@@ -194,7 +194,7 @@ const sponsors = {
         {
             name: "SGS",
             logo: sgs,
-            url: "https://www.sgs.com/en",
+            url: "https://www.kyocera-sgstool.com/",
             scale: 1.0
         },
         {
