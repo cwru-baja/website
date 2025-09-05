@@ -59,7 +59,7 @@ const sponsors = [
     { logo: kissoftLogo, link: "https://www.kisssoft.com/" },
     { logo: skfLogo, link: "https://www.skf.com/us" },
     { logo: tylokLogo, link: "https://www.tylok.com/" },
-    { logo: gmpFrictionLogo, link: "https://www.gmp-friction.com/" },
+    { logo: gmpFrictionLogo, link: "https://gmpfriction.com" },
     { logo: siemensLogo, link: "https://www.siemens.com/" },
     { logo: magnaLogo, link: "https://www.magna.com/" },
     { logo: sgsLogo, link: "https://www.kyocera-sgstool.com/" },
