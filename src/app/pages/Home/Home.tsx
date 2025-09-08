@@ -8,90 +8,8 @@ import { FadeIn } from '../../../components/FadeIn/FadeIn.tsx';
 import { HeroSection } from "../../../components/HeroSection/HeroSection.tsx";
 import { LogoCarousel } from "../../../components/LogoCarousel/LogoCarousel.tsx";
 import aboutImage from '../../../assets/images/LMF02596.jpg';
-
-import gmnBearingLogo from '../../../assets/logo/sponsor/svg/gmn-bearing.svg';
-import jergensLogo from '../../../assets/logo/sponsor/svg/jergens.svg';
-import bwxtLogo from '../../../assets/logo/sponsor/svg/bwxt.svg';
-import orangeViseLogo from '../../../assets/logo/sponsor/svg/orange-vise.svg';
-import kissoftLogo from '../../../assets/logo/sponsor/svg/kissoft.svg';
-import skfLogo from '../../../assets/logo/sponsor/svg/skf.svg';
-import tylokLogo from '../../../assets/logo/sponsor/svg/tylok.svg';
-import gmpFrictionLogo from '../../../assets/logo/sponsor/svg/gmp-friction.svg';
-import siemensLogo from '../../../assets/logo/sponsor/svg/siemens.svg';
-import magnaLogo from '../../../assets/logo/sponsor/svg/magna.svg';
-import sgsLogo from '../../../assets/logo/sponsor/svg/sgs.svg';
-import altiumLogo from '../../../assets/logo/sponsor/svg/altium.svg';
-import kenestoLogo from '../../../assets/logo/sponsor/svg/kenesto.svg';
-import ansysLogo from '../../../assets/logo/sponsor/svg/ansys.svg';
-import skamarLogo from '../../../assets/logo/sponsor/svg/skamar.svg';
-import schunkLogo from '../../../assets/logo/sponsor/svg/schunk.svg';
-import thinkboxLogo from '../../../assets/logo/sponsor/svg/thinkbox.svg';
-import michiganScientificLogo from '../../../assets/logo/sponsor/svg/michigan-scientific.svg';
-import mastercamLogo from '../../../assets/logo/sponsor/svg/mastercam.svg';
-import blaserSwisslubeLogo from '../../../assets/logo/sponsor/svg/blaser-swisslube.svg';
-import speedMetalsLogo from '../../../assets/logo/sponsor/svg/spee-d-metals.svg';
-import automationDirectLogo from '../../../assets/logo/sponsor/svg/automation-direct.svg';
-import nordLockGroupLogo from '../../../assets/logo/sponsor/svg/nord-lock-group.svg';
-import southingtonLogo from '../../../assets/logo/sponsor/svg/southington.svg';
-import geneHaasFoundationLogo from '../../../assets/logo/sponsor/svg/gene-haas-foundation.svg';
-import americanFrictionLogo from '../../../assets/logo/sponsor/svg/american-friction-technologies.svg';
-import ptgLogo from '../../../assets/logo/sponsor/svg/ptg.svg';
-import boltDepotLogo from '../../../assets/logo/sponsor/svg/bolt-depot.svg';
-import clarkLogo from '../../../assets/logo/sponsor/svg/clark.svg';
-import fkRodEndsLogo from '../../../assets/logo/sponsor/svg/fk-rod-ends.svg';
-import asiLogo from '../../../assets/logo/sponsor/svg/asi.svg';
-import altairLogo from '../../../assets/logo/sponsor/svg/altair.svg';
-import alroLogo from '../../../assets/logo/sponsor/svg/alro.svg';
-import foxLogo from '../../../assets/logo/sponsor/svg/fox.svg';
-import bmtAerospaceLogo from '../../../assets/logo/sponsor/svg/bmt-aerospace.svg';
-import enterlineFoundationLogo from '../../../assets/logo/sponsor/svg/enterline-foundation.svg';
-import stifelLogo from '../../../assets/logo/sponsor/svg/stifel.svg';
-import parkerLogo from '../../../assets/logo/sponsor/svg/parker.svg';
-import caseAlumniLogo from '../../../assets/logo/sponsor/svg/case-alumni-association.svg';
 import tshirtImage from "../../../assets/images/cwru-baja-tshirt.png";
-
-
-const sponsors = [
-    { logo: gmnBearingLogo, link: "https://www.gmn.de/en/" },
-    { logo: jergensLogo, link: "https://www.jergensinc.com/" },
-    { logo: bwxtLogo, link: "https://www.bwxt.com/" },
-    { logo: orangeViseLogo, link: "https://www.orangevise.com/" },
-    { logo: kissoftLogo, link: "https://www.kisssoft.com/" },
-    { logo: skfLogo, link: "https://www.skf.com/" },
-    { logo: tylokLogo, link: "https://www.tylok.com/" },
-    { logo: gmpFrictionLogo, link: "https://www.gmp-friction.com/" },
-    { logo: siemensLogo, link: "https://www.siemens.com/" },
-    { logo: magnaLogo, link: "https://www.magna.com/" },
-    { logo: sgsLogo, link: "https://www.sgsgroup.com/" },
-    { logo: altiumLogo, link: "https://www.altium.com/" },
-    { logo: kenestoLogo, link: "https://www.kenesto.com/" },
-    { logo: ansysLogo, link: "https://www.ansys.com/" },
-    { logo: skamarLogo, link: "https://www.skamar.com/" },
-    { logo: schunkLogo, link: "https://www.schunk.com/" },
-    { logo: thinkboxLogo, link: "https://www.thinkboxsoftware.com/" },
-    { logo: michiganScientificLogo, link: "https://www.michsci.com/" },
-    { logo: mastercamLogo, link: "https://www.mastercam.com/" },
-    { logo: blaserSwisslubeLogo, link: "https://www.blaser.com/" },
-    { logo: speedMetalsLogo, link: "https://www.speedymetals.com/" },
-    { logo: automationDirectLogo, link: "https://www.automationdirect.com/" },
-    { logo: nordLockGroupLogo, link: "https://www.nord-lock.com/" },
-    { logo: southingtonLogo, link: "https://www.southington-tool.com/" },
-    { logo: geneHaasFoundationLogo, link: "https://ghaasfoundation.org/" },
-    { logo: americanFrictionLogo, link: "https://www.americanfriction.com/" },
-    { logo: ptgLogo, link: "https://www.ptglobal.com/" },
-    { logo: boltDepotLogo, link: "https://www.boltdepot.com/" },
-    { logo: clarkLogo, link: "http://www.clark-metal.com/" },
-    { logo: fkRodEndsLogo, link: "https://www.fkrodends.com/" },
-    { logo: asiLogo, link: "https://www.americanspecialties.com/" },
-    { logo: altairLogo, link: "https://www.altair.com/" },
-    { logo: alroLogo, link: "https://www.alro.com/" },
-    { logo: foxLogo, link: "https://www.ridefox.com/" },
-    { logo: bmtAerospaceLogo, link: "https://www.bmt-aerospace.com/" },
-    { logo: enterlineFoundationLogo, link: "https://enterlinefoundation.org/" },
-    { logo: stifelLogo, link: "https://www.stifel.com/" },
-    { logo: parkerLogo, link: "https://www.parker.com/" },
-    { logo: caseAlumniLogo, link: "https://casealum.org/" },
-];
+import { getAllSponsors } from '../../../config/sponsors';
 
 function DonationSection() {
     return (
@@ -221,7 +139,7 @@ export default function Home() {
                         />
                     </div>
                 </FadeIn>
-                <LogoCarousel sponsors={sponsors} />
+                <LogoCarousel sponsors={getAllSponsors()} />
             </div>
             <FooterSocial />
         </>
