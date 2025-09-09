@@ -49,7 +49,7 @@ import ptg from '../assets/logo/sponsor/svg/ptg.svg';
 import boltDepot from '../assets/logo/sponsor/svg/bolt-depot.svg';
 import fkRodEnds from '../assets/logo/sponsor/svg/fk-rod-ends.svg';
 import alro from '../assets/logo/sponsor/svg/alro.svg';
-import fathomRealty from '../assets/logo/sponsor/fathom-logo.png';
+import fathomRealty from '../assets/logo/sponsor/fathom-realty-logo.png';
 import gates from '../assets/logo/sponsor/gates-logo.png';
 import microMeasurements from '../assets/logo/sponsor/micro-measurements-logo.png';
 import oshCut from '../assets/logo/sponsor/oshcut-logo.png';
