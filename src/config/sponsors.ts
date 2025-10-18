@@ -2,7 +2,6 @@
 import fox from '../assets/logo/sponsor/fox-logo.png';
 import bmt from '../assets/logo/sponsor/svg/bmt-aerospace.svg';
 import enterline from '../assets/logo/sponsor/svg/enterline-foundation.svg';
-import stifel from '../assets/logo/sponsor/svg/stifel.svg';
 import caseAlumniAssociation from '../assets/logo/sponsor/svg/case-alumni-association.svg';
 
 // PLATINUM SPONSORS
@@ -71,7 +70,6 @@ export const sponsors = {
         { name: "Fox", logo: fox, url: "https://ridefox.com/" },
         { name: "BMT Aerospace", logo: bmt, url: "https://bmtaerospace.com/" },
         { name: "Enterline Foundation", logo: enterline, url: "https://enterlinefoundation.org/" },
-        { name: "Stifel", logo: stifel, url: "https://www.stifel.com/" },
         { name: "Case Alumni Association", logo: caseAlumniAssociation, url: "https://casealumni.org/" },
     ],
     platinum: [
