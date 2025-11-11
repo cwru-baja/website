@@ -165,7 +165,7 @@ const operationsBoard: MemberType[] = [
         name: "Logan Senning",
         role: "Test Engineering Lead",
         img: A6406335,
-        graduationYear: "2026",
+        graduationYear: "2027",
         linkedin: "https://www.linkedin.com/in/logan-senning/"
     }
 ];
