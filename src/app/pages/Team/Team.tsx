@@ -281,7 +281,7 @@ export default function Team() {
                 <HeroSection
                     backgroundImage={heroImage}
                     title={`MEET THE TEAM`}
-                    subtitle={"2024 - 2025"}
+                    subtitle={"2025 - 2026"}
                 />
                 <FadeIn direction="up" delay={0.1}>
                     <div className={styles.section}>
