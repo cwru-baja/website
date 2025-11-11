@@ -30,6 +30,19 @@ import LMF04721 from '../../../assets/images/headshots/LMF04721.jpg';
 import LMF04619 from '../../../assets/images/headshots/LMF04619.jpg';
 import LMF04673 from '../../../assets/images/headshots/LMF04673.jpg';
 import LMF04762 from '../../../assets/images/headshots/LMF04762.jpg';
+import A6406322 from '../../../assets/images/headshots/A6406322.jpg';
+import A6406330 from '../../../assets/images/headshots/A6406330.jpg';
+import A6406819 from '../../../assets/images/headshots/A6406819.jpg';
+import A6406832 from '../../../assets/images/headshots/A6406832.jpg';
+import A6406349 from '../../../assets/images/headshots/A6406349.jpg';
+import A6406798 from '../../../assets/images/headshots/A6406798.jpg';
+import A6406847 from '../../../assets/images/headshots/A6406847.jpg';
+import A6406861 from '../../../assets/images/headshots/A6406861.jpg';
+import A6406335 from '../../../assets/images/headshots/A6406335.jpg';
+import A6406817 from '../../../assets/images/headshots/A6406817.jpg';
+import A6406791 from '../../../assets/images/headshots/A6406791.jpg';
+
+import placeholder from '../../../assets/images/LMF0991.png';
 
 type MemberType = {
     name: string;
@@ -41,143 +54,150 @@ type MemberType = {
 
 const executiveBoard: MemberType[] = [
     {
-        name: "Simon Merenstein",
-        role: "Team Captain",
-        img: LMF04593,
-        graduationYear: "2025",
-        linkedin: "https://www.linkedin.com/in/simon-merenstein/"
-    },
-    {
-        name: "Liam Flanagan",
-        role: "Technical Director",
-        img: LMF04533,
-        graduationYear: "2025",
-        linkedin: "https://www.linkedin.com/in/liam-f"
-    },
-    {
-        name: "Arnav Manu",
-        role: "Finance Lead",
-        img: LMF04640,
-        graduationYear: "2026",
-        linkedin: "https://www.linkedin.com/in/arnav-manu-667444253/"
-    },
-    {
-        name: "Amy Budzichowski",
-        role: "Membership Lead",
-        img: LMF04651,
-        graduationYear: "2026",
-        linkedin: "https://www.linkedin.com/in/amy-budzichowski/"
-    },
-    {
-        name: "Anish Khot",
-        role: "Logistics Lead",
-        img: LMF04502,
-        graduationYear: "2025",
-        linkedin: "https://www.linkedin.com/in/anishkhot/"
-    }
-];
-
-const operationsBoard: MemberType[] = [
-    {
         name: "Brendan Flanagan",
-        role: "CNC Lead",
+        role: "Team Captain",
         img: LMF04560,
         graduationYear: "2026",
         linkedin: "https://www.linkedin.com/in/brendan-flanagan-3220492a3/"
     },
     {
-        name: "Auston Govender",
-        role: "Brakes & Throttle Lead",
-        img: LMF04525,
-        graduationYear: "2026",
-        linkedin: "https://www.linkedin.com/in/auston-govender/"
-    },
-    {
         name: "Ammar Ali Asghar",
-        role: "Rear Drivetrain Lead",
+        role: "Technical Director",
         img: LMF04478,
         graduationYear: "2026",
         linkedin: "https://www.linkedin.com/in/ammar-ali-asghar-8129b524b/"
     },
     {
-        name: "Daniel Clare",
-        role: "Suspension & Steering Lead",
-        img: LMF04609,
-        graduationYear: "2026",
-        linkedin: "https://www.linkedin.com/in/daniel-clare-5b49aa227/"
-    },
-    {
-        name: "Jordan Haight",
-        role: "Test Engineering Lead",
-        img: LMF04589,
-        graduationYear: "2026",
-        linkedin: "https://www.linkedin.com/in/jordanhaight/"
-    },
-    {
-        name: "Xavier Nye",
-        role: "Front Drivetrain Lead",
-        img: LMF04514,
-        graduationYear: "2025",
-        linkedin: "https://www.linkedin.com/in/xavier-nye-29034a229/"
-    },
-    {
-        name: "Uzair Syed",
-        role: "Systems Lead",
-        img: LMF04613,
-        graduationYear: "2026",
-        linkedin: "https://www.linkedin.com/in/77uzairsyed77/"
-    },
-    {
-        name: "Devin Korybski",
-        role: "Frame Lead",
-        img: LMF04606,
-        graduationYear: "2025",
-        linkedin: "https://www.linkedin.com/in/devin-korybski-34835a28a/"
-    },
-    {
         name: "Shelley Wei",
-        role: "Manufacturing Coordinator",
+        role: "Finance Lead",
         img: LMF04542,
         graduationYear: "2027",
         linkedin: "https://www.linkedin.com/in/shelleyywei/"
     },
     {
-        name: "Collin Lorenzen",
-        role: "Race Logistics Lead",
-        img: LMF04690,
-        graduationYear: "2025",
-        linkedin: "https://www.linkedin.com/company/cwru-motorsports/"
-    },
-];
-
-const specialtyLeads: MemberType[] = [
-    {
         name: "Lucy Ma",
-        role: "Cost Report Coordinator",
+        role: "Membership Lead",
         img: LMF04627,
         graduationYear: "2027",
         linkedin: "https://www.linkedin.com/in/lucyma-/"
     },
     {
-        name: "Ari Avalos",
-        role: "Welding Lead",
-        img: LMF04673,
-        graduationYear: "2025",
-        linkedin: "https://www.linkedin.com/company/cwru-motorsports/"
+        name: "John Scherer",
+        role: "Logistics Lead",
+        img: A6406330,
+        graduationYear: "2027",
+        linkedin: "https://www.linkedin.com/in/john-scherer-299264300/"
+    },
+];
+
+const operationsBoard: MemberType[] = [
+    {
+        name: "Arnav Manu",
+        role: "Front Drivetrain Lead",
+        img: LMF04640,
+        graduationYear: "2026",
+        linkedin: "https://www.linkedin.com/in/arnav-manu-667444253/"
+    },
+    {
+        name: "Maureen Manning",
+        role: "Manufacturing Lead",
+        img: A6406832,
+        graduationYear: "2028",
+        linkedin: "https://www.linkedin.com/in/maureen--manning/"
+    },
+    {
+        name: "Giovanni Ricupero",
+        role: "Brakes & Throttle Lead",
+        img: A6406819,
+        graduationYear: "2026",
+        linkedin: "https://www.linkedin.com/in/ricupgio/"
+    },
+    {
+        name: "Joshua Stout",
+        role: "Suspension Lead",
+        img: LMF04466,
+        graduationYear: "2027",
+        linkedin: "https://www.linkedin.com/in/joshua-martin-stout/"
+    },
+    {
+        name: "Elad Dov Kleinerman",
+        role: "CNC Manufacturing Lead",
+        img: A6406861,
+        graduationYear: "2027",
+        linkedin: "https://www.linkedin.com/in/elad-dov-kleinerman-mordkowitz-19b423199/"
+    },
+    {
+        name: "Bram Loren",
+        role: "Panels & Composites Lead",
+        img: A6406817,
+        graduationYear: "2028",
+        linkedin: "https://www.linkedin.com/in/bramloren/"
+    },
+    {
+        name: "Auston Govender",
+        role: "Race Logistics Lead",
+        img: LMF04525,
+        graduationYear: "2026",
+        linkedin: "https://www.linkedin.com/in/auston-govender/"
     },
     {
         name: "Kenji Miyake",
-        role: "Radio Lead",
+        role: "Frame & Radio Lead",
         img: LMF04655,
         graduationYear: "2026",
         linkedin: "https://www.linkedin.com/in/gabrielkenjimiyake/"
     },
     {
-        name: "Joshua Stout",
-        role: "Business Presentation Coordinator",
-        img: LMF04466,
+        name: "Evan Grover",
+        role: "Electronics & Systems Lead",
+        img: A6406798,
+        graduationYear: "2026",
+        linkedin: "https://www.linkedin.com/in/ehgrover/"
+    },
+    {
+        name: "Matthew Alcantara",
+        role: "Rear Drivetrain Lead",
+        img: A6406322,
         graduationYear: "2027",
-        linkedin: "https://www.linkedin.com/in/joshua-martin-stout/"
+        linkedin: "https://www.linkedin.com/in/matthew-allen-alcantara/"
+    },
+    {
+        name: "Logan Senning",
+        role: "Test Engineering Lead",
+        img: A6406335,
+        graduationYear: "2026",
+        linkedin: "https://www.linkedin.com/in/logan-senning/"
+    }
+];
+
+const specialtyLeads: MemberType[] = [
+    {
+        name: "Daniel Clare",
+        role: "Static Events Coordinator",
+        img: LMF04609,
+        graduationYear: "2026",
+        linkedin: "https://www.linkedin.com/in/daniel-clare-5b49aa227/"
+    },
+    {
+        name: "Anthony Retelewski",
+        role: "Website Lead",
+        img: A6406847,
+        graduationYear: "2028",
+        linkedin: "https://www.linkedin.com/in/anthony-retelewski-4340402aa/"
+    },
+    {
+        name: "Zane Sandelin",
+        role: "Cost Report Coordinator",
+        img: A6406791,
+        graduationYear: "2028",
+        linkedin: "https://www.linkedin.com/in/zane-sandelin-010b1b274/"
+    },
+    {
+        name: "Suhani Dangre",
+        role: "Business Presentation Lead\n& Social Media Lead",
+        img: A6406349,
+        graduationYear: "2028",
+        linkedin: "https://www.linkedin.com/in/suhani-dangre/"
     },
     {
         name: "Jessica Shue",
@@ -185,20 +205,6 @@ const specialtyLeads: MemberType[] = [
         img: LMF04721,
         graduationYear: "2027",
         linkedin: "https://www.linkedin.com/in/jessica-s-7b7935268/"
-    },
-    {
-        name: "John Scherer",
-        role: "Engine Lead",
-        img: LMF04619,
-        graduationYear: "2027",
-        linkedin: "https://www.linkedin.com/in/john-scherer-299264300/"
-    },
-    {
-        name: "Anthony Retelewski",
-        role: "Website Lead",
-        img: LMF04762,
-        graduationYear: "2028",
-        linkedin: "https://www.linkedin.com/in/anthony-retelewski-4340402aa/"
     },
 ];
 

@@ -32,16 +32,16 @@ export const theme = createTheme({
       '#08090A'
     ],
     red: [
-      '#FFE0E0',
-      '#FFBABA',
-      '#FF9494',
-      '#FF6B6B',
-      '#FF5252',
-      '#FF3838',
-      '#FF1F1F',
-      '#E60000',
-      '#C00000',
-      '#9A0000'
+      '#FFE5E8',
+      '#FDC8CE',
+      '#F7AAB3',
+      '#F18C99',
+      '#EA6E7F',
+      '#E25365',
+      '#C93B4E',
+      '#A90A1C',
+      '#8C0716',
+      '#67050F'
     ]
   },
   primaryColor: 'red',
