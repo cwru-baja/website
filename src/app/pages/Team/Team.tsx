@@ -100,7 +100,7 @@ const operationsBoard: MemberType[] = [
     },
     {
         name: "Maureen Manning",
-        role: "Manufacturing Lead",
+        role: "Manufacturing Coordinator",
         img: A6406832,
         graduationYear: "2028",
         linkedin: "https://www.linkedin.com/in/maureen--manning/"
@@ -121,7 +121,7 @@ const operationsBoard: MemberType[] = [
     },
     {
         name: "Elad Dov Kleinerman",
-        role: "CNC Manufacturing Lead",
+        role: "CNC Manufacturing Coordinator",
         img: A6406861,
         graduationYear: "2027",
         linkedin: "https://www.linkedin.com/in/elad-dov-kleinerman-mordkowitz-19b423199/"
@@ -194,7 +194,7 @@ const specialtyLeads: MemberType[] = [
     },
     {
         name: "Suhani Dangre",
-        role: "Business Presentation Lead\n& Social Media Lead",
+        role: "Business Presentation Coordinator\n& Social Media Lead",
         img: A6406349,
         graduationYear: "2028",
         linkedin: "https://www.linkedin.com/in/suhani-dangre/"
