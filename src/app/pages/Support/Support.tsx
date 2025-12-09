@@ -21,11 +21,11 @@ function DonationSection() {
                     Donations directly support new equipment, materials, competition fees, and travel expenses for our team members.
                 </p>
                 <div className={styles.donationInstructions}>
-                    <strong>Important:</strong> Once reaching the giving form, check "other" in the gift designation field and enter "Baja".
+                    {/* <strong>Important:</strong> Once reaching the giving form, check "other" in the gift designation field and enter "Baja". */}
                 </div>
                 <Button
                     component="a"
-                    href="https://www.givecampus.com/71er24"
+                    href="https://casealumni.org/campaigns/baja-team/"
                     target="_blank"
                     rel="noopener noreferrer"
                     size="lg"
