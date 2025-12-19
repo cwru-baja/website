@@ -5,14 +5,17 @@ import enterline from '../assets/logo/sponsor/svg/enterline-foundation.svg';
 import caseAlumniAssociation from '../assets/logo/sponsor/svg/case-alumni-association.svg';
 
 // PLATINUM SPONSORS
-import speedMetals from '../assets/logo/sponsor/svg/spee-d-metals.svg';
 import siemens from '../assets/logo/sponsor/svg/siemens.svg';
 import skbCases from '../assets/logo/sponsor/skb-cases.png';
 import kenesto from '../assets/logo/sponsor/svg/kenesto.svg';
 import altair from '../assets/logo/sponsor/svg/altair.svg';
 import kissoft from '../assets/logo/sponsor/svg/kissoft.svg';
+import hexagon from '../assets/logo/sponsor/svg/hexagon.svg';
+import ntop from '../assets/logo/sponsor/svg/nTop-Logo_Light-theme.svg';
+
 
 // GOLD SPONSORS
+import speedMetals from '../assets/logo/sponsor/svg/spee-d-metals.svg';
 import jergens from '../assets/logo/sponsor/svg/jergens.svg';
 import bwxt from '../assets/logo/sponsor/svg/bwxt.svg';
 import gmnBearing from '../assets/logo/sponsor/svg/gmn-bearing.svg';
@@ -73,14 +76,16 @@ export const sponsors = {
         { name: "Case Alumni Association", logo: caseAlumniAssociation, url: "https://casealumni.org/" },
     ],
     platinum: [
-        { name: "Speed Metals", logo: speedMetals, url: "https://speedmetals.com/" },
         { name: "Siemens", logo: siemens, url: "https://www.siemens.com/global/en.html" },
         { name: "SKB Cases", logo: skbCases, url: "https://www.skbcases.com/" },
         { name: "Kenesto", logo: kenesto, url: "https://www.kenesto.com/" },
         { name: "Altair", logo: altair, url: "https://altair.com/" },
         { name: "KISSsoft", logo: kissoft, url: "https://www.kisssoft.com/en" },
+        { name: "Hexagon", logo: hexagon, url: "https://hexagon.com/" },
+        { name: "nTop", logo: ntop, url: "https://www.ntop.com/" },
     ],
     gold: [
+        { name: "Spee-D Metals", logo: speedMetals, url: "https://speedmetals.com/" },
         { name: "Jergens", logo: jergens, url: "https://www.jergensinc.com/" },
         { name: "BWXT", logo: bwxt, url: "https://www.bwxt.com/" },
         // { name: "Orange Vise", logo: orangeVise, url: "https://www.orangevise.com/" },

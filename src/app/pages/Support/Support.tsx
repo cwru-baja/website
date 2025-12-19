@@ -21,7 +21,7 @@ function DonationSection() {
                     Donations directly support new equipment, materials, competition fees, and travel expenses for our team members.
                 </p>
                 <div className={styles.donationInstructions}>
-                    <strong>Important:</strong> Once reaching the website, scroll down to donate.
+                    <strong>Important:</strong> Once reaching the website, scroll down to the embedded form to donate. Please include "Baja" in the text box so it goes directly to our team!
                 </div>
                 <Button
                     component="a"
