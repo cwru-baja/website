@@ -55,7 +55,7 @@ import hypermill from '../assets/logo/sponsor/svg/hypermill.svg';
 import nordlock from '../assets/logo/sponsor/svg/nord-lock-group.svg';
 import holley from '../assets/logo/sponsor/HolleyPB_White_RGB copy.png';
 import southington from '../assets/logo/sponsor/svg/southington.svg';
-import redBull from '../assets/logo/sponsor/svg/redbull.svg';
+// import redBull from '../assets/logo/sponsor/svg/redbull.svg';
 import ptg from '../assets/logo/sponsor/svg/ptg.svg';
 import boltDepot from '../assets/logo/sponsor/svg/bolt-depot.svg';
 import fkRodEnds from '../assets/logo/sponsor/svg/fk-rod-ends.svg';
@@ -141,7 +141,7 @@ export const sponsors = {
         { name: "Holley", logo: holley, url: "https://www.holley.com/" },
         { name: "Southington Offroad", logo: southington, url: "https://southingtonoffroad.com/" },
         { name: "Performance Titanium Group", logo: ptg, url: "https://performancetitanium.com/" },
-        { name: "Red Bull", logo: redBull, url: "https://www.redbull.com/us-en" },
+        // { name: "Red Bull", logo: redBull, url: "https://www.redbull.com/us-en" },
         { name: "Bolt Depot", logo: boltDepot, url: "https://boltdepot.com/" },
         { name: "FK Rod Ends", logo: fkRodEnds, url: "https://www.fkrodends.com/" },
         { name: "Fathom Realty", logo: fathomRealty, url: "https://fathomrealty.com/" },
