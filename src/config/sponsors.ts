@@ -77,6 +77,7 @@ import motec from '../assets/logo/sponsor/svg/motec.svg';
 import extremePowderCoating from '../assets/logo/sponsor/svg/extreme powder coating.svg';
 import simutech from '../assets/logo/sponsor/svg/simutech group.svg';
 import raisingCanes from '../assets/logo/sponsor/svg/raising canes.svg';
+import meridianLab from '../assets/logo/sponsor/svg/meridian laboratory.svg';
 
 export interface Sponsor {
     name: string;
@@ -162,6 +163,7 @@ export const sponsors = {
         { name: "Extreme Powder Coating", logo: extremePowderCoating, url: "https://ohiopowdercoat.com/" },
         { name: "SimuTech Group", logo: simutech, url: "https://simutechgroup.com/" },
         { name: "Raising Canes", logo: raisingCanes, url: "https://raisingcanes.com/" },
+        { name: "Meridian Laboratory", logo: meridianLab, url: "https://www.meridianlab.com/" },
     ],
 };
 
