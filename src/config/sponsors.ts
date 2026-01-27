@@ -8,7 +8,7 @@ import caseAlumniAssociation from '../assets/logo/sponsor/svg/case-alumni-associ
 import siemens from '../assets/logo/sponsor/svg/siemens.svg';
 import skbCases from '../assets/logo/sponsor/skb-cases.png';
 import kenesto from '../assets/logo/sponsor/svg/kenesto.svg';
-import altair from '../assets/logo/sponsor/svg/altair.svg';
+// import altair from '../assets/logo/sponsor/svg/altair.svg';
 import kissoft from '../assets/logo/sponsor/svg/kissoft.svg';
 import hexagon from '../assets/logo/sponsor/svg/hexagon.svg';
 import ntop from '../assets/logo/sponsor/svg/nTop-Logo_Light-theme.svg';
@@ -95,7 +95,7 @@ export const sponsors = {
         { name: "Siemens", logo: siemens, url: "https://www.siemens.com/global/en.html" },
         { name: "SKB Cases", logo: skbCases, url: "https://www.skbcases.com/" },
         { name: "Kenesto", logo: kenesto, url: "https://www.kenesto.com/" },
-        { name: "Altair", logo: altair, url: "https://altair.com/" },
+        // { name: "Altair", logo: altair, url: "https://altair.com/" },
         { name: "KISSsoft", logo: kissoft, url: "https://www.kisssoft.com/en" },
         { name: "Hexagon", logo: hexagon, url: "https://hexagon.com/" },
         { name: "nTop", logo: ntop, url: "https://www.ntop.com/" },
