@@ -1,99 +1,27 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
-
-const IMAGES = [
-  "/images/about-1.jpg",
-  "/images/about-2.jpg",
-  "/images/about-3.jpg",
-  "/images/about-4.jpg",
-  "/images/about-5.jpg",
-  "/images/about-6.jpg",
-  "/images/about-7.jpg",
-  "/images/about-8.jpg",
-  "/images/about-9.jpg",
-  "/images/about-10.jpg",
-  "/images/about-11.jpg",
-  "/images/about-12.jpg",
-  "/images/about-13.jpg",
-  "/images/about-14.jpg",
-  "/images/about-15.jpg",
-  "/images/about-16.jpg",
-  "/images/about-17.jpg",
-  "/images/about-18.jpg",
-  "/images/about-19.jpg",
-  "/images/about-20.jpg",
-];
-
-// Pixels scrolled before advancing to the next image
-const PX_PER_IMAGE = 250;
+import AboutBentoGrid from "./AboutBentoGrid";
 
 export default function AboutSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [visible, setVisible] = useState(false);
 
-  // Entrance fade-in
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisible(true);
-      },
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
       { threshold: 0.15 }
     );
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
-  // Scroll-driven image switching — only active while section is visible
-  useEffect(() => {
-    const isVisible = { current: false };
-
-    const visObserver = new IntersectionObserver(
-      ([entry]) => { isVisible.current = entry.isIntersecting; },
-      { threshold: 0.1 }
-    );
-    if (sectionRef.current) visObserver.observe(sectionRef.current);
-
-    let lastY = window.scrollY;
-    let accumulated = 0;
-    let idx = 0;
-
-    const onScroll = () => {
-      if (!isVisible.current) return;
-
-      const delta = window.scrollY - lastY;
-      lastY = window.scrollY;
-      accumulated += delta;
-
-      // Advance forward
-      while (accumulated >= PX_PER_IMAGE) {
-        accumulated -= PX_PER_IMAGE;
-        idx = (idx + 1) % IMAGES.length;
-        setCurrentIndex(idx);
-      }
-      // Step backward
-      while (accumulated <= -PX_PER_IMAGE) {
-        accumulated += PX_PER_IMAGE;
-        idx = (idx - 1 + IMAGES.length) % IMAGES.length;
-        setCurrentIndex(idx);
-      }
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      visObserver.disconnect();
-    };
-  }, []);
-
   return (
     <section ref={sectionRef} className="bg-bg overflow-hidden pt-24 lg:pt-48">
       <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row">
 
-        {/* Left — Photo */}
+        {/* Left — Bento grid */}
         <div
           className="relative lg:w-[56%] min-h-[360px] lg:min-h-[560px] overflow-hidden"
           style={{
@@ -103,26 +31,9 @@ export default function AboutSection() {
               "opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1)",
           }}
         >
-          {/* Render all images, show only current — no transition for hard cut */}
-          {IMAGES.map((src, i) => (
-            <div
-              key={src}
-              className="absolute inset-0"
-              style={{ opacity: i === currentIndex ? 1 : 0 }}
-            >
-              <Image
-                src={src}
-                alt=""
-                fill
-                className="object-cover"
-                style={{ objectPosition: "center 35%" }}
-                sizes="(max-width: 1024px) 100vw, 56vw"
-                priority={i < 3}
-              />
-            </div>
-          ))}
+          <AboutBentoGrid />
 
-          {/* Right-edge gradient */}
+          {/* Right-edge gradient — blends grid into text panel */}
           <div
             className="pointer-events-none absolute inset-0 z-10"
             style={{
@@ -184,6 +95,7 @@ export default function AboutSection() {
             </Link>
           </div>
         </div>
+
       </div>
     </section>
   );

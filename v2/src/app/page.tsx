@@ -2,7 +2,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import StatsSection from "@/components/StatsSection";
 import AboutSection from "@/components/AboutSection";
-import CompetitionSection from "@/components/CompetitionSection";
+import HiredByTheBest from "@/components/HiredByTheBest";
 import SponsorsMarquee from "@/components/SponsorsMarquee";
 
 export default function Home() {
@@ -12,7 +12,7 @@ export default function Home() {
       <Hero />
       <StatsSection />
       <AboutSection />
-      <CompetitionSection />
+      <HiredByTheBest />
       <SponsorsMarquee />
     </>
   );
