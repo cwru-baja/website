@@ -19,12 +19,9 @@ export default function Hero() {
       {/* Left panel — text content */}
       <div className="relative z-10 flex w-[42%] flex-col justify-center px-8 pl-16 lg:pl-20 xl:pl-28">
         {/* Headline */}
-        <h1
-          className="font-satoshi font-black leading-[0.9] tracking-tight text-white"
-          style={{ fontSize: "clamp(3rem, 7vw, 7.5rem)" }}
-        >
-          <span className="block">BUILT</span>
-          <span className="block text-red">TO WIN.</span>
+        <h1 className="leading-[1.05] text-white" style={{ fontSize: "clamp(3rem, 7vw, 7.5rem)" }}>
+          <span className="block font-satoshi font-black tracking-tight">BUILT</span>
+          <span className="block font-butler font-semibold text-red">TO WIN.</span>
         </h1>
 
         {/* Subtitle */}

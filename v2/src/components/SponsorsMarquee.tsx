@@ -1,3 +1,11 @@
+"use client";
+
+import { useRef } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import PageContainer from "@/components/PageContainer";
+
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
 
 const sponsors: Sponsor[] = [
@@ -59,37 +67,106 @@ const sponsors: Sponsor[] = [
 ];
 
 export default function SponsorsMarquee() {
+  const container = useRef<HTMLDivElement>(null);
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const directionRef = useRef(1);
+
+  useGSAP(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const marquee = marqueeRef.current;
+    if (!marquee) return;
+
+    // Use xPercent: -50 since the content is duplicated.
+    const tween = gsap.to(marquee, {
+      xPercent: -50,
+      repeat: -1,
+      duration: 60, // doubled duration for slower base speed
+      ease: "none",
+    });
+
+    // Advance the playhead so we can seamlessly reverse without hitting 0
+    tween.totalTime(tween.duration() * 100);
+
+    ScrollTrigger.create({
+      onUpdate: (self) => {
+        // self.direction: 1 = scrolling down, -1 = scrolling up
+        if (self.direction !== directionRef.current) {
+          directionRef.current = self.direction;
+        }
+
+        // Calculate a speed multiplier based on scroll velocity
+        // Increase the divisor to reduce the effect of velocity
+        const velocity = Math.abs(self.getVelocity() / 2000);
+        const clampedVelocity = Math.min(velocity, 1.5);
+
+        // Apply timescale
+        gsap.to(tween, {
+          timeScale: directionRef.current * (1 + clampedVelocity),
+          duration: 0.1, // Quick reaction to scroll speed
+          overwrite: true,
+          onComplete: () => {
+            // Decelerate back to normal speed once scrolling stops
+            gsap.to(tween, {
+              timeScale: directionRef.current,
+              duration: 1.5, // Slow decay for smooth deceleration
+              overwrite: true,
+            });
+          }
+        });
+      },
+    });
+
+  }, { scope: container });
+
   return (
-    <section className="py-24">
-      <div
-        className="relative overflow-hidden"
-        style={{
-          maskImage:
-            "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
-        }}
-      >
-        <div className="flex w-max animate-marquee">
-          {[...sponsors, ...sponsors].map((sponsor, i) => (
-            <a
-              key={i}
-              href={sponsor.url || undefined}
-              target={sponsor.url ? "_blank" : undefined}
-              rel={sponsor.url ? "noopener noreferrer" : undefined}
-              className="flex items-center justify-center px-12 shrink-0 opacity-40 hover:opacity-100 transition-opacity duration-300"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={sponsor.png ? `/logo/sponsor/${sponsor.file}.png` : `/logo/sponsor/svg/${sponsor.file}.svg`}
-                alt={sponsor.name}
-                className="h-12 w-auto"
-                style={{ filter: "brightness(0) invert(1)" }}
-              />
-            </a>
-          ))}
+    <section className="py-24" ref={container}>
+      <PageContainer>
+        {/* Header row */}
+        <div className="flex items-start justify-between mb-25">
+          {/* Big stacked title */}
+          <div className="leading-none">
+            <div className="font-bebas text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none [paint-order:stroke_fill] [-webkit-text-stroke:0.04em_white]">
+              PARTNERS
+            </div>
+            <div className="font-butler font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-red leading-none">
+              &amp;SPONSORS
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Marquee */}
+        <div
+          className="relative overflow-hidden"
+          style={{
+            maskImage:
+              "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)",
+          }}
+        >
+          {/* Removed animate-marquee from className */}
+          <div className="flex w-max" ref={marqueeRef}>
+            {[...sponsors, ...sponsors].map((sponsor, i) => (
+              <a
+                key={i}
+                href={sponsor.url || undefined}
+                target={sponsor.url ? "_blank" : undefined}
+                rel={sponsor.url ? "noopener noreferrer" : undefined}
+                className="flex items-center justify-center px-12 shrink-0 opacity-100 transition-opacity duration-300"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={sponsor.png ? `/logo/sponsor/${sponsor.file}.png` : `/logo/sponsor/svg/${sponsor.file}.svg`}
+                  alt={sponsor.name}
+                  className="h-12 w-auto"
+                  style={{ filter: "brightness(0) invert(1)" }}
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      </PageContainer>
     </section>
   );
 }

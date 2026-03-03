@@ -1,57 +1,69 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, useEffect } from "react";
-import AboutBentoGrid from "./AboutBentoGrid";
+import { useEffect, useRef, useState } from "react";
 
 export default function AboutSection() {
-  const sectionRef = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
       { threshold: 0.15 }
     );
-    if (sectionRef.current) observer.observe(sectionRef.current);
+    if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <section ref={sectionRef} className="bg-bg overflow-hidden pt-24 lg:pt-48">
+    <section ref={ref} className="bg-bg overflow-hidden pt-24 lg:pt-36">
+
+      {/* Main body */}
       <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row">
 
-        {/* Left — Bento grid */}
+        {/* Left — Photo */}
         <div
           className="relative lg:w-[56%] min-h-[360px] lg:min-h-[560px] overflow-hidden"
           style={{
             opacity: visible ? 1 : 0,
             transform: visible ? "translateX(0)" : "translateX(-28px)",
-            transition:
-              "opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1)",
+            transition: "opacity 0.85s cubic-bezier(0.16,1,0.3,1), transform 0.85s cubic-bezier(0.16,1,0.3,1)",
           }}
         >
-          <AboutBentoGrid />
+          <Image
+            src="/images/about.jpg"
+            alt="CWRU Motorsports team in the pits"
+            fill
+            className="object-cover"
+            style={{ objectPosition: "center 35%" }}
+            sizes="(max-width: 1024px) 100vw, 56vw"
+          />
 
-          {/* Right-edge gradient — blends grid into text panel */}
+          {/* Right-edge gradient — bleeds into text panel */}
           <div
-            className="pointer-events-none absolute inset-0 z-10"
+            className="pointer-events-none absolute inset-0"
             style={{
               background:
                 "linear-gradient(to right, transparent 55%, rgba(10,10,10,0.85) 85%, #0a0a0a 100%)",
             }}
           />
+
           {/* Bottom gradient */}
           <div
-            className="pointer-events-none absolute inset-0 z-10"
+            className="pointer-events-none absolute inset-0"
             style={{
               background:
                 "linear-gradient(to top, rgba(10,10,10,0.55) 0%, transparent 35%)",
             }}
           />
-          {/* Red glow */}
+
+          {/* Red glow overlay */}
           <div
-            className="pointer-events-none absolute inset-0 z-10"
+            className="pointer-events-none absolute inset-0"
             style={{
               background:
                 "radial-gradient(ellipse 50% 60% at 20% 70%, rgba(188,33,33,0.07) 0%, transparent 70%)",
@@ -69,6 +81,7 @@ export default function AboutSection() {
               "opacity 0.85s cubic-bezier(0.16,1,0.3,1) 0.18s, transform 0.85s cubic-bezier(0.16,1,0.3,1) 0.18s",
           }}
         >
+          {/* Headline */}
           <h2
             className="font-bebas leading-[0.88] tracking-tight text-white"
             style={{ fontSize: "clamp(4rem, 5.5vw, 7rem)" }}
@@ -78,6 +91,7 @@ export default function AboutSection() {
             <span className="text-red">WE ARE.</span>
           </h2>
 
+          {/* Body */}
           <p className="mt-6 max-w-sm text-[0.82rem] leading-relaxed text-white/40">
             CWRU Motorsports is a student-run engineering team at Case Western
             Reserve University. Every year we design, fabricate, and race a
@@ -86,6 +100,7 @@ export default function AboutSection() {
             across North America.
           </p>
 
+          {/* CTA */}
           <div className="mt-9">
             <Link
               href="/team"
@@ -95,7 +110,6 @@ export default function AboutSection() {
             </Link>
           </div>
         </div>
-
       </div>
     </section>
   );

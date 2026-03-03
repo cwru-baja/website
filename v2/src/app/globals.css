@@ -12,13 +12,14 @@
 }
 
 @theme {
-  --animate-marquee: marquee 55s linear infinite;
+  --animate-marquee: marquee 90s linear infinite;
   --color-bg: #0a0a0a;
   --color-surface: #111111;
   --color-red: #bc2121;
   --color-red-dim: #8a1818;
   --color-dim: #666666;
   --font-bebas: var(--font-bebas-neue);
+  --font-butler: 'Brier', serif;
   --font-sans: 'Satoshi-Variable', sans-serif;
   --font-satoshi: 'Satoshi-Variable', sans-serif;
 }

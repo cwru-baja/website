@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 
 type Member = {
   name: string;
@@ -94,11 +93,6 @@ export default function GeneralBodyTable() {
     return a[sortField] > b[sortField] ? v : -v;
   });
 
-  function SortIcon({ field }: { field: SortField }) {
-    if (sortField !== field) return <span className="ml-1 text-white/20">↕</span>;
-    return <span className="ml-1 text-white/60">{sortDir === "asc" ? "↑" : "↓"}</span>;
-  }
-
   return (
     <section className="bg-bg pb-24">
       <div className="max-w-[1600px] mx-auto px-8 lg:px-16 xl:px-24">
@@ -116,7 +110,7 @@ export default function GeneralBodyTable() {
                   className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium cursor-pointer select-none hover:text-white/60 transition-colors w-48"
                   onClick={() => handleSort("name")}
                 >
-                  Name <SortIcon field="name" />
+                  Name {sortField === "name" ? (sortDir === "asc" ? <span className="ml-1 text-white/60">↑</span> : <span className="ml-1 text-white/60">↓</span>) : <span className="ml-1 text-white/20">↕</span>}
                 </TableHead>
                 <TableHead className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium">
                   Subteam
@@ -125,7 +119,7 @@ export default function GeneralBodyTable() {
                   className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium cursor-pointer select-none hover:text-white/60 transition-colors w-28"
                   onClick={() => handleSort("classOf")}
                 >
-                  Class of <SortIcon field="classOf" />
+                  Class of {sortField === "classOf" ? (sortDir === "asc" ? <span className="ml-1 text-white/60">↑</span> : <span className="ml-1 text-white/60">↓</span>) : <span className="ml-1 text-white/20">↕</span>}
                 </TableHead>
                 <TableHead className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium">
                   Major
