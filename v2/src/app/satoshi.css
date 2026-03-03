@@ -1,0 +1,162 @@
+/**
+ * Brier
+ * Paths point to /fonts/brier/ (public/fonts/brier in Next.js)
+ */
+@font-face {
+  font-family: 'Brier';
+  src: url('/fonts/brier/Brier-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Brier';
+  src: url('/fonts/brier/Brier-Bold.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Brier';
+  src: url('/fonts/brier/Brier-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+/**
+ * Butler – Free weights
+ * Paths point to /fonts/butler/ (public/fonts/butler in Next.js)
+ */
+@font-face {
+  font-family: 'Butler';
+  src: url('/fonts/butler/Butler-Free-Rmn.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Butler';
+  src: url('/fonts/butler/Butler-Free-Med.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Butler';
+  src: url('/fonts/butler/Butler-Free-SBd.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Butler';
+  src: url('/fonts/butler/Butler-Free-Bd.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Butler';
+  src: url('/fonts/butler/Butler-Free-XBd.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Butler';
+  src: url('/fonts/butler/Butler-Free-Blk.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+/**
+ * Satoshi – Font Share
+ * https://www.fontshare.com/fonts/satoshi
+ * Paths point to /fonts/satoshi/ (public/fonts/satoshi in Next.js)
+ */
+@font-face {
+  font-family: 'Satoshi-Light';
+  src: url('/fonts/satoshi/Satoshi-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi-LightItalic';
+  src: url('/fonts/satoshi/Satoshi-LightItalic.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Satoshi-Regular';
+  src: url('/fonts/satoshi/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi-Italic';
+  src: url('/fonts/satoshi/Satoshi-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Satoshi-Medium';
+  src: url('/fonts/satoshi/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi-MediumItalic';
+  src: url('/fonts/satoshi/Satoshi-MediumItalic.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Satoshi-Bold';
+  src: url('/fonts/satoshi/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi-BoldItalic';
+  src: url('/fonts/satoshi/Satoshi-BoldItalic.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Satoshi-Black';
+  src: url('/fonts/satoshi/Satoshi-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi-BlackItalic';
+  src: url('/fonts/satoshi/Satoshi-BlackItalic.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Satoshi-Variable';
+  src: url('/fonts/satoshi/Satoshi-Variable.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi-VariableItalic';
+  src: url('/fonts/satoshi/Satoshi-VariableItalic.woff2') format('woff2');
+  font-weight: 300 900;
+  font-display: swap;
+  font-style: italic;
+}
