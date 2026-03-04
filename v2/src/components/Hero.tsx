@@ -4,6 +4,43 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section className="relative h-dvh overflow-hidden bg-bg">
+      {/* Aurora background layer */}
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        style={{
+          maskImage: "linear-gradient(to bottom, transparent 0%, transparent 7%, black 14%), radial-gradient(ellipse 140% 70% at 65% 45%, black 0%, transparent 70%)",
+          maskComposite: "intersect",
+          WebkitMaskComposite: "source-in",
+        }}
+      >
+        {/* Layer 1 — 100deg, 120s */}
+        <div
+          className="absolute -inset-[10px] will-change-transform"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(100deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), repeating-linear-gradient(100deg, #bc2121 10%, #8a1818 18%, #3d0a0a 25%, #600d0d 32%, #8a1818 40%)",
+            backgroundSize: "600%, 400%",
+            backgroundPosition: "50% 50%, 50% 50%",
+            animation: "aurora 120s linear infinite",
+            opacity: 0.55,
+            filter: "blur(20px)",
+          }}
+        />
+        {/* Layer 2 — 130deg, 83s (different angle + speed creates interference) */}
+        <div
+          className="absolute -inset-[10px] will-change-transform"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(130deg, #000 0%, #000 7%, transparent 10%, transparent 12%, #000 16%), repeating-linear-gradient(130deg, #8a1818 10%, #600d0d 18%, #bc2121 25%, #3d0a0a 32%, #600d0d 40%)",
+            backgroundSize: "600%, 400%",
+            backgroundPosition: "50% 50%, 50% 50%",
+            animation: "aurora 83s linear infinite",
+            opacity: 0.4,
+            filter: "blur(20px)",
+          }}
+        />
+      </div>
+
       {/* Subtle red glow behind the car */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -20,8 +57,8 @@ export default function Hero() {
       <div className="relative z-10 flex w-[42%] flex-col justify-center px-8 pl-16 lg:pl-20 xl:pl-28">
         {/* Headline */}
         <h1 className="leading-[1.05] text-white" style={{ fontSize: "clamp(3rem, 7vw, 7.5rem)" }}>
-          <span className="block font-satoshi font-black tracking-tight">BUILT</span>
-          <span className="block font-butler font-semibold text-red">TO WIN.</span>
+          <span className="block font-coolvetica font-bold leading-none">BUILT</span>
+          <span className="block font-brier font-semibold text-red leading-none -mt-5">TO WIN.</span>
         </h1>
 
         {/* Subtitle */}

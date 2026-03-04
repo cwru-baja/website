@@ -23,10 +23,10 @@ export default function HiredByTheBest() {
 
         
         <div className="leading-none mb-14 text-right">
-          <div className="font-bebas text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none [paint-order:stroke_fill] [-webkit-text-stroke:0.04em_white]">
+          <div className="font-coolvetica font-bold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none">
             HIRED BY
           </div>
-          <div className="font-butler font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-red leading-none">
+          <div className="font-brier font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-red leading-none -mt-3">
             THE BEST
           </div>
         </div>

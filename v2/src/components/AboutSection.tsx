@@ -83,7 +83,7 @@ export default function AboutSection() {
         >
           {/* Headline */}
           <h2
-            className="font-bebas leading-[0.88] tracking-tight text-white"
+            className="font-coolvetica font-bold leading-[0.88] text-white"
             style={{ fontSize: "clamp(4rem, 5.5vw, 7rem)" }}
           >
             WHO

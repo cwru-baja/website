@@ -55,11 +55,11 @@ function StatItem({
     >
       {/* Number */}
       <div
-        className="font-bebas leading-none tracking-tight mt-2"
+        className="font-clash font-medium leading-none mt-2"
         style={{ fontSize: "clamp(4.5rem, 7vw, 9rem)", color: "#fff" }}
       >
         {count}
-        <span className="text-red">{suffix}</span>
+        <span className="text-red font-light">{suffix}</span>
       </div>
 
       {/* Label */}
@@ -86,7 +86,7 @@ export default function StatsSection() {
 
   return (
     <section ref={ref} className="bg-bg">
-      <div className="max-w-[1600px] mx-auto">
+      <div className="max-w-[1600px] mx-auto px-8 lg:px-16 xl:px-24">
         {/* Stats grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/5">
           {stats.map((stat, i) => (

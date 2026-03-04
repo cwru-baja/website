@@ -98,7 +98,7 @@ export default function GeneralBodyTable() {
       <div className="max-w-[1600px] mx-auto px-8 lg:px-16 xl:px-24">
 
         <div className="mb-6 flex items-baseline gap-3">
-          <h2 className="font-bebas text-2xl tracking-widest text-white/50">General Body</h2>
+          <h2 className="font-coolvetica font-bold text-2xl tracking-widest text-white/50">General Body</h2>
           <span className="text-[0.65rem] tracking-[0.12em] uppercase text-white/25">{members.length} members</span>
         </div>
 

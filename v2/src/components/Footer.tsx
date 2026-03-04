@@ -48,7 +48,7 @@ export default function Footer() {
         >
           <ul className="flex flex-col items-start space-y-2">
             {[
-              { label: "© 2025", ml: "ml-1" },
+              { label: "© 2026", ml: "ml-1" },
               { label: "All rights reserved", ml: "-ml-4" },
             ].map(({ label, ml }) => (
               <li key={label} className={`text-sm text-white/70 whitespace-nowrap ${ml}`}>

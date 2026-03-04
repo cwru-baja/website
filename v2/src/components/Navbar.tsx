@@ -7,6 +7,7 @@ import Image from "next/image";
 
 const links = [
   { label: "Team", href: "/team" },
+  { label: "Competition", href: "/competition" },
   { label: "Car", href: "/car" },
   { label: "Sponsors", href: "/sponsors" },
   { label: "Support", href: "/support" },
@@ -48,7 +49,7 @@ export default function Navbar() {
             <li key={label}>
               <Link
                 href={href}
-                className="text-sm tracking-[0.15em] uppercase text-white/50 hover:text-white transition-colors duration-200 font-medium"
+                className="text-sm tracking-[0.15em] uppercase text-white/50 hover:text-white transition-colors duration-200 font-coolvetica"
               >
                 {label}
               </Link>

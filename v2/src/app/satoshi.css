@@ -1,4 +1,118 @@
 /**
+ * Clash Display
+ */
+@font-face {
+  font-family: 'ClashDisplay-Variable';
+  src: url('/fonts/clash-display/ClashDisplay-Variable.woff2') format('woff2');
+  font-weight: 200 700;
+  font-display: swap;
+  font-style: normal;
+}
+
+/**
+ * Coolvetica
+ * Paths point to /fonts/coolvetica/ (public/fonts/coolvetica in Next.js)
+ */
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Ultra-Light-Regular.woff2') format('woff2');
+  font-weight: 100;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Ultra-Light-Italic.woff2') format('woff2');
+  font-weight: 100;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Extra-Light-Regular.woff2') format('woff2');
+  font-weight: 200;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Extra-Light-Italic.woff2') format('woff2');
+  font-weight: 200;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Light-Regular.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Light-Italic.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Italic.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Book-Regular.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Book-Italic.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Bold-Italic.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Heavy-Regular.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Coolvetica';
+  src: url('/fonts/coolvetica/Coolvetica-Heavy-Italic.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+  font-style: italic;
+}
+
+/**
  * Brier
  * Paths point to /fonts/brier/ (public/fonts/brier in Next.js)
  */

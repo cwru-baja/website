@@ -72,7 +72,7 @@ function MemberCard({ name, role, img, graduationYear, linkedin }: Member) {
 function Tier({ title, members }: { title: string; members: Member[] }) {
   return (
     <div>
-      <h2 className="font-bebas text-2xl tracking-widest text-white/50 mb-8">
+      <h2 className="font-coolvetica font-bold text-2xl tracking-widest text-white/50 mb-8">
         {title}
       </h2>
       <div className="grid grid-cols-3 gap-x-8 gap-y-12 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">

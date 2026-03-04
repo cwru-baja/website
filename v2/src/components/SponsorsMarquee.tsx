@@ -126,10 +126,10 @@ export default function SponsorsMarquee() {
         <div className="flex items-start justify-between mb-25">
           {/* Big stacked title */}
           <div className="leading-none">
-            <div className="font-bebas text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none [paint-order:stroke_fill] [-webkit-text-stroke:0.04em_white]">
+            <div className="font-coolvetica font-bold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none">
               PARTNERS
             </div>
-            <div className="font-butler font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-red leading-none">
+            <div className="font-brier font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-red leading-none -mt-3">
               &amp;SPONSORS
             </div>
           </div>

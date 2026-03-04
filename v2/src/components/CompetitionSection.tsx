@@ -57,7 +57,7 @@ export default function CompetitionSection() {
             </p>
 
             <h2
-              className="font-bebas leading-[0.88] tracking-tight text-white"
+              className="font-coolvetica font-bold leading-[0.88] text-white"
               style={{ fontSize: "clamp(4rem, 5.5vw, 7rem)" }}
             >
               THE
@@ -152,7 +152,7 @@ export default function CompetitionSection() {
 
               {/* Event name */}
               <h3
-                className="font-bebas leading-tight text-white"
+                className="font-coolvetica font-bold leading-tight text-white"
                 style={{ fontSize: "clamp(1.6rem, 2.4vw, 2.4rem)", whiteSpace: "pre-line" }}
               >
                 {ev.name}
