@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import Image from "next/image";
 
@@ -14,6 +15,7 @@ const links = [
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -49,7 +51,9 @@ export default function Navbar() {
             <li key={label}>
               <Link
                 href={href}
-                className="text-sm tracking-[0.15em] uppercase text-white/50 hover:text-white transition-colors duration-200 font-coolvetica"
+                className={`text-sm tracking-[0.15em] uppercase transition-colors duration-200 font-coolvetica ${
+                pathname === href ? "text-white" : "text-white/50 hover:text-white"
+              }`}
               >
                 {label}
               </Link>

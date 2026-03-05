@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
 import RaceCountdown from "@/components/RaceCountdown";
 import SeasonSection from "@/components/SeasonSection";
+import AllResultsSection from "@/components/AllResultsSection";
 
 // Default to the next upcoming event (index 0–2)
 const EVENT_STARTS = [
@@ -66,6 +67,12 @@ export default function CompetitionPage() {
       </section>
 
       <RaceCountdown selectedIndex={selectedIndex} />
+
+      <section className="bg-bg">
+        <PageContainer>
+          <AllResultsSection />
+        </PageContainer>
+      </section>
 
       <Footer />
     </>

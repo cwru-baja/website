@@ -92,15 +92,14 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Right panel — car render */}
+      {/* Right panel — car render, constrained so it never overlaps text */}
       <div className="relative flex-1">
-
         <Image
           src="/main.webp"
           alt="CWRU Motorsports Baja Car"
           fill
           className="object-contain"
-          style={{ objectPosition: "50% center", scale: "1.9", translate: "4% 3%" }}
+          style={{ objectPosition: "center center" }}
           priority
         />
       </div>

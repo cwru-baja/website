@@ -100,24 +100,25 @@ export default function SeasonSection({ selectedIndex, onSelect }: Props) {
           >
             {/* Name */}
             <h3
-              className={`font-coolvetica font-bold leading-tight transition-colors duration-200 ${
-                selectedIndex === i ? "text-red" : "text-white group-hover:text-red"
-              }`}
+              className="font-coolvetica font-bold leading-tight text-white"
               style={{ fontSize: "clamp(1.5rem, 2.2vw, 2.2rem)" }}
             >
-              {ev.name}
+              <span className="font-coolvetica font-semibold">Baja SAE </span>
+              <span
+                className={`font-brier transition-colors duration-200 ${
+                  selectedIndex === i ? "text-red" : "group-hover:text-red"
+                }`}
+              >
+                {ev.name.replace(/^Baja SAE /, "")}
+              </span>
             </h3>
             {/* Date */}
-            <p className="mt-1 text-[0.65rem] tracking-[0.16em] uppercase text-red">
+            <p className="mt-2 text-[0.8rem] tracking-[0.16em] uppercase text-red">
               {ev.displayDate}
             </p>
             {/* Location */}
-            <p className="mt-0.5 text-[0.62rem] tracking-[0.16em] uppercase text-white/25">
+            <p className="mt-1 text-[0.78rem] tracking-[0.16em] uppercase text-white/25">
               {ev.location}
-            </p>
-            {/* Desc */}
-            <p className="mt-4 text-[0.78rem] leading-relaxed max-w-xs text-white/35">
-              {ev.desc}
             </p>
           </div>
         ))}
