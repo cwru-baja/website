@@ -32,7 +32,7 @@ const operationsBoard: Member[] = [
 
 const specialtyLeads: Member[] = [
   { name: "Daniel Clare",         role: "Static Events Coordinator",                 img: "LMF04609", graduationYear: "2026", linkedin: "https://www.linkedin.com/in/daniel-clare-5b49aa227/" },
-  { name: "Anthony Retelewski",   role: "Website Lead",                              img: "A6406847",  graduationYear: "2028", linkedin: "https://www.linkedin.com/in/anthony-retelewski-4340402aa/" },
+  { name: "Anthony Retelewski",   role: "Website Lead",                              img: "A6406847",  graduationYear: "2028", linkedin: "https://aretelew.com" },
   { name: "Zane Sandelin",        role: "Cost Report Coordinator",                   img: "A6406791",  graduationYear: "2028", linkedin: "https://www.linkedin.com/in/zane-sandelin-010b1b274/" },
   { name: "Suhani Dangre",        role: "Business Presentation & Social Media Lead", img: "A6406349",  graduationYear: "2028", linkedin: "https://www.linkedin.com/in/suhani-dangre/" },
   { name: "Jessica Shue",         role: "Documentation Lead",                        img: "LMF04721", graduationYear: "2027", linkedin: "https://www.linkedin.com/in/jessica-s-7b7935268/" },

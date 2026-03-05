@@ -201,48 +201,8 @@ export default function SponsorsPage() {
         </PageContainer>
       </section>
 
-      {/* Become a sponsor CTA */}
-      <section className="bg-bg pb-32">
-        <PageContainer>
-          <div className="mt-4 border border-white/8 p-12 flex flex-col md:flex-row md:items-end md:justify-between gap-8">
-            <div>
-              <div className="text-[0.65rem] font-medium tracking-[0.25em] uppercase text-white/30 mb-3">
-                Get Involved
-              </div>
-              <h2
-                className="font-coolvetica font-bold leading-none text-white"
-                style={{ fontSize: "clamp(2.5rem, 5vw, 5rem)" }}
-              >
-                BECOME A{" "}
-                <span className="text-red">SPONSOR.</span>
-              </h2>
-              <p className="mt-4 text-sm text-white/50 max-w-md leading-relaxed">
-                Your support helps CWRU Motorsports design, build, and compete
-                with our off-road vehicles. Sponsorships directly fund
-                equipment, materials, competition travel, and more.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-              <a
-                href="https://www.givecampus.com/71er24"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-8 py-3 bg-red text-white text-sm font-coolvetica tracking-[0.12em] uppercase transition-opacity hover:opacity-80"
-              >
-                Donate
-              </a>
-              <a
-                href="mailto:cwrubaja@case.edu"
-                className="inline-flex items-center justify-center px-8 py-3 border border-white/20 text-white text-sm font-coolvetica tracking-[0.12em] uppercase transition-colors hover:border-white/50"
-              >
-                Contact Us
-              </a>
-            </div>
-          </div>
-        </PageContainer>
-      </section>
 
-      <Footer />
+<Footer />
     </>
   );
 }

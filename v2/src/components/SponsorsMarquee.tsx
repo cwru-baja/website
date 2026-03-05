@@ -81,7 +81,7 @@ export default function SponsorsMarquee() {
     const tween = gsap.to(marquee, {
       xPercent: -50,
       repeat: -1,
-      duration: 60, // doubled duration for slower base speed
+      duration: 120, // slow base speed
       ease: "none",
     });
 

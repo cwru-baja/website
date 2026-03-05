@@ -7,17 +7,11 @@ import PageContainer from "@/components/PageContainer";
 import RaceCountdown from "@/components/RaceCountdown";
 import SeasonSection from "@/components/SeasonSection";
 import AllResultsSection from "@/components/AllResultsSection";
-
-// Default to the next upcoming event (index 0–2)
-const EVENT_STARTS = [
-  new Date("2026-03-19T08:00:00"),
-  new Date("2026-05-28T08:00:00"),
-  new Date("2026-09-17T08:00:00"),
-];
+import { EVENTS } from "@/lib/events";
 
 function getDefaultIndex() {
   const now = Date.now();
-  const idx = EVENT_STARTS.findIndex((d) => d.getTime() + 4 * 86_400_000 > now);
+  const idx = EVENTS.findIndex((e) => e.startDate.getTime() + 4 * 86_400_000 > now);
   return idx === -1 ? 0 : idx;
 }
 
@@ -68,7 +62,7 @@ export default function CompetitionPage() {
 
       <RaceCountdown selectedIndex={selectedIndex} />
 
-      <section className="bg-bg">
+      <section className="bg-bg py-20">
         <PageContainer>
           <AllResultsSection />
         </PageContainer>

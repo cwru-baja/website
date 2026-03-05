@@ -4,12 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import PageContainer from "@/components/PageContainer";
-
-const COMPETITION_DATES: { name: string; location: string; date: Date }[] = [
-  { name: "Baja SAE Tennessee", location: "Cookeville, TN",  date: new Date("2026-03-20T08:00:00") },
-  { name: "Baja SAE Kansas",    location: "Pittsburg, KS",   date: new Date("2026-05-29T08:00:00") },
-  { name: "Baja SAE Oregon",    location: "Corvallis, OR",   date: new Date("2026-09-18T08:00:00") },
-];
+import { EVENTS } from "@/lib/events";
 
 interface TimeLeft { days: number; hours: number; minutes: number; seconds: number; }
 
@@ -35,11 +30,11 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
   const metaRef       = useRef<HTMLParagraphElement>(null);
   const isFirstRender = useRef(true);
 
-  const active = COMPETITION_DATES[displayIndex] ?? null;
+  const active = EVENTS[displayIndex] ?? null;
 
   // Tick against the displayed competition
   useEffect(() => {
-    const tick = () => { if (active) setTimeLeft(calcTimeLeft(active.date)); };
+    const tick = () => { if (active) setTimeLeft(calcTimeLeft(active.startDate)); };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
@@ -121,10 +116,10 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
 
   return (
     <section className="bg-bg overflow-hidden">
-      <PageContainer className="pt-2 pb-16 lg:pb-20">
+      <PageContainer className="py-16">
 
         {/* Each unit is wrapped in overflow-hidden so digits clip cleanly as they slide */}
-        <div ref={unitsRef} className="flex items-baseline justify-center gap-0 select-none">
+        <div ref={unitsRef} className="flex items-baseline justify-start gap-0 select-none">
           {units.map(({ value, label }, i) => (
             <div key={i} className="cd-unit overflow-hidden flex items-baseline">
               <span
@@ -149,9 +144,9 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
 
         <p
           ref={metaRef}
-          className="mt-6 text-center text-[0.62rem] tracking-[0.22em] uppercase text-white/20"
+          className="mt-6 text-left text-[0.62rem] tracking-[0.22em] uppercase text-white/20"
         >
-          {active.date.toLocaleDateString("en-US", {
+          {active.startDate.toLocaleDateString("en-US", {
             weekday: "long", year: "numeric", month: "long", day: "numeric",
           })}
         </p>

@@ -54,7 +54,7 @@ export default function Hero() {
       <div className="relative flex h-full max-w-[1600px] mx-auto">
 
       {/* Left panel — text content */}
-      <div className="relative z-10 flex w-[42%] flex-col justify-center px-8 pl-16 lg:pl-20 xl:pl-28">
+      <div className="relative z-10 flex w-[42%] flex-col justify-start pt-[18%] px-8 pl-16 lg:pl-20 xl:pl-28">
         {/* Headline */}
         <h1 className="leading-[1.05] text-white" style={{ fontSize: "clamp(3rem, 7vw, 7.5rem)" }}>
           <span className="block font-coolvetica font-bold leading-none">BUILT</span>
@@ -92,14 +92,14 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Right panel — car render, constrained so it never overlaps text */}
-      <div className="relative flex-1">
+      {/* Car render — fully contained, scales with viewport */}
+      <div className="absolute top-[12%] bottom-0 left-[20%] right-0">
         <Image
-          src="/main.webp"
+          src="/homepage-car-dim.png"
           alt="CWRU Motorsports Baja Car"
           fill
           className="object-contain"
-          style={{ objectPosition: "center center" }}
+          style={{ objectPosition: "left center" }}
           priority
         />
       </div>

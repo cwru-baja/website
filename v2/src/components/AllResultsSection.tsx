@@ -47,136 +47,192 @@ function parseAward(award: string): { place: string; event: string } | null {
 
 const RESULTS: YearResult[] = [
   {
+    year: "2025",
+    podiums: 7,
+    competitions: [
+      {
+        name: "Baja SAE Carolina",
+        awards: [
+          "7th Place Overall",
+          "19th Place Business Presentation",
+          "5th Place Cost",
+          "2nd Place Design",
+          "3rd Place Acceleration",
+          "4th Place Hill Climb",
+          "1st Place Suspension & Traction",
+          "9th Place Endurance",
+        ],
+      },
+      {
+        name: "Baja SAE Maryland",
+        awards: [
+          "6th Place Overall",
+          "28th Place Business Presentation",
+          "10th Place Cost",
+          "1st Place Design",
+          "7th Place Acceleration",
+          "11th Place Maneuverability",
+          "9th Place Hill Climb",
+          "33rd Place Suspension & Traction",
+          "2nd Place Endurance",
+        ],
+      },
+      {
+        name: "Baja SAE Arizona",
+        awards: [
+          "4th Place Overall",
+          "22nd Place Business Presentation",
+          "11th Place Cost",
+          "1st Place Design",
+          "11th Place Acceleration",
+          "16th Place Maneuverability",
+          "9th Place Pilot Pull",
+          "7th Place Suspension & Traction",
+          "1st Place Endurance",
+        ],
+      },
+    ],
+  },
+  {
     year: "2024",
     podiums: 6,
     competitions: [
       {
-        name: "Baja SAE California",
+        name: "Baja SAE Michigan",
         awards: [
-          "9th Place Overall",
-          "5th Place Design",
+          "6th Place Overall",
+          "32nd Place Business Presentation",
+          "16th Place Cost",
+          "7th Place Design",
           "1st Place Acceleration",
-          "1st Place Hill Climb",
-          "2nd Place Maneuverability",
-          "5th Place Suspension",
+          "11th Place Maneuverability",
+          "3rd Place Hill Climb",
+          "6th Place Suspension & Traction",
+          "6th Place Endurance",
         ],
       },
       {
         name: "Baja SAE Williamsport",
         awards: [
           "6th Place Overall",
+          "33rd Place Business Presentation",
+          "22nd Place Cost",
           "4th Place Design",
           "1st Place Acceleration",
-          "7th Place Hill Climb",
           "5th Place Maneuverability",
-          "10th Place Suspension",
+          "7th Place Hill Climb",
+          "10th Place Suspension & Traction",
+          "20th Place Endurance",
         ],
       },
       {
-        name: "Baja SAE Michigan",
+        name: "Baja SAE California",
         awards: [
-          "6th Place Overall",
-          "7th Place Design",
+          "9th Place Overall",
+          "22nd Place Business Presentation",
+          "20th Place Cost",
+          "5th Place Design",
           "1st Place Acceleration",
-          "3rd Place Hill Climb",
-          "11th Place Maneuverability",
-          "6th Place Suspension",
-          "6th Place Endurance",
+          "2nd Place Maneuverability",
+          "1st Place Hill Climb",
+          "5th Place Suspension & Traction",
+          "19th Place Endurance",
         ],
       },
     ],
   },
   {
     year: "2023",
-    podiums: 9,
+    podiums: 8,
     competitions: [
       {
-        name: "Baja SAE Oshkosh",
+        name: "Baja SAE Ohio",
         awards: [
-          "5th Place Overall",
-          "5th Place Sales",
-          "5th Place Design",
-          "2nd Place Acceleration",
-          "4th Place Maneuverability",
-          "9th Place Endurance",
+          "1st Place Overall",
+          "2nd Place Business Presentation",
+          "22nd Place Cost",
+          "8th Place Design",
+          "3rd Place Acceleration",
+          "2nd Place Maneuverability",
+          "28th Place Pilot Pull",
+          "1st Place Suspension & Traction",
+          "2nd Place Endurance",
         ],
       },
       {
         name: "Baja SAE Oregon",
         awards: [
           "6th Place Overall",
-          "9th Place Sales",
+          "9th Place Sales Presentation",
+          "47th Place Cost",
           "3rd Place Design",
           "5th Place Acceleration",
           "4th Place Maneuverability",
+          "11th Place Hill Climb",
+          "17th Place Rock Crawl",
           "2nd Place Endurance",
         ],
       },
       {
-        name: "Baja SAE Ohio",
+        name: "Baja SAE Oshkosh",
         awards: [
-          "1st Place Overall",
-          "2nd Place Sales",
-          "8th Place Design",
-          "3rd Place Acceleration",
-          "2nd Place Maneuverability",
-          "1st Place Suspension",
-          "2nd Place Endurance",
+          "5th Place Overall",
+          "5th Place Sales Presentation",
+          "13th Place Cost",
+          "5th Place Design",
+          "2nd Place Acceleration",
+          "4th Place Maneuverability",
+          "42nd Place Sled Pull",
+          "11th Place Suspension & Traction",
+          "9th Place Endurance",
         ],
       },
     ],
   },
   {
     year: "2022",
-    podiums: 4,
+    podiums: 3,
     competitions: [
+      {
+        name: "Baja SAE Tennessee Tech",
+        awards: [
+          "12th Place Overall",
+          "5th Place Sales Presentation",
+          "13th Place Cost",
+          "4th Place Design",
+          "4th Place Acceleration",
+          "54th Place Sled Pull",
+          "40th Place Suspension & Traction",
+          "12th Place Endurance",
+        ],
+      },
       {
         name: "Baja SAE Arizona",
         awards: [
           "5th Place Overall",
-          "2nd Place Sales",
+          "2nd Place Sales Presentation",
+          "12th Place Cost",
+          "13th Place Design",
           "3rd Place Acceleration",
           "3rd Place Maneuverability",
           "6th Place Sled Pull",
+          "12th Place Suspension & Traction",
           "8th Place Endurance",
-          "3rd Place Overall Dynamic",
         ],
       },
       {
         name: "Baja SAE Rochester",
-        awards: ["6th Place Acceleration"],
-      },
-      {
-        name: "Baja SAE Tennessee Tech",
         awards: [
-          "5th Place Overall",
-          "4th Place Design",
-          "4th Place Acceleration",
+          "28th Place Overall",
+          "16th Place Sales Presentation",
+          "15th Place Cost",
+          "24th Place Design",
+          "6th Place Acceleration",
+          "18th Place Maneuverability",
+          "58th Place Sled Pull",
+          "52nd Place Suspension & Traction",
+          "39th Place Endurance",
         ],
-      },
-    ],
-  },
-  {
-    year: "2021",
-    podiums: 4,
-    competitions: [
-      {
-        name: "Baja SAE Knowledge",
-        awards: ["2nd Place Overall", "2nd Place Sales"],
-      },
-      {
-        name: "Baja SAE Louisville",
-        awards: ["1st Place Hill Climb", "1st Place Maneuverability"],
-      },
-    ],
-  },
-  {
-    year: "2020",
-    podiums: 1,
-    competitions: [
-      {
-        name: "Baja SAE Louisville",
-        awards: ["3rd Place Sales"],
       },
     ],
   },
@@ -186,7 +242,45 @@ const RESULTS: YearResult[] = [
     competitions: [
       {
         name: "Baja SAE Rochester",
-        awards: ["1st Place Acceleration"],
+        awards: [
+          "11th Place Overall",
+          "13th Place Sales Presentation",
+          "25th Place Cost",
+          "20th Place Design",
+          "1st Place Acceleration",
+          "41st Place Maneuverability",
+          "4th Place Hill Climb",
+          "35th Place Suspension & Traction",
+          "15th Place Endurance",
+        ],
+      },
+      {
+        name: "Baja SAE California",
+        awards: [
+          "13th Place Overall",
+          "45th Place Sales Presentation",
+          "23rd Place Cost",
+          "15th Place Design",
+          "22nd Place Acceleration",
+          "31st Place Maneuverability",
+          "28th Place Hill Climb",
+          "29th Place Suspension & Traction",
+          "15th Place Endurance",
+        ],
+      },
+      {
+        name: "Baja SAE Tennessee Tech",
+        awards: [
+          "31st Place Overall",
+          "15th Place Sales Presentation",
+          "20th Place Cost",
+          "10th Place Design",
+          "8th Place Acceleration",
+          "35th Place Maneuverability",
+          "35th Place Sled Pull",
+          "6th Place Suspension & Traction",
+          "65th Place Endurance",
+        ],
       },
     ],
   },
@@ -195,12 +289,46 @@ const RESULTS: YearResult[] = [
     podiums: 2,
     competitions: [
       {
-        name: "Baja SAE Maryland",
-        awards: ["3rd Place Maneuverability"],
+        name: "Baja SAE Oregon",
+        awards: [
+          "18th Place Overall",
+          "45th Place Sales Presentation",
+          "32nd Place Cost",
+          "11th Place Design",
+          "4th Place Acceleration",
+          "15th Place Maneuverability",
+          "24th Place Hill Climb",
+          "34th Place Rock Crawl",
+          "32nd Place Endurance",
+        ],
       },
       {
         name: "Baja SAE Kansas",
-        awards: ["3rd Place Design"],
+        awards: [
+          "23rd Place Overall",
+          "40th Place Sales Presentation",
+          "43rd Place Cost",
+          "3rd Place Design",
+          "10th Place Acceleration",
+          "25th Place Maneuverability",
+          "17th Place Sled Pull",
+          "55th Place Suspension & Traction",
+          "40th Place Endurance",
+        ],
+      },
+      {
+        name: "Baja SAE Maryland",
+        awards: [
+          "12th Place Overall",
+          "19th Place Sales Presentation",
+          "34th Place Cost",
+          "22nd Place Design",
+          "4th Place Acceleration",
+          "3rd Place Maneuverability",
+          "9th Place Hill Climb",
+          "40th Place Suspension & Traction",
+          "16th Place Endurance",
+        ],
       },
     ],
   },
@@ -209,12 +337,31 @@ const RESULTS: YearResult[] = [
     podiums: 0,
     competitions: [
       {
-        name: "Baja SAE California",
-        awards: ["9th Place Overall"],
+        name: "Baja SAE Kansas",
+        awards: [
+          "8th Place Overall",
+          "67th Place Sales Presentation",
+          "79th Place Cost",
+          "21st Place Design",
+          "11th Place Acceleration",
+          "6th Place Maneuverability",
+          "48th Place Sled Pull",
+          "14th Place Suspension & Traction",
+          "8th Place Endurance",
+        ],
       },
       {
-        name: "Baja SAE Kansas",
-        awards: ["8th Place Overall"],
+        name: "Baja SAE California",
+        awards: [
+          "9th Place Overall",
+          "6th Place Sales Presentation",
+          "38th Place Cost",
+          "14th Place Design",
+          "14th Place Acceleration",
+          "6th Place Maneuverability",
+          "29th Place Hill Climb",
+          "4th Place Endurance",
+        ],
       },
     ],
   },
@@ -224,7 +371,146 @@ const RESULTS: YearResult[] = [
     competitions: [
       {
         name: "Baja SAE Rochester",
-        awards: ["3rd Place Acceleration"],
+        awards: [
+          "23rd Place Overall",
+          "6th Place Sales Presentation",
+          "27th Place Cost",
+          "12th Place Design",
+          "3rd Place Acceleration",
+          "22nd Place Maneuverability",
+          "4th Place Hill Climb",
+          "26th Place Suspension & Traction",
+          "50th Place Endurance",
+        ],
+      },
+      {
+        name: "Baja SAE California",
+        awards: [
+          "23rd Place Overall",
+          "4th Place Sales Presentation",
+          "29th Place Cost",
+          "12th Place Design",
+          "8th Place Acceleration",
+          "32nd Place Maneuverability",
+          "30th Place Hill Climb",
+          "39th Place Suspension & Traction",
+          "40th Place Endurance",
+        ],
+      },
+      {
+        name: "Baja SAE Tennessee Tech",
+        awards: [
+          "46th Place Overall",
+          "24th Place Sales Presentation",
+          "30th Place Cost",
+          "21st Place Design",
+          "4th Place Acceleration",
+          "30th Place Maneuverability",
+          "62nd Place Sled Pull",
+          "30th Place Suspension & Traction",
+          "69th Place Endurance",
+        ],
+      },
+    ],
+  },
+  {
+    year: "2015",
+    podiums: 0,
+    competitions: [
+      {
+        name: "Baja SAE Oregon",
+        awards: [
+          "42nd Place Overall",
+          "53rd Place Endurance",
+          "26th Place Hill Climb",
+          "20th Place Rock Crawl",
+          "17th Place Maneuverability",
+          "27th Place Acceleration",
+          "8th Place Sales Presentation",
+          "23rd Place Design",
+          "64th Place Cost",
+        ],
+      },
+      {
+        name: "Baja SAE Maryland",
+        awards: [
+          "14th Place Overall",
+          "5th Place Endurance",
+          "22nd Place Suspension & Traction",
+          "28th Place Hill Climb",
+          "23rd Place Maneuverability",
+          "38th Place Acceleration",
+          "52nd Place Sales Presentation",
+          "21st Place Design",
+          "58th Place Cost",
+        ],
+      },
+      {
+        name: "Baja SAE Auburn",
+        awards: [
+          "42nd Place Overall",
+          "59th Place Endurance",
+          "47th Place Suspension & Traction",
+          "32nd Place Hill Climb",
+          "23rd Place Maneuverability",
+          "10th Place Acceleration",
+          "14th Place Sales Presentation",
+          "20th Place Design",
+          "62nd Place Cost",
+        ],
+      },
+    ],
+  },
+  {
+    year: "2014",
+    podiums: 0,
+    competitions: [
+      {
+        name: "Baja SAE Illinois",
+        awards: [
+          "42nd Place Overall",
+          "32nd Place Endurance",
+          "37th Place Hill Climb",
+          "59th Place Rock Crawl",
+          "55th Place Maneuverability",
+          "21st Place Acceleration",
+          "26th Place Sales Presentation",
+          "55th Place Design",
+          "34th Place Cost",
+        ],
+      },
+      {
+        name: "Baja SAE Kansas",
+        awards: [
+          "49th Place Overall",
+          "34th Place Endurance",
+          "62nd Place Suspension & Traction",
+          "71st Place Sled Pull",
+          "50th Place Maneuverability",
+          "72nd Place Acceleration",
+          "46th Place Sales Presentation",
+          "27th Place Design",
+          "43rd Place Cost",
+        ],
+      },
+    ],
+  },
+  {
+    year: "2013",
+    podiums: 0,
+    competitions: [
+      {
+        name: "Baja SAE Rochester",
+        awards: [
+          "58th Place Overall",
+          "68th Place Endurance",
+          "27th Place Suspension & Traction",
+          "60th Place Hill Climb",
+          "35th Place Maneuverability",
+          "49th Place Acceleration",
+          "30th Place Design",
+          "31st Place Cost",
+        ],
       },
     ],
   },
@@ -274,7 +560,7 @@ export default function AllResultsSection() {
   }
 
   return (
-    <div className="mt-24 pb-24">
+    <div className="pb-4">
       {/* Section header */}
       <div className="text-right">
         <div
@@ -319,7 +605,7 @@ export default function AllResultsSection() {
               {/* Year row */}
               <button
                 onClick={() => handleYearClick(result.year)}
-                className={`w-full grid items-center border-b border-white/8 py-4 transition-none group ${
+                className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
                   isOpen ? "bg-red" : "hover:bg-red"
                 }`}
                 style={{ gridTemplateColumns: COLS_YEAR }}
@@ -372,7 +658,7 @@ export default function AllResultsSection() {
               </button>
 
               {/* Competition sub-rows */}
-              {isOpen && <div className="pt-4" />}
+              {isOpen && <div className="pt-1" />}
               {isOpen && result.competitions.map((comp) => {
                 const compKey = `${result.year}-${comp.name}`;
                 const isCompOpen = openComp === compKey;
@@ -385,7 +671,7 @@ export default function AllResultsSection() {
                     <div className="pl-10">
                       <button
                         onClick={() => setOpenComp(isCompOpen ? null : compKey)}
-                        className={`w-full grid items-center border-b border-white/8 py-4 transition-none group ${
+                        className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
                           isCompOpen ? "bg-red" : "hover:bg-red"
                         }`}
                         style={{ gridTemplateColumns: COLS_COMP }}
@@ -408,7 +694,7 @@ export default function AllResultsSection() {
                           }`}
                           style={{ fontSize: "clamp(1.1rem,2.2vw,2rem)" }}
                         >
-                          {comp.name}
+                          {comp.name.replace(/^Baja SAE\s*/i, "")}
                         </span>
 
                         <div
@@ -472,6 +758,7 @@ export default function AllResultsSection() {
                   </div>
                 );
               })}
+              {isOpen && <div className="pb-6" />}
             </div>
           );
         })}
