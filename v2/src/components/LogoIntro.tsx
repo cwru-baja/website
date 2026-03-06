@@ -8,6 +8,14 @@ import gsap from "gsap";
 const INITIAL_SIZE = 320;
 // Terminal size — large enough to clear any viewport diagonal
 const FINAL_SIZE = 16000;
+// SVG aspect ratio (width / height)
+const ASPECT_RATIO = 2.544;
+
+// Zoom origin as a fraction of the logo dimensions from top-left.
+// (0.5, 0.5) = logo center. Adjust to pick any point on the logo.
+// ~60% from left = middle of the second slanted line; 50% = vertical center.
+const ZOOM_FX = 0.60;
+const ZOOM_FY = 0.50;
 
 export default function LogoIntro() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,15 +28,35 @@ export default function LogoIntro() {
     const redLogo = redLogoRef.current;
     if (!container || !overlay || !redLogo) return;
 
-    // Helper: update both standard and webkit mask-size simultaneously
-    const setMaskSize = (px: number) => {
-      const val = `${px}px, 100%`;
-      overlay.style.setProperty("mask-size", val);
-      overlay.style.setProperty("-webkit-mask-size", val);
+    // Update mask-size AND mask-position together so the zoom appears to
+    // originate from (ZOOM_FX, ZOOM_FY) within the logo, not from its center.
+    //
+    // Math: the desired zoom-origin point P is fixed at its initial screen
+    // position. At mask-size = S, the mask top-left must be placed such that
+    // P (a fixed fraction of the mask image) stays at that fixed screen coord.
+    //
+    //   mask_left = vw/2 + (ZOOM_FX - 0.5)*S0  -  ZOOM_FX * S
+    //   mask_top  = vh/2 + (ZOOM_FY - 0.5)*S0/AR  -  ZOOM_FY * S/AR
+    const setMask = (size: number) => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const maskLeft = vw / 2 + (ZOOM_FX - 0.5) * INITIAL_SIZE - ZOOM_FX * size;
+      const maskTop =
+        vh / 2 +
+        ((ZOOM_FY - 0.5) * INITIAL_SIZE) / ASPECT_RATIO -
+        (ZOOM_FY * size) / ASPECT_RATIO;
+
+      const sizeStr = `${size}px, 100%`;
+      const posStr = `${maskLeft}px ${maskTop}px, center center`;
+
+      overlay.style.setProperty("mask-size", sizeStr);
+      overlay.style.setProperty("-webkit-mask-size", sizeStr);
+      overlay.style.setProperty("mask-position", posStr);
+      overlay.style.setProperty("-webkit-mask-position", posStr);
     };
 
-    // Ensure initial mask-size is set before animation starts
-    setMaskSize(INITIAL_SIZE);
+    // Set initial mask before animation starts
+    setMask(INITIAL_SIZE);
 
     const state = { size: INITIAL_SIZE };
 
@@ -50,7 +78,7 @@ export default function LogoIntro() {
         duration: 1.55,
         ease: "power4.in",
         onUpdate() {
-          setMaskSize(state.size);
+          setMask(state.size);
         },
         onComplete() {
           container.style.display = "none";
@@ -73,8 +101,8 @@ export default function LogoIntro() {
         Dark overlay — the "fly-through" layer.
         mask-composite: exclude inverts the M logo mask so that the M shape
         becomes a transparent hole while everything else stays opaque.
-        As GSAP scales the first mask layer from INITIAL_SIZE → FINAL_SIZE,
-        the hole expands exponentially until the entire viewport is revealed.
+        Both mask-size and mask-position are animated by GSAP so the hole
+        grows from the configured zoom-origin point on the logo.
       */}
       <div
         ref={overlayRef}
@@ -95,7 +123,7 @@ export default function LogoIntro() {
           WebkitMaskRepeat: "no-repeat, no-repeat",
           // Initial size — will be updated by GSAP onUpdate
           maskSize: `${INITIAL_SIZE}px, 100%`,
-          willChange: "mask-size",
+          willChange: "mask-size, mask-position",
           transform: "translateZ(0)",
           backfaceVisibility: "hidden",
         }}
