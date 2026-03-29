@@ -53,7 +53,7 @@ import gates from '../assets/logo/sponsor/gates-logo.png';
 import microMeasurements from '../assets/logo/sponsor/micro-measurements-logo.png';
 import oshCut from '../assets/logo/sponsor/oshcut-logo.png';
 import stampedeDie from '../assets/logo/sponsor/stampede-die-logo.png';
-import zintilon from '../assets/logo/sponsor/svg/zintilon.svg';
+// import zintilon from '../assets/logo/sponsor/svg/zintilon.svg';
 import nsk from '../assets/logo/sponsor/nsk-logo.png';
 import commercialSteelTreating from '../assets/logo/sponsor/commercial-steel-logo.png';
 import tmacMachine from '../assets/logo/sponsor/tmac-machine-logo.png';
@@ -122,7 +122,7 @@ export const sponsors = {
         { name: "Micro-Measurements", logo: microMeasurements, url: "https://www.micro-measurements.com/" },
         { name: "OSH Cut", logo: oshCut, url: "https://www.oshcut.com/" },
         { name: "Stampede Die", logo: stampedeDie, url: "https://stampededie.com/" },
-        { name: "Zintilon", logo: zintilon, url: "https://www.zintilon.com/" },
+        // { name: "Zintilon", logo: zintilon, url: "https://www.zintilon.com/" },
         { name: "NSK", logo: nsk, url: "https://www.nsk.com/" },
         { name: "Commercial Steel Treating Co", logo: commercialSteelTreating, url: "https://www.commercialsteeltreating.com/" },
         { name: "T-Mac Machine Inc.", logo: tmacMachine, url: "" },
