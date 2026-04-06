@@ -1,0 +1,35 @@
+name: Deploy v1 to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: v1/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: v1
+
+      - name: Build
+        run: npm run build
+        working-directory: v1
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: v1/dist
