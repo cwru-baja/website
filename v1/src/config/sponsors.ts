@@ -42,6 +42,7 @@ import schunk from '../assets/logo/sponsor/svg/schunk.svg';
 import summitRacing from '../assets/logo/sponsor/summit-racing-logo.png';
 
 // BRONZE SPONSORS
+import extremeCanopy from '../assets/logo/sponsor/extreme-canopy.png';
 import nordlock from '../assets/logo/sponsor/svg/nord-lock-group.svg';
 import southington from '../assets/logo/sponsor/svg/southington.svg';
 import ptg from '../assets/logo/sponsor/svg/ptg.svg';
@@ -126,7 +127,8 @@ export const sponsors = {
         { name: "NSK", logo: nsk, url: "https://www.nsk.com/" },
         { name: "Commercial Steel Treating Co", logo: commercialSteelTreating, url: "https://www.commercialsteeltreating.com/" },
         { name: "T-Mac Machine Inc.", logo: tmacMachine, url: "" },
-        { name: "PPG", logo: ppg, url: "https://www.ppg.com/" }
+        { name: "PPG", logo: ppg, url: "https://www.ppg.com/" },
+        { name: "Extreme Canopy", logo: extremeCanopy, url: "https://www.extremecanopy.com/" }
     ],
 };
 
