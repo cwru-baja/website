@@ -722,6 +722,7 @@ export default function AllResultsSection() {
                       </button>
 
                       {/* Event rows — indented further */}
+                      {isCompOpen && <div className="pt-1" />}
                       {isCompOpen && comp.awards.map((award) => {
                         const parsed = parseAward(award);
                         if (!parsed) return null;
@@ -730,7 +731,7 @@ export default function AllResultsSection() {
                         return (
                           <div key={award} className="pl-10">
                             <div
-                              className="w-full grid items-center border-b border-white/8 py-3"
+                              className="group grid w-full items-center border-b border-white/8 py-3 hover:bg-red"
                               style={{ gridTemplateColumns: COLS_EVENT }}
                             >
                               {/* Empty chevron column */}
@@ -738,14 +739,22 @@ export default function AllResultsSection() {
 
                               <span
                                 className={`font-coolvetica font-bold leading-tight ${
-                                  isPodium ? "text-red" : "text-white/40"
+                                  isPodium
+                                    ? "text-red group-hover:text-black"
+                                    : "text-white/40 group-hover:text-black"
                                 }`}
                                 style={{ fontSize: "clamp(0.9rem,1.6vw,1.4rem)" }}
                               >
                                 {parsed.event}
                               </span>
 
-                              <div className={`text-right pr-6 ${isPodium ? "text-red" : "text-white/40"}`}>
+                              <div
+                                className={`pr-6 text-right ${
+                                  isPodium
+                                    ? "text-red group-hover:text-black"
+                                    : "text-white/40 group-hover:text-black"
+                                }`}
+                              >
                                 <FinishDisplay finish={parsed.place} small />
                               </div>
 
