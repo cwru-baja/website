@@ -63,7 +63,7 @@ function ApparelSection() {
 
         <Button
           component="a"
-          href="https://cwrumoto.printful.me/"
+          href="https://cwrum-merchstore.printful.me/"
           target="_blank"
           rel="noopener noreferrer"
           size="lg"
