@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 
 // Initial width of the M logo mask (px). The SVG aspect ratio is ~2.55:1
@@ -17,12 +17,18 @@ const ASPECT_RATIO = 2.544;
 const ZOOM_FX = 0.60;
 const ZOOM_FY = 0.50;
 
+let hasPlayed = false;
+
 export default function LogoIntro() {
+  const [show] = useState(!hasPlayed);
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const redLogoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!show) return;
+    hasPlayed = true;
+
     const container = containerRef.current;
     const overlay = overlayRef.current;
     const redLogo = redLogoRef.current;
@@ -91,6 +97,8 @@ export default function LogoIntro() {
       tl.kill();
     };
   }, []);
+
+  if (!show) return null;
 
   return (
     <div

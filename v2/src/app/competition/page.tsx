@@ -7,6 +7,7 @@ import PageContainer from "@/components/PageContainer";
 import RaceCountdown from "@/components/RaceCountdown";
 import SeasonSection from "@/components/SeasonSection";
 import AllResultsSection from "@/components/AllResultsSection";
+import HiredByTheBest from "@/components/HiredByTheBest";
 import { EVENTS } from "@/lib/events";
 
 function getDefaultIndex() {
@@ -61,6 +62,8 @@ export default function CompetitionPage() {
       </section>
 
       <RaceCountdown selectedIndex={selectedIndex} />
+
+      <HiredByTheBest />
 
       <section className="bg-bg py-20">
         <PageContainer>

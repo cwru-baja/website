@@ -27,7 +27,6 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
   const [timeLeft, setTimeLeft]         = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   const unitsRef      = useRef<HTMLDivElement>(null);
-  const metaRef       = useRef<HTMLParagraphElement>(null);
   const isFirstRender = useRef(true);
 
   const active = EVENTS[displayIndex] ?? null;
@@ -45,7 +44,7 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
     if (selectedIndex === displayIndex) return;
 
     const units = Array.from(unitsRef.current?.querySelectorAll<HTMLElement>(".cd-unit") ?? []);
-    gsap.killTweensOf([...units, metaRef.current]);
+    gsap.killTweensOf(units);
 
     gsap.timeline()
       // digits exit right→left (reverse cascade = S→M→H→D)
@@ -56,13 +55,6 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
         stagger: 0.04,
         ease: "power3.in",
       })
-      // date text fades with digits
-      .to(metaRef.current, {
-        y: -16,
-        opacity: 0,
-        duration: 0.15,
-        ease: "power2.in",
-      }, "<0.06")
       // swap content after exit completes
       .add(() => setDisplayIndex(selectedIndex));
   }, [selectedIndex]);
@@ -76,19 +68,13 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
     }
 
     const units = Array.from(unitsRef.current?.querySelectorAll<HTMLElement>(".cd-unit") ?? []);
-    gsap.killTweensOf([...units, metaRef.current]);
+    gsap.killTweensOf(units);
 
     gsap.timeline()
       // digits arrive left→right (D→H→M→S)
       .fromTo(units,
         { y: 32, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.28, stagger: 0.05, ease: "power3.out" }
-      )
-      // date text follows
-      .fromTo(metaRef.current,
-        { y: 16, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.22, ease: "power2.out" },
-        "<0.1"
       );
   }, [displayIndex]);
 
@@ -141,15 +127,6 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
             </div>
           ))}
         </div>
-
-        <p
-          ref={metaRef}
-          className="mt-6 text-left text-[0.62rem] tracking-[0.22em] uppercase text-white/20"
-        >
-          {active.startDate.toLocaleDateString("en-US", {
-            weekday: "long", year: "numeric", month: "long", day: "numeric",
-          })}
-        </p>
 
       </PageContainer>
     </section>

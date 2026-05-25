@@ -36,7 +36,7 @@ export default function Navbar() {
         {/* Logo */}
         <Link href="/" className="transition-opacity hover:opacity-80">
           <Image
-            src="/logo/team/m-logo-minimal.png"
+            src="/logo/team/m-logo.svg"
             alt="CWRU Motorsports"
             width={100}
             height={100}
@@ -52,8 +52,10 @@ export default function Navbar() {
               <Link
                 href={href}
                 className={`text-sm tracking-[0.15em] uppercase transition-colors duration-200 font-clash ${
-                pathname === href ? "text-white" : "text-white/50 hover:text-white"
-              }`}
+                  pathname === href
+                    ? "text-white"
+                    : "text-white/50 hover:text-white"
+                }`}
               >
                 {label}
               </Link>

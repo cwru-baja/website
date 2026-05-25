@@ -93,9 +93,9 @@ export default function Hero() {
       </div>
 
       {/* Car render — fully contained, scales with viewport */}
-      <div className="absolute top-[12%] bottom-0 left-[20%] right-0">
+      <div className="absolute top-[4%] bottom-[2%] left-[40%] right-[1%]">
         <Image
-          src="/homepage-car-dim.png"
+          src="/homepage-car-sr26.png"
           alt="CWRU Motorsports Baja Car"
           fill
           className="object-contain"
