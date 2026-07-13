@@ -76,16 +76,21 @@ type SortField = "name" | "classOf";
 type SortDir = "asc" | "desc";
 
 export default function GeneralBodyTable() {
-  const [sortField, setSortField] = useState<SortField>("classOf");
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [sort, setSort] = useState<{ field: SortField; direction: SortDir }>({
+    field: "classOf",
+    direction: "asc",
+  });
+  const { field: sortField, direction: sortDir } = sort;
 
   function handleSort(field: SortField) {
-    if (sortField === field) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDir("asc");
-    }
+    setSort((current) =>
+      current.field === field
+        ? {
+            field,
+            direction: current.direction === "asc" ? "desc" : "asc",
+          }
+        : { field, direction: "asc" },
+    );
   }
 
   const sorted = [...members].sort((a, b) => {

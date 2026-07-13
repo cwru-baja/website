@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import gsap from "gsap";
 
 // Initial width of the M logo mask (px). The SVG aspect ratio is ~2.55:1
@@ -33,6 +33,7 @@ export default function LogoIntro() {
     const overlay = overlayRef.current;
     const redLogo = redLogoRef.current;
     if (!container || !overlay || !redLogo) return;
+    overlay.style.willChange = "mask-size, mask-position";
 
     // Update mask-size AND mask-position together so the zoom appears to
     // originate from (ZOOM_FX, ZOOM_FY) within the logo, not from its center.
@@ -87,6 +88,7 @@ export default function LogoIntro() {
           setMask(state.size);
         },
         onComplete() {
+          overlay.style.willChange = "auto";
           container.style.display = "none";
         },
       },
@@ -95,8 +97,9 @@ export default function LogoIntro() {
 
     return () => {
       tl.kill();
+      overlay.style.willChange = "auto";
     };
-  }, []);
+  }, [show]);
 
   if (!show) return null;
 
@@ -114,27 +117,10 @@ export default function LogoIntro() {
       */}
       <div
         ref={overlayRef}
-        className="absolute inset-0"
-        style={{
-          backgroundColor: "#0a0a0a",
-          maskImage:
-            "url(/logo/team/m-logo.svg), linear-gradient(black, black)",
-          WebkitMaskImage:
-            "url(/logo/team/m-logo.svg), linear-gradient(black, black)",
-          // Standard spec: 'exclude' = XOR (inverts the logo mask)
-          maskComposite: "exclude",
-          // Safari uses older keyword
-          WebkitMaskComposite: "xor",
-          maskPosition: "center, center",
-          WebkitMaskPosition: "center, center",
-          maskRepeat: "no-repeat, no-repeat",
-          WebkitMaskRepeat: "no-repeat, no-repeat",
-          // Initial size — will be updated by GSAP onUpdate
-          maskSize: `${INITIAL_SIZE}px, 100%`,
-          willChange: "mask-size, mask-position",
-          transform: "translateZ(0)",
-          backfaceVisibility: "hidden",
-        }}
+        className="logo-intro-mask absolute inset-0"
+        style={
+          { "--logo-intro-mask-size": `${INITIAL_SIZE}px` } as CSSProperties
+        }
       />
 
       {/*

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import Image from "next/image";
 import PageContainer from "@/components/PageContainer";
 
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
@@ -196,6 +197,11 @@ const sponsors: Sponsor[] = [
   { name: "PPG", file: "ppg-logo", url: "https://www.ppg.com/", png: true },
 ];
 
+const repeatedSponsors = [
+  ...sponsors.map((sponsor) => ({ sponsor, copy: "first" })),
+  ...sponsors.map((sponsor) => ({ sponsor, copy: "second" })),
+];
+
 export default function SponsorsMarquee() {
   const container = useRef<HTMLDivElement>(null);
   const marqueeRef = useRef<HTMLDivElement>(null);
@@ -243,22 +249,23 @@ export default function SponsorsMarquee() {
         >
           {/* Removed animate-marquee from className */}
           <div className="flex w-max" ref={marqueeRef}>
-            {[...sponsors, ...sponsors].map((sponsor, i) => (
+            {repeatedSponsors.map(({ sponsor, copy }) => (
               <a
-                key={i}
+                key={`${copy}-${sponsor.file}`}
                 href={sponsor.url || undefined}
                 target={sponsor.url ? "_blank" : undefined}
                 rel={sponsor.url ? "noopener noreferrer" : undefined}
                 className="flex items-center justify-center px-12 shrink-0 opacity-100 transition-opacity duration-300"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={
                     sponsor.png
                       ? `/logo/sponsor/${sponsor.file}.png`
                       : `/logo/sponsor/svg/${sponsor.file}.svg`
                   }
                   alt={sponsor.name}
+                  width={200}
+                  height={48}
                   className="h-12 w-auto"
                   style={{ filter: "brightness(0) invert(1)" }}
                 />

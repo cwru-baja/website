@@ -40,7 +40,7 @@ const specialtyLeads: Member[] = [
 
 function MemberCard({ name, role, img, graduationYear, linkedin }: Member) {
   const photo = (
-    <div className="relative mx-auto h-44 w-44 overflow-hidden rounded-full ring-2 ring-white/10 transition-all duration-100 group-hover:ring-4 group-hover:ring-red">
+    <div className="relative mx-auto h-44 w-44 overflow-hidden rounded-full ring-2 ring-white/10 group-hover:ring-4 group-hover:ring-red">
       <Image
         src={`/images/headshots/${img}.jpg`}
         alt={name}

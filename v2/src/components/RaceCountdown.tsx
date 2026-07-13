@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import PageContainer from "@/components/PageContainer";
@@ -23,7 +23,10 @@ function pad(n: number, len = 2) { return String(n).padStart(len, "0"); }
 
 export default function RaceCountdown({ selectedIndex }: { selectedIndex: number }) {
   // displayIndex is what's currently rendered — lags behind selectedIndex during transition
-  const [displayIndex, setDisplayIndex] = useState(selectedIndex);
+  const [displayIndex, setDisplayIndex] = useReducer(
+    (_current: number, next: number) => next,
+    selectedIndex,
+  );
   const [timeLeft, setTimeLeft]         = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   const unitsRef      = useRef<HTMLDivElement>(null);
@@ -107,7 +110,7 @@ export default function RaceCountdown({ selectedIndex }: { selectedIndex: number
         {/* Each unit is wrapped in overflow-hidden so digits clip cleanly as they slide */}
         <div ref={unitsRef} className="flex items-baseline justify-start gap-0 select-none">
           {units.map(({ value, label }, i) => (
-            <div key={i} className="cd-unit overflow-hidden flex items-baseline">
+            <div key={label} className="cd-unit overflow-hidden flex items-baseline">
               <span
                 className="font-coolvetica font-bold leading-none text-white tabular-nums"
                 style={{ fontSize: "clamp(3rem, 11.5vw, 12.5rem)" }}

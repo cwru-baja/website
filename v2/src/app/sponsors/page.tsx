@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
+import Image from "next/image";
 
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
 
@@ -184,10 +185,11 @@ export default function SponsorsPage() {
                       rel={sponsor.url ? "noopener noreferrer" : undefined}
                       className="group"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={logoSrc(sponsor)}
                         alt={sponsor.name}
+                        width={300}
+                        height={100}
                         className={`${tier.logoHeight} w-auto max-w-full object-contain`}
                         style={{ filter: "brightness(0) invert(1)" }}
                       />

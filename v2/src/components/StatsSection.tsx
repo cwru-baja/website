@@ -9,24 +9,6 @@ const stats = [
   { value: 100, suffix: "%", label: "Student Built",       sublabel: "Design to Fabrication" },
 ];
 
-function useCountUp(target: number, duration = 1400, active: boolean) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let start: number | null = null;
-    const step = (ts: number) => {
-      if (!start) start = ts;
-      const progress = Math.min((ts - start) / duration, 1);
-      // Ease out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [active, target, duration]);
-  return count;
-}
-
 function StatItem({
   value,
   suffix,
@@ -42,7 +24,24 @@ function StatItem({
   delay: number;
   active: boolean;
 }) {
-  const count = useCountUp(value, 1400, active);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!active) return;
+
+    let start: number | null = null;
+    let frame = 0;
+    const step = (timestamp: number) => {
+      if (start === null) start = timestamp;
+      const progress = Math.min((timestamp - start) / 1400, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * value));
+      if (progress < 1) frame = requestAnimationFrame(step);
+    };
+
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [active, value]);
 
   return (
     <div
@@ -91,7 +90,7 @@ export default function StatsSection() {
         <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/5">
           {stats.map((stat, i) => (
             <StatItem
-              key={i}
+              key={stat.label}
               {...stat}
               delay={i * 120}
               active={active}

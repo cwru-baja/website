@@ -24,9 +24,11 @@ export default function SeasonSection({ selectedIndex, onSelect }: Props) {
       {/* Events grid */}
       <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 divide-y lg:divide-y-0 lg:divide-x divide-white/8">
         {EVENTS.map((ev, i) => (
-          <div
+          <button
+            type="button"
             key={ev.name}
             onClick={() => onSelect(i)}
+            aria-pressed={selectedIndex === i}
             className="relative py-8 lg:py-0 lg:px-12 first:lg:pl-0 last:lg:pr-0 cursor-pointer group flex flex-col items-start text-left"
           >
             {/* Name */}
@@ -51,7 +53,7 @@ export default function SeasonSection({ selectedIndex, onSelect }: Props) {
             <p className="mt-1 text-[0.78rem] tracking-[0.16em] uppercase text-white/25">
               {ev.location}
             </p>
-          </div>
+          </button>
         ))}
       </div>
 

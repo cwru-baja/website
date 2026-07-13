@@ -23,7 +23,7 @@ export default function Hero() {
             backgroundPosition: "50% 50%, 50% 50%",
             animation: "aurora 120s linear infinite",
             opacity: 0.55,
-            filter: "blur(20px)",
+            filter: "blur(8px)",
           }}
         />
         {/* Layer 2 — 130deg, 83s (different angle + speed creates interference) */}
@@ -36,7 +36,7 @@ export default function Hero() {
             backgroundPosition: "50% 50%, 50% 50%",
             animation: "aurora 83s linear infinite",
             opacity: 0.4,
-            filter: "blur(20px)",
+            filter: "blur(8px)",
           }}
         />
       </div>
@@ -98,6 +98,7 @@ export default function Hero() {
           src="/homepage-car-sr26.png"
           alt="CWRU Motorsports Baja Car"
           fill
+          sizes="59vw"
           className="object-contain"
           style={{ objectPosition: "left center" }}
           priority

@@ -546,17 +546,18 @@ const COLS_COMP = "4rem 1fr 8rem 7rem";
 const COLS_EVENT = "4rem 1fr 8rem 7rem";
 
 export default function AllResultsSection() {
-  const [openYear, setOpenYear] = useState<string | null>(null);
-  const [openComp, setOpenComp] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<{
+    year: string | null;
+    competition: string | null;
+  }>({ year: null, competition: null });
+  const { year: openYear, competition: openComp } = expanded;
 
   function handleYearClick(year: string) {
-    if (openYear === year) {
-      setOpenYear(null);
-      setOpenComp(null);
-    } else {
-      setOpenYear(year);
-      setOpenComp(null);
-    }
+    setExpanded((current) =>
+      current.year === year
+        ? { year: null, competition: null }
+        : { year, competition: null },
+    );
   }
 
   return (
@@ -604,6 +605,7 @@ export default function AllResultsSection() {
             <div key={result.year}>
               {/* Year row */}
               <button
+                type="button"
                 onClick={() => handleYearClick(result.year)}
                 className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
                   isOpen ? "bg-red" : "hover:bg-red"
@@ -670,7 +672,14 @@ export default function AllResultsSection() {
                     {/* Competition row — indented */}
                     <div className="pl-10">
                       <button
-                        onClick={() => setOpenComp(isCompOpen ? null : compKey)}
+                        type="button"
+                        onClick={() =>
+                          setExpanded((current) => ({
+                            ...current,
+                            competition:
+                              current.competition === compKey ? null : compKey,
+                          }))
+                        }
                         className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
                           isCompOpen ? "bg-red" : "hover:bg-red"
                         }`}
