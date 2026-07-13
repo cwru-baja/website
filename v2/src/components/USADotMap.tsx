@@ -1,9 +1,18 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CompetitionCard, type CompetitionMarker } from "./CompetitionCard";
+import {
+  completeContentReveal,
+  createContentTransition,
+  markContentReady,
+  requestContentTransition,
+  type ContentTransitionState,
+  type ContentTransitionToken,
+} from "./contentTransition";
+import { createHoverHandoffController } from "./hoverHandoff";
 
 const BASE_R = 0.22;
 const MAX_R = 0.38;
@@ -12,6 +21,7 @@ const MAGNETIC_RADIUS = 7; // SVG viewBox units
 const CARD_W = 480;
 const CARD_H = 330; // approx: header ~55px + 16:9 image ~270px + padding
 const CARD_GAP = 18; // gap between cursor and card edge
+const HANDOFF_GRACE_MS = 250;
 
 interface Props {
   dots: [number, number, 0 | 1][];
@@ -22,8 +32,27 @@ interface Props {
 export function USADotMap({ dots, viewBox, competitions }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const activeCompRef = useRef<string | null>(null);
-  const [activeComp, setActiveComp] = useState<CompetitionMarker | null>(null);
+  const sessionRef = useRef(0);
+  const [cardTransition, setCardTransition] =
+    useState<ContentTransitionState<CompetitionMarker> | null>(null);
+
+  const handleIncomingReady = useCallback((token: ContentTransitionToken) => {
+    setCardTransition((current) =>
+      current ? markContentReady(current, token) : current,
+    );
+  }, []);
+
+  const handleIncomingRevealed = useCallback((token: ContentTransitionToken) => {
+    setCardTransition((current) =>
+      current
+        ? completeContentReveal(
+            current,
+            token,
+            (left, right) => left.id === right.id,
+          )
+        : current,
+    );
+  }, []);
 
   // GSAP scroll entrance animation
   useEffect(() => {
@@ -69,18 +98,104 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     const yTo = gsap.quickTo(card, "y", { duration: 0.4, ease: "power3.out" });
 
     let rafId: number;
+    let shellGeneration = 0;
+    let shellPhase: "hidden" | "showing" | "visible" | "hiding" = "hidden";
+
+    const showCard = (comp: CompetitionMarker, wasActive: boolean) => {
+      const session = ++sessionRef.current;
+      setCardTransition((current) => {
+        if (!wasActive || current === null) {
+          return createContentTransition(comp, session);
+        }
+
+        return requestContentTransition(
+          current,
+          comp,
+          (left, right) => left.id === right.id,
+        );
+      });
+
+      // A normal active-to-active handoff changes content only. The shell's
+      // opacity and scale remain completely untouched.
+      if (wasActive && (shellPhase === "showing" || shellPhase === "visible")) {
+        return;
+      }
+
+      const generation = ++shellGeneration;
+      shellPhase = "showing";
+      gsap.killTweensOf(card, "opacity,scale");
+      gsap.to(card, {
+        opacity: 1,
+        scale: 1,
+        duration: 0.22,
+        ease: "power2.out",
+        overwrite: "auto",
+        onComplete: () => {
+          if (handoff.current() !== null && generation === shellGeneration) {
+            shellPhase = "visible";
+          }
+        },
+      });
+    };
+
+    const hideCard = () => {
+      const generation = ++shellGeneration;
+      shellPhase = "hiding";
+      gsap.killTweensOf(card, "opacity,scale");
+      gsap.to(card, {
+        opacity: 0,
+        scale: 0.88,
+        duration: 0.18,
+        ease: "power2.in",
+        overwrite: "auto",
+        onComplete: () => {
+          if (handoff.current() === null && generation === shellGeneration) {
+            shellPhase = "hidden";
+            setCardTransition(null);
+          }
+        },
+      });
+    };
+
+    const handoff = createHoverHandoffController<CompetitionMarker>({
+      delayMs: HANDOFF_GRACE_MS,
+      isSame: (current, next) => current.id === next.id,
+      onActivate: showCard,
+      onDismiss: hideCard,
+    });
 
     const onMouseMove = (e: MouseEvent) => {
       cancelAnimationFrame(rafId);
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return;
+
+      const pt = svg.createSVGPoint();
+      pt.x = e.clientX;
+      pt.y = e.clientY;
+      const { x: mx, y: my } = pt.matrixTransform(ctm.inverse());
+
+      // Resolve hover state synchronously so a target entered near the end of
+      // the grace window cancels dismissal before the 250 ms timer can fire.
+      let nearestComp: CompetitionMarker | null = null;
+      let nearestDist = Infinity;
+      for (const comp of competitions) {
+        const dx = comp.svgX - mx;
+        const dy = comp.svgY - my;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestComp = comp;
+        }
+      }
+
+      const hoveredComp = nearestComp && nearestDist < MAGNETIC_RADIUS ? nearestComp : null;
+      if (hoveredComp) {
+        handoff.activate(hoveredComp);
+      } else {
+        handoff.schedule();
+      }
+
       rafId = requestAnimationFrame(() => {
-        const ctm = svg.getScreenCTM();
-        if (!ctm) return;
-
-        const pt = svg.createSVGPoint();
-        pt.x = e.clientX;
-        pt.y = e.clientY;
-        const { x: mx, y: my } = pt.matrixTransform(ctm.inverse());
-
         // Dot hover radius — grow dots near cursor
         for (let i = 0; i < circles.length; i++) {
           const dx = positions[i].cx - mx;
@@ -94,23 +209,10 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
           );
         }
 
-        // Find nearest competition in SVG space
-        let nearestComp: CompetitionMarker | null = null;
-        let nearestDist = Infinity;
-        for (const comp of competitions) {
-          const dx = comp.svgX - mx;
-          const dy = comp.svgY - my;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < nearestDist) {
-            nearestDist = dist;
-            nearestComp = comp;
-          }
-        }
-
-        if (nearestComp && nearestDist < MAGNETIC_RADIUS) {
+        if (hoveredComp) {
           const cpt = svg.createSVGPoint();
-          cpt.x = nearestComp.svgX;
-          cpt.y = nearestComp.svgY;
+          cpt.x = hoveredComp.svgX;
+          cpt.y = hoveredComp.svgY;
           const compScreen = cpt.matrixTransform(ctm);
 
           const t = 1 - nearestDist / MAGNETIC_RADIUS;
@@ -132,22 +234,6 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
 
           xTo(cardX);
           yTo(cardY);
-
-          if (activeCompRef.current !== nearestComp.id) {
-            activeCompRef.current = nearestComp.id;
-            setActiveComp(nearestComp);
-            gsap.killTweensOf(card, "opacity,scale");
-            gsap.to(card, { opacity: 1, scale: 1, duration: 0.22, ease: "power2.out" });
-          }
-        } else if (activeCompRef.current !== null) {
-          activeCompRef.current = null;
-          gsap.to(card, {
-            opacity: 0,
-            scale: 0.88,
-            duration: 0.18,
-            ease: "power2.in",
-            onComplete: () => setActiveComp(null),
-          });
         }
       });
     };
@@ -155,16 +241,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     const onMouseLeave = () => {
       cancelAnimationFrame(rafId);
       for (const c of circles) c.setAttribute("r", BASE_R.toFixed(3));
-      if (activeCompRef.current !== null) {
-        activeCompRef.current = null;
-        gsap.to(card, {
-          opacity: 0,
-          scale: 0.88,
-          duration: 0.18,
-          ease: "power2.in",
-          onComplete: () => setActiveComp(null),
-        });
-      }
+      handoff.dismissNow();
     };
 
     svg.addEventListener("mousemove", onMouseMove);
@@ -172,6 +249,10 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
 
     return () => {
       cancelAnimationFrame(rafId);
+      handoff.dispose();
+      xTo.tween.kill();
+      yTo.tween.kill();
+      gsap.killTweensOf(card);
       svg.removeEventListener("mousemove", onMouseMove);
       svg.removeEventListener("mouseleave", onMouseLeave);
     };
@@ -197,7 +278,12 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
         ))}
       </svg>
 
-      <CompetitionCard ref={cardRef} comp={activeComp} />
+      <CompetitionCard
+        ref={cardRef}
+        transition={cardTransition}
+        onIncomingReady={handleIncomingReady}
+        onIncomingRevealed={handleIncomingRevealed}
+      />
     </>
   );
 }
