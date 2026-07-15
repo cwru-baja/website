@@ -45,7 +45,7 @@ function StatItem({
 
   return (
     <div
-      className="relative flex flex-col px-10 xl:px-14 py-12 transition-opacity duration-700"
+      className="relative flex min-w-0 flex-col px-10 py-12 transition-opacity duration-700 xl:px-14"
       style={{
         opacity: active ? 1 : 0,
         transform: active ? "translateY(0)" : "translateY(18px)",
@@ -54,15 +54,21 @@ function StatItem({
     >
       {/* Number */}
       <div
-        className="font-clash font-medium leading-none mt-2"
-        style={{ fontSize: "clamp(4.5rem, 7vw, 9rem)", color: "#fff" }}
+        className="relative mt-2 font-clash font-medium leading-none"
+        style={{ fontSize: "clamp(3.5rem, 7vw, 9rem)", color: "#fff" }}
       >
-        {count}
-        <span className="text-red font-light">{suffix}</span>
+        <span aria-hidden="true" className="invisible hidden whitespace-nowrap xl:block">
+          {value}
+          <span className="font-light text-red">{suffix}</span>
+        </span>
+        <span className="whitespace-nowrap xl:absolute xl:inset-0">
+          {count}
+          <span className="font-light text-red">{suffix}</span>
+        </span>
       </div>
 
       {/* Label */}
-      <div className="mt-4 space-y-1">
+      <div className="mt-4 space-y-1 xl:whitespace-nowrap">
         <p className="text-sm font-semibold tracking-wide text-white/80">{label}</p>
         <p className="text-[0.65rem] tracking-[0.2em] uppercase text-white/30">{sublabel}</p>
       </div>
@@ -84,10 +90,10 @@ export default function StatsSection() {
   }, []);
 
   return (
-    <section ref={ref} className="bg-bg">
-      <div className="max-w-[1600px] mx-auto px-8 lg:px-16 xl:px-24">
+    <section ref={ref} className="bg-bg px-8 lg:px-16">
+      <div className="mx-auto flex w-full max-w-[1600px] justify-center">
         {/* Stats grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/5">
+        <div className="grid w-full grid-cols-2 divide-x divide-white/5 lg:grid-cols-4 xl:w-fit xl:grid-cols-[repeat(4,max-content)]">
           {stats.map((stat, i) => (
             <StatItem
               key={stat.label}
