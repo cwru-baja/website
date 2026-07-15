@@ -42,7 +42,7 @@ export default function CompetitionPage() {
           <div className="mt-6 flex flex-wrap gap-x-10 gap-y-2">
             {[
               { value: "10+", label: "Years Competing" },
-              { value: "250+", label: "Teams per Event" },
+              { value: "50+", label: "Teams per Event" },
               { value: "2026", label: "Season" },
             ].map(({ value, label }) => (
               <div key={label} className="flex items-baseline gap-2">
