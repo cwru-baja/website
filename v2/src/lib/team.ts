@@ -113,7 +113,7 @@ export const GENERAL_BODY: GeneralMember[] = [
   { name: "Aryeh Rothenberg",         subteams: ["Manufacturing"],                     classOf: "2027", major: "Mechanical Engineering" },
   { name: "Avaneesh Rao",             subteams: ["Brakes"],                            classOf: "2027", major: "Mechanical & Aerospace Engineering" },
   { name: "Cameron Griffith",         subteams: ["Manufacturing"],                     classOf: "2027", major: "Mechanical Engineering" },
-  { name: "Davis Clarke",             subteams: ["Drivetrain", "Business Presentation", "Manufacturing"], classOf: "2029", major: "—" },
+  { name: "Davis Clarke",             subteams: ["Drivetrain", "Business Presentation", "Manufacturing"], classOf: "2029", major: "Mechanical Engineering" },
   { name: "Elad Dov Kleinerman Mordkowitz", subteams: ["CNC"],                        classOf: "2027", major: "—" },
   { name: "Finn Barrett",             subteams: ["Manufacturing"],                     classOf: "2028", major: "Mechanical Engineering" },
   { name: "Isaac Hugenberger",        subteams: ["Drivetrain", "Panels", "Brakes"],   classOf: "2028", major: "Mechanical Engineering" },
