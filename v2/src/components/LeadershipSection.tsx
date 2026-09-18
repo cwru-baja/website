@@ -145,9 +145,9 @@ function MemberCard({
         photo
       )}
       <p className="mt-4 text-sm font-semibold text-white leading-snug">{name}</p>
-      <p className="mt-0.5 text-[0.7rem] tracking-wide text-white/40 leading-snug">{role}</p>
+      <p className="mt-0.5 text-xs tracking-wide text-white/40 leading-snug sm:text-[0.7rem]">{role}</p>
       {graduationYear && (
-        <p className="mt-1 text-[0.65rem] tracking-[0.12em] uppercase text-white/25">
+        <p className="mt-1 text-[0.7rem] tracking-[0.12em] uppercase text-white/25 sm:text-[0.65rem]">
           Class of {graduationYear}
         </p>
       )}

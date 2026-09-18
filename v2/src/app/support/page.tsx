@@ -90,7 +90,7 @@ export default function SupportPage() {
         <section aria-labelledby="gear-heading" className="bg-bg py-10 sm:py-14 lg:py-20">
           <PageContainer>
             <article className="grid overflow-hidden lg:grid-cols-2">
-              <div className="relative min-h-[28rem] overflow-hidden sm:min-h-[36rem]">
+              <div className="relative aspect-square overflow-hidden lg:aspect-auto lg:min-h-[36rem]">
                 <Image
                   src="/images/cwru-baja-tshirt.png"
                   alt="Official navy CWRU Motorsports team T-shirt"

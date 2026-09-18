@@ -34,6 +34,10 @@ function StatItem({
 
     let start: number | null = null;
     let frame = 0;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      frame = requestAnimationFrame(() => setCount(value));
+      return () => cancelAnimationFrame(frame);
+    }
     const step = (timestamp: number) => {
       if (start === null) start = timestamp;
       const progress = Math.min((timestamp - start) / 1400, 1);

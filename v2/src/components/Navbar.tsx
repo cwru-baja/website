@@ -65,13 +65,13 @@ export default function Navbar() {
           setOpenOn(null);
         }
       }}
-      className={`fixed top-0 left-0 right-0 z-50 h-16 border-b transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 h-16 border-b transition-all duration-500 max-md:bg-bg max-md:backdrop-blur-none ${
         scrolled
           ? "bg-bg/60 backdrop-blur-xl border-white/10 shadow-[0_1px_24px_rgba(0,0,0,0.5)]"
           : "bg-white/[0.02] backdrop-blur-md border-white/5"
       }`}
     >
-      <div className="flex h-full max-w-[1600px] items-center justify-between px-5 sm:px-8 lg:px-16 xl:px-24 mx-auto">
+      <div className="flex h-full max-w-[1600px] items-center justify-between px-8 lg:px-16 xl:px-24 mx-auto">
         {/* Logo */}
         <Link href="/" className="inline-flex min-h-11 items-center hover:opacity-80">
           <MLogo role="img" aria-label="CWRU Motorsports" className="h-6 w-auto text-livery" />
@@ -125,7 +125,7 @@ export default function Navbar() {
       {menuOpen && (
         <div
           id="mobile-navigation"
-          className="absolute top-full left-0 right-0 border-b border-white/10 bg-bg px-5 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.45)] md:hidden"
+          className="absolute top-full left-0 right-0 border-b border-white/10 bg-bg px-8 py-6 shadow-[0_16px_40px_rgba(0,0,0,0.45)] md:hidden"
         >
           <ul className="flex flex-col">
             {links.map(({ label, href }, index) => (

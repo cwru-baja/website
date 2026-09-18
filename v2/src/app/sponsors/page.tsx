@@ -180,7 +180,7 @@ export default function SponsorsPage() {
                 </div>
 
                 {/* Logo row */}
-                <div className={`flex flex-wrap items-center gap-x-20 gap-y-12 ${right ? "justify-end" : ""}`}>
+                <div className={`flex flex-wrap items-center gap-x-10 gap-y-12 sm:gap-x-20 ${right ? "justify-end" : ""}`}>
                   {tier.sponsors.map((sponsor) => {
                     const box = logoBox(sponsor.file, tier.key);
                     return (
@@ -189,17 +189,18 @@ export default function SponsorsPage() {
                         href={sponsor.url || undefined}
                         target={sponsor.url ? "_blank" : undefined}
                         rel={sponsor.url ? "noopener noreferrer" : undefined}
-                        // Logos run 29-43px tall; the padding makes every link
-                        // at least a 44px target without moving anything.
-                        className="group -my-2 py-2"
+                        // Logos run 23-43px tall (phones draw them at 80%); the
+                        // padding makes every link at least a 44px target
+                        // without moving anything.
+                        className="group -my-3 py-3"
                       >
                         <Image
                           src={logoSrc(sponsor.file, sponsor.png)}
                           alt={sponsor.name}
                           width={box.width}
                           height={box.height}
-                          className="w-auto max-w-full object-contain"
-                          style={{ height: box.height, filter: "brightness(0) invert(1)" }}
+                          className="h-(--logo-h) w-auto max-w-full object-contain max-sm:h-[calc(var(--logo-h)*0.8)]"
+                          style={{ "--logo-h": `${box.height}px`, filter: "brightness(0) invert(1)" } as React.CSSProperties}
                         />
                       </a>
                     );

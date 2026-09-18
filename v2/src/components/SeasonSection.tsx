@@ -120,7 +120,7 @@ export default function SeasonSection() {
   return (
     <>
       {/* THIS SEASON */}
-      <div className="mt-36 leading-none">
+      <div className="mt-20 leading-none sm:mt-36">
         <div className="font-coolvetica font-bold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none">
           THIS
         </div>
