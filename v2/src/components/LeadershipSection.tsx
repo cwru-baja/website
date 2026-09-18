@@ -80,8 +80,8 @@ function MemberCard({
     const origin = dragOriginRef.current;
     if (!calibration || !origin) return;
     calibration.onPan(
-      dragToPan(event.clientX - origin.x),
-      dragToPan(event.clientY - origin.y),
+      dragToPan(event.clientX - origin.x, event.currentTarget.clientWidth),
+      dragToPan(event.clientY - origin.y, event.currentTarget.clientWidth),
     );
     dragOriginRef.current = { x: event.clientX, y: event.clientY };
   };
@@ -95,7 +95,7 @@ function MemberCard({
 
   const photo = (
     <div
-      className={`relative mx-auto h-44 w-44 overflow-hidden rounded-full ring-2 ring-white/10 group-hover:ring-4 group-hover:ring-livery-ink ${
+      className={`relative mx-auto aspect-square w-full max-w-44 overflow-hidden rounded-full ring-2 ring-white/10 group-hover:ring-4 group-hover:ring-livery-ink ${
         calibration
           ? `touch-none ${calibration.selected ? "cursor-grab !ring-4 !ring-livery-ink" : "cursor-pointer"}`
           : ""
@@ -111,7 +111,7 @@ function MemberCard({
         fill
         className={
           usesLogo
-            ? "object-contain p-12"
+            ? "object-contain p-[27%]"
             : framed
               ? "object-cover object-center"
               : "object-cover object-top"
@@ -133,7 +133,9 @@ function MemberCard({
           href={linkedin}
           target="_blank"
           rel="noopener noreferrer"
-          className="block"
+          // Sized like the frame: the column centres its children, so a link
+          // left to shrink-wrap would give the fluid frame nothing to fill.
+          className="block w-full max-w-44"
           // Selecting a headshot must not navigate away mid-calibration.
           onClick={calibration ? (event) => event.preventDefault() : undefined}
         >
@@ -167,7 +169,7 @@ function Tier({
       <h2 className="font-coolvetica font-bold text-2xl tracking-widest text-white/50 mb-8">
         {title}
       </h2>
-      <div className="grid grid-cols-3 gap-x-8 gap-y-12 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {members.map((m) => (
           <MemberCard key={m.name} {...m} {...renderProps(m)} />
         ))}

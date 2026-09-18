@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
+import PageTitle from "@/components/PageTitle";
 import LeadershipSection from "@/components/LeadershipSection";
 import GeneralBodyTable from "@/components/GeneralBodyTable";
 import Footer from "@/components/Footer";
@@ -21,13 +22,7 @@ export default function TeamPage() {
         <PageContainer>
 
           {/* Headline */}
-          <h1
-            className="font-coolvetica font-bold leading-[0.88] text-white"
-            style={{ fontSize: "clamp(5rem, 10vw, 11rem)" }}
-          >
-            THE{" "}
-            <span className="text-livery-ink">TEAM.</span>
-          </h1>
+          <PageTitle lead="THE" accent="TEAM." />
 
           {/* Divider */}
           <div className="mt-8 h-px w-full bg-white/8" />

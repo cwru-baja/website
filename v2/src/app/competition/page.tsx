@@ -3,6 +3,7 @@ import path from "node:path";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
+import PageTitle from "@/components/PageTitle";
 import SeasonSection from "@/components/SeasonSection";
 import AllResultsSection from "@/components/AllResultsSection";
 import HiredByTheBest from "@/components/HiredByTheBest";
@@ -25,12 +26,7 @@ export default function CompetitionPage() {
         <PageContainer>
 
           {/* Headline */}
-          <h1
-            className="font-coolvetica font-bold leading-[0.88] text-white"
-            style={{ fontSize: "clamp(5rem, 10vw, 11rem)" }}
-          >
-            THE <span className="text-livery-ink">COMPETITION.</span>
-          </h1>
+          <PageTitle lead="THE" accent="COMPETITION." />
 
           {/* Divider */}
           <div className="mt-8 h-px w-full bg-white/8" />

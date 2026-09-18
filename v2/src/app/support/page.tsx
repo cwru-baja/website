@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import FinanceDonutChart from "@/components/FinanceDonutChart";
 import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
+import PageTitle from "@/components/PageTitle";
 
 export const metadata = {
   title: "Support — CWRU Motorsports",
@@ -17,12 +18,7 @@ export default function SupportPage() {
       <main className="bg-bg">
         <header className="pt-36 pb-14 sm:pt-40 sm:pb-16 lg:pb-20">
           <PageContainer>
-            <h1
-              className="font-coolvetica font-bold leading-[0.88] text-white"
-              style={{ fontSize: "clamp(4.5rem, 10vw, 11rem)" }}
-            >
-              SUPPORT <span className="text-livery-ink">US.</span>
-            </h1>
+            <PageTitle lead="SUPPORT" accent="US." />
 
             <div className="mt-8 h-px w-full bg-white/10" />
 

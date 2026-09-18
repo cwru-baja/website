@@ -53,3 +53,6 @@ next-env.d.ts
 /public/renders-sr26/temp/
 /design-qa*.md
 /*.png
+
+# scripts/mobile-check.mjs output
+/.mobile-check/

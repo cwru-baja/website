@@ -56,7 +56,6 @@
   --color-bg: #0a0a0a;
   --color-surface: #111111;
   --color-dim: #666666;
-  --font-bebas: var(--font-bebas-neue);
   --font-coolvetica: 'Coolvetica', sans-serif;
   --font-brier: 'Brier', serif;
   --font-clash: 'ClashDisplay-Variable', sans-serif;
@@ -204,7 +203,19 @@
   *::-webkit-scrollbar {
     display: none;
   }
+  /* Safety net: nothing should ever scroll the page sideways on a phone. It
+     takes both. On body alone the value propagates to the viewport, and mobile
+     Chrome still widened the page to the overflowing content (measured: 414px
+     on a 390px screen). With html set too, body keeps its own value and clips
+     its content. clip rather than hidden, because hidden makes a scroll
+     container, which breaks sticky positioning and ScrollTrigger. This hides
+     overflow; it doesn't fix it. scripts/mobile-check.mjs still reports
+     anything wider than the screen. */
+  html {
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
+    overflow-x: clip;
   }
 }

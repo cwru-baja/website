@@ -46,17 +46,22 @@ function StatItem({
 
   return (
     <div
-      className="relative flex min-w-0 flex-col px-10 py-12 transition-opacity duration-700 xl:px-14"
+      className="relative flex min-w-0 flex-col px-4 py-12 transition-opacity duration-700 sm:px-10 xl:px-14"
       style={{
         opacity: active ? 1 : 0,
         transform: active ? "translateY(0)" : "translateY(18px)",
         transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
       }}
     >
-      {/* Number */}
+      {/* Number. The third limit keeps the widest value, "100%" (2.54em), inside
+          its cell on a phone: two columns, px-8 around the grid and px-4 inside
+          each cell leave 50vw - 4rem. It only binds below about 420px. */}
       <div
         className="relative mt-2 font-clash font-medium leading-none"
-        style={{ fontSize: "clamp(3.5rem, 7vw, 9rem)", color: "#fff" }}
+        style={{
+          fontSize: "min(max(3.5rem, 7vw), 9rem, calc((50vw - 4rem) / 2.6))",
+          color: "#fff",
+        }}
       >
         <span aria-hidden="true" className="invisible hidden whitespace-nowrap xl:block">
           {value}

@@ -34,7 +34,9 @@ function FinishDisplay({ finish, fontSize }: { finish: string; fontSize: string 
   );
 }
 
-const COLS_YEAR = "5rem 1fr 8rem 7rem";
+// Below sm the columns shrink to what they hold at 320px (year 62px, rank 63px,
+// the "Podiums" label 56px), with a few px to spare for other fonts' metrics.
+const COLS_YEAR = "grid-cols-[2.5rem_1fr_4.75rem_3.75rem] sm:grid-cols-[5rem_1fr_8rem_7rem]";
 const FINISH_YEAR = "clamp(1.8rem,3vw,3rem)";
 const FINISH_EVENT = "clamp(1.25rem,2vw,1.75rem)";
 const FINISH_PODIUM = "clamp(1.5rem,2.4vw,2.125rem)";
@@ -241,16 +243,16 @@ export default function AllResultsSection({ results }: { results: SeasonResult[]
       <div className="mt-8" style={{ overflowAnchor: "none" }}>
         {/* Column headers */}
         <div
-          className="grid items-center border-b border-white/8 py-3"
-          style={{ gridTemplateColumns: COLS_YEAR }}
+          className={`grid items-center border-b border-white/8 py-3 ${COLS_YEAR}`}
         >
+          {/* The chevron column is too narrow for its label on a phone. */}
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30">
-            Results
+            <span className="max-sm:sr-only">Results</span>
           </span>
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30">
             Year
           </span>
-          <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right pr-6">
+          <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right pr-2 sm:pr-6">
             Season Rank
           </span>
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right">
@@ -272,10 +274,9 @@ export default function AllResultsSection({ results }: { results: SeasonResult[]
                   setOpenYear(isOpen ? null : result.year);
                 }}
                 aria-expanded={isOpen}
-                className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
+                className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${COLS_YEAR} ${
                   isOpen ? "bg-livery" : "hover:bg-livery"
                 }`}
-                style={{ gridTemplateColumns: COLS_YEAR }}
               >
                 <svg
                   width="24"
@@ -297,7 +298,7 @@ export default function AllResultsSection({ results }: { results: SeasonResult[]
                   {result.year}
                 </span>
 
-                <div className={`text-right pr-6 transition-none ${tone}`}>
+                <div className={`text-right pr-2 sm:pr-6 transition-none ${tone}`}>
                   <FinishDisplay finish={ordinal(result.seasonRank)} fontSize={FINISH_YEAR} />
                 </div>
 

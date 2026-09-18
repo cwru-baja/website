@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
+import PageTitle from "@/components/PageTitle";
 import Image from "next/image";
 import { SEASON } from "@/lib/events";
 import { logoBox, logoSrc, type TierKey } from "@/lib/logoSizing";
@@ -137,12 +138,7 @@ export default function SponsorsPage() {
       {/* Page header */}
       <section className="bg-bg pt-40 pb-0">
         <PageContainer>
-          <h1
-            className="font-coolvetica font-bold leading-[0.88] text-white"
-            style={{ fontSize: "clamp(5rem, 10vw, 11rem)" }}
-          >
-            OUR <span className="text-livery-ink">SPONSORS.</span>
-          </h1>
+          <PageTitle lead="OUR" accent="SPONSORS." />
 
           <div className="mt-8 h-px w-full bg-white/8" />
 
