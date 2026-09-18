@@ -38488,23 +38488,23 @@
     },
     "Johns Hopkins University": {
       "Overall": {
-        "Rank": 53,
-        "Car #": 81,
+        "Rank": 6,
+        "Car #": 65,
         "School": "Johns Hopkins University",
-        "Overall (1000)": 76.0,
-        "Overall Dynamic (300)": 0.0,
-        "Overall Static (300)": 76.0,
-        "Cost Event (100)": 76.0,
-        "Design (150)": 0.0,
-        "Business Presentation (50)": 0.0,
-        "Acceleration (75)": 0.0,
-        "Maneuverability (75)": 0.0,
-        "Hill Climb (75)": 0.0,
-        "Suspension (75)": 0.0,
-        "Endurance (400)": 0.0,
+        "Overall (1000)": 788.81,
+        "Overall Dynamic (300)": 223.4,
+        "Overall Static (300)": 267.0,
+        "Cost Event (100)": 79.0,
+        "Design (150)": 125.0,
+        "Business Presentation (50)": 63.0,
+        "Acceleration (75)": 57.82,
+        "Maneuverability (75)": 62.79,
+        "Hill Climb (75)": 67.26,
+        "Suspension (75)": 35.52,
+        "Endurance (400)": 298.41,
         "Adjustments": 0.0,
-        "Registered": "False",
-        "Passed Tech": "False",
+        "Registered": "True",
+        "Passed Tech": "True",
         "Passed Tech On Time": "True",
         "Public Comments": "",
         "team_key": "Johns Hopkins University - Blue Jay Racing"
@@ -38516,20 +38516,20 @@
         "Message For Team": ""
       },
       "Cost Event": {
-        "Rank": 11,
+        "Rank": 10,
         "Report Score": 14.0,
         "Penalty Points": 0.0,
-        "Final Score": 76.0,
+        "Final Score": 79.0,
         "Message For Team": ""
       },
       "Design": {
-        "Rank": 50,
+        "Rank": 4,
         "Report Score": 0.0,
-        "Eval. Score": 0.0,
-        "Bonus Points": 0.0,
+        "Eval. Score": 120.0,
+        "Bonus Points": 5.0,
         "Penalty Points": 0.0,
-        "Final Score": 0.0,
-        "Message For Team": "No show"
+        "Final Score": 125.0,
+        "Message For Team": "Finals"
       },
       "Acceleration": {
         "Rank": 8,
@@ -38572,9 +38572,9 @@
         "Score": 35.52
       },
       "Endurance": {
-        "Rank": 60,
-        "Laps": 0.0,
-        "Points (400)": 0.0,
+        "Rank": 10,
+        "Laps": 48.0,
+        "Points (400)": 298.4127,
         "Diff To Leader": "",
         "Gap To Next": ""
       }
@@ -40162,20 +40162,20 @@
     },
     "University of San Diego": {
       "Overall": {
-        "Rank": 35,
-        "Car #": 88,
+        "Rank": 24,
+        "Car #": 23,
         "School": "University of San Diego",
-        "Overall (1000)": 221.12,
-        "Overall Dynamic (300)": 52.18,
-        "Overall Static (300)": 61.0,
-        "Cost Event (100)": 51.0,
-        "Design (150)": 10.0,
-        "Business Presentation (50)": 0.0,
-        "Acceleration (75)": 9.4,
+        "Overall (1000)": 391.76,
+        "Overall Dynamic (300)": 106.24,
+        "Overall Static (300)": 76.0,
+        "Cost Event (100)": 46.0,
+        "Design (150)": 20.0,
+        "Business Presentation (50)": 10.0,
+        "Acceleration (75)": 42.67,
         "Maneuverability (75)": 0.0,
-        "Hill Climb (75)": 27.97,
-        "Suspension (75)": 14.8,
-        "Endurance (400)": 107.94,
+        "Hill Climb (75)": 39.88,
+        "Suspension (75)": 23.68,
+        "Endurance (400)": 209.52,
         "Adjustments": 0.0,
         "Registered": "True",
         "Passed Tech": "True",
@@ -40184,33 +40184,33 @@
         "team_key": "University of San Diego - Torero Racing"
       },
       "Business Presentation": {
-        "Rank": "",
-        "Eval. Score": "",
-        "Final Score": 0.0,
+        "Rank": 49,
+        "Eval. Score": 10.0,
+        "Final Score": 10.0,
         "Message For Team": ""
       },
       "Cost Event": {
-        "Rank": 27,
-        "Report Score": 10.0,
+        "Rank": 31,
+        "Report Score": 12.0,
         "Penalty Points": 0.0,
-        "Final Score": 51.0,
+        "Final Score": 46.0,
         "Message For Team": ""
       },
       "Design": {
-        "Rank": 47,
+        "Rank": 44,
         "Report Score": 0.0,
         "Eval. Score": 20.0,
         "Bonus Points": 0.0,
-        "Penalty Points": 10.0,
-        "Final Score": 10.0,
-        "Message For Team": "DRB 1 day late"
+        "Penalty Points": 0.0,
+        "Final Score": 20.0,
+        "Message For Team": ""
       },
       "Acceleration": {
-        "Rank": 40,
-        "Time Run 1": 5.535,
+        "Rank": 22,
+        "Time Run 1": 4.617,
         "Time Run 2": "",
-        "Best Time": 5.535,
-        "Score": 9.4
+        "Best Time": 4.617,
+        "Score": 42.67
       },
       "Maneuverability": {
         "Rank": "",
@@ -40226,31 +40226,31 @@
         "Score": 0.0
       },
       "Hill Climb": {
-        "Rank": 29,
-        "Distance Run 1": 267.75,
-        "Time Run 1": 53.046,
-        "Distance Run 2": 244.0,
-        "Time Run 2": 51.253,
-        "Best Time": 0.0,
-        "Best Distance": 267.75,
-        "Score": 27.97
+        "Rank": 24,
+        "Distance Run 1": 0.0,
+        "Time Run 1": 4.49,
+        "Distance Run 2": 300.0,
+        "Time Run 2": 43.85,
+        "Best Time": 43.85,
+        "Best Distance": 300.0,
+        "Score": 39.88
       },
       "Suspension": {
-        "Rank": 31,
-        "Distance Run 1": 5.0,
-        "Time Run 1": 40.848,
+        "Rank": 29,
+        "Distance Run 1": 8.0,
+        "Time Run 1": 64.501,
         "Distance Run 2": "",
         "Time Run 2": "",
         "Best Time": 0.0,
-        "Best Distance": 5.0,
-        "Score": 14.8
+        "Best Distance": 8.0,
+        "Score": 23.68
       },
       "Endurance": {
-        "Rank": 26,
-        "Laps": 18.0,
-        "Points (400)": 107.93651,
-        "Diff To Leader": "28 Laps",
-        "Gap To Next": "32:34.424"
+        "Rank": 21,
+        "Laps": 34.0,
+        "Points (400)": 209.52381,
+        "Diff To Leader": "12 Laps",
+        "Gap To Next": "2 Laps"
       }
     },
     "University of Nevada - Reno": {
@@ -41181,6 +41181,99 @@
         "Points (400)": 57.14286,
         "Diff To Leader": "2 Laps",
         "Gap To Next": "2 Laps"
+      }
+    },
+    "University of San Diego - Torero Club Racing": {
+      "Overall": {
+        "Rank": 35,
+        "Car #": 88,
+        "School": "University of San Diego",
+        "Overall (1000)": 221.12,
+        "Overall Dynamic (300)": 52.18,
+        "Overall Static (300)": 61.0,
+        "Cost Event (100)": 51.0,
+        "Design (150)": 10.0,
+        "Business Presentation (50)": 0.0,
+        "Acceleration (75)": 9.4,
+        "Maneuverability (75)": 0.0,
+        "Hill Climb (75)": 27.97,
+        "Suspension (75)": 14.8,
+        "Endurance (400)": 107.94,
+        "Adjustments": 0.0,
+        "Registered": "True",
+        "Passed Tech": "True",
+        "Passed Tech On Time": "True",
+        "Public Comments": "",
+        "team_key": "University of San Diego - Torero Club Racing"
+      },
+      "Business Presentation": {
+        "Rank": "",
+        "Eval. Score": "",
+        "Final Score": 0.0,
+        "Message For Team": ""
+      },
+      "Cost Event": {
+        "Rank": 27,
+        "Report Score": 10.0,
+        "Penalty Points": 0.0,
+        "Final Score": 51.0,
+        "Message For Team": ""
+      },
+      "Design": {
+        "Rank": 47,
+        "Report Score": 0.0,
+        "Eval. Score": 20.0,
+        "Bonus Points": 0.0,
+        "Penalty Points": 10.0,
+        "Final Score": 10.0,
+        "Message For Team": "DRB 1 day late"
+      },
+      "Acceleration": {
+        "Rank": 40,
+        "Time Run 1": 5.535,
+        "Time Run 2": "",
+        "Best Time": 5.535,
+        "Score": 9.4
+      },
+      "Maneuverability": {
+        "Rank": "",
+        "Time Run 1": "",
+        "# Minor Penalty Run 1": "",
+        "# Major Penalty Run 1": "",
+        "Total Time Run 1": "",
+        "Time Run 2": "",
+        "# Minor Penalty Run 2": "",
+        "# Major Penalty Run 2": "",
+        "Total Time Run 2": "",
+        "Best Time": "",
+        "Score": 0.0
+      },
+      "Hill Climb": {
+        "Rank": 29,
+        "Distance Run 1": 267.75,
+        "Time Run 1": 53.046,
+        "Distance Run 2": 244.0,
+        "Time Run 2": 51.253,
+        "Best Time": 0.0,
+        "Best Distance": 267.75,
+        "Score": 27.97
+      },
+      "Suspension": {
+        "Rank": 31,
+        "Distance Run 1": 5.0,
+        "Time Run 1": 40.848,
+        "Distance Run 2": "",
+        "Time Run 2": "",
+        "Best Time": 0.0,
+        "Best Distance": 5.0,
+        "Score": 14.8
+      },
+      "Endurance": {
+        "Rank": 26,
+        "Laps": 18.0,
+        "Points (400)": 107.93651,
+        "Diff To Leader": "28 Laps",
+        "Gap To Next": "32:34.424"
       }
     },
     "University of Calgary": {
@@ -42598,6 +42691,53 @@
       },
       "Endurance": {
         "Rank": 48,
+        "Laps": 0.0,
+        "Points (400)": 0.0,
+        "Diff To Leader": "",
+        "Gap To Next": ""
+      }
+    },
+    "Johns Hopkins University - Blue Jay Racing 2": {
+      "Overall": {
+        "Rank": 53,
+        "Car #": 81,
+        "School": "Johns Hopkins University",
+        "Overall (1000)": 76.0,
+        "Overall Dynamic (300)": 0.0,
+        "Overall Static (300)": 76.0,
+        "Cost Event (100)": 76.0,
+        "Design (150)": 0.0,
+        "Business Presentation (50)": 0.0,
+        "Acceleration (75)": 0.0,
+        "Maneuverability (75)": 0.0,
+        "Hill Climb (75)": 0.0,
+        "Suspension (75)": 0.0,
+        "Endurance (400)": 0.0,
+        "Adjustments": 0.0,
+        "Registered": "False",
+        "Passed Tech": "False",
+        "Passed Tech On Time": "True",
+        "Public Comments": "",
+        "team_key": "Johns Hopkins University - Blue Jay Racing 2"
+      },
+      "Cost Event": {
+        "Rank": 11,
+        "Report Score": 14.0,
+        "Penalty Points": 0.0,
+        "Final Score": 76.0,
+        "Message For Team": ""
+      },
+      "Design": {
+        "Rank": 50,
+        "Report Score": 0.0,
+        "Eval. Score": 0.0,
+        "Bonus Points": 0.0,
+        "Penalty Points": 0.0,
+        "Final Score": 0.0,
+        "Message For Team": "No show"
+      },
+      "Endurance": {
+        "Rank": 60,
         "Laps": 0.0,
         "Points (400)": 0.0,
         "Diff To Leader": "",
@@ -73329,6 +73469,370 @@
     }
   },
   "Arizona 2022": {
+    "University of Michigan - Ann Arbor": {
+      "Overall": {
+        "Rank": 1,
+        "Car #": 36,
+        "School": "University of Michigan - Ann Arbor",
+        "Overall (1000)": 1009.21,
+        "Overall Dynamic (300)": 237.81,
+        "Overall Static (300)": 291.4,
+        "Cost Event (100)": 91.4,
+        "Design (150)": 130.0,
+        "Sales Presentation (50)": 70.0,
+        "Acceleration (75)": 70.0,
+        "Maneuverability (75)": 69.24,
+        "Sled Pull (75)": 61.91,
+        "Suspension (75)": 36.65,
+        "Endurance (400)": 400.0,
+        "Adjustments": 80.0,
+        "Registered": "True",
+        "Passed Tech": "True",
+        "Passed Tech On Time": "True",
+        "Public Comments": "4WD Bonus",
+        "team_key": "University of Michigan - Ann Arbor - Michigan Baja Racing"
+      },
+      "Sales Presentation": {
+        "Rank": 4,
+        "Eval. Score": 70.0,
+        "Final Score": 70.0,
+        "Message For Team": "Finals"
+      },
+      "Cost Event": {
+        "Rank": 2,
+        "Report Score": 17.0,
+        "Penalty Points": 0.0,
+        "Final Score": 91.4,
+        "Message For Team": ""
+      },
+      "Design": {
+        "Rank": 3,
+        "Report Score": 0.0,
+        "Eval. Score": 130.0,
+        "Bonus Points": 0.0,
+        "Penalty Points": 0.0,
+        "Final Score": 130.0,
+        "Message For Team": "Finals"
+      },
+      "Acceleration": {
+        "Rank": 1,
+        "Time Run 1": 5.424,
+        "Time Run 2": 5.415,
+        "Best Time": 5.415,
+        "Score": 70.0
+      },
+      "Maneuverability": {
+        "Rank": 2,
+        "Time Run 1": 72.677,
+        "# Minor Penalty Run 1": 1,
+        "Total Time Run 1": 74.677,
+        "Time Run 2": 71.024,
+        "# Minor Penalty Run 2": 0,
+        "Total Time Run 2": 71.024,
+        "Best Time": 71.024,
+        "Score": 69.24
+      },
+      "Sled Pull": {
+        "Rank": 7,
+        "Distance Run 1": 178.333,
+        "Time Run 1": 103.824,
+        "Distance Run 2": 187.167,
+        "Time Run 2": 7.739,
+        "Best Time": 0.0,
+        "Best Distance": 187.167,
+        "Score": 61.91
+      },
+      "Suspension": {
+        "Rank": 7,
+        "Distance Run 1": 277.0,
+        "Time Run 1": 32.231,
+        "Distance Run 2": 254.0,
+        "Time Run 2": 42.015,
+        "Best Time": 0.0,
+        "Best Distance": 277.0,
+        "Score": 36.65
+      },
+      "Endurance": {
+        "Rank": 1,
+        "Laps": 70.0,
+        "Points (400)": 400.0,
+        "Diff To Leader": "",
+        "Gap To Next": ""
+      }
+    },
+    "Ecole de Technologie Superieure": {
+      "Overall": {
+        "Rank": 2,
+        "Car #": 41,
+        "School": "Ecole de Technologie Superieure",
+        "Overall (1000)": 969.71,
+        "Overall Dynamic (300)": 216.96,
+        "Overall Static (300)": 278.63,
+        "Cost Event (100)": 91.2,
+        "Design (150)": 145.0,
+        "Sales Presentation (50)": 42.43,
+        "Acceleration (75)": 51.7,
+        "Maneuverability (75)": 70.0,
+        "Sled Pull (75)": 58.61,
+        "Suspension (75)": 36.65,
+        "Endurance (400)": 394.12,
+        "Adjustments": 80.0,
+        "Registered": "True",
+        "Passed Tech": "True",
+        "Passed Tech On Time": "True",
+        "Public Comments": "4WD Bonus",
+        "team_key": "Ecole de Technologie Superieure - Baja ETS"
+      },
+      "Sales Presentation": {
+        "Rank": 34,
+        "Eval. Score": 42.43,
+        "Final Score": 42.43,
+        "Message For Team": ""
+      },
+      "Cost Event": {
+        "Rank": 3,
+        "Report Score": 20.0,
+        "Penalty Points": 0.0,
+        "Final Score": 91.2,
+        "Message For Team": ""
+      },
+      "Design": {
+        "Rank": 1,
+        "Report Score": 0.0,
+        "Eval. Score": 130.0,
+        "Bonus Points": 15.0,
+        "Penalty Points": 0.0,
+        "Final Score": 145.0,
+        "Message For Team": "Finals"
+      },
+      "Acceleration": {
+        "Rank": 11,
+        "Time Run 1": 6.093,
+        "Time Run 2": 6.011,
+        "Best Time": 6.011,
+        "Score": 51.7
+      },
+      "Maneuverability": {
+        "Rank": 1,
+        "Time Run 1": 71.925,
+        "# Minor Penalty Run 1": 0,
+        "Total Time Run 1": 71.925,
+        "Time Run 2": 69.999,
+        "# Minor Penalty Run 2": 0,
+        "Total Time Run 2": 69.999,
+        "Best Time": 69.999,
+        "Score": 70.0
+      },
+      "Sled Pull": {
+        "Rank": 13,
+        "Distance Run 1": 177.167,
+        "Time Run 1": 35.646,
+        "Distance Run 2": 174.333,
+        "Time Run 2": 3.846,
+        "Best Time": 0.0,
+        "Best Distance": 177.167,
+        "Score": 58.61
+      },
+      "Suspension": {
+        "Rank": 5,
+        "Distance Run 1": 277.0,
+        "Time Run 1": 43.493,
+        "Distance Run 2": 277.0,
+        "Time Run 2": 42.14,
+        "Best Time": 0.0,
+        "Best Distance": 277.0,
+        "Score": 36.65
+      },
+      "Endurance": {
+        "Rank": 2,
+        "Laps": 69.0,
+        "Points (400)": 394.11765,
+        "Diff To Leader": "1 Lap",
+        "Gap To Next": "1 Lap"
+      }
+    },
+    "Rochester Institute of Technology": {
+      "Overall": {
+        "Rank": 3,
+        "Car #": 46,
+        "School": "Rochester Institute of Technology",
+        "Overall (1000)": 945.8,
+        "Overall Dynamic (300)": 246.71,
+        "Overall Static (300)": 248.5,
+        "Cost Event (100)": 88.0,
+        "Design (150)": 100.0,
+        "Sales Presentation (50)": 60.5,
+        "Acceleration (75)": 56.43,
+        "Maneuverability (75)": 66.03,
+        "Sled Pull (75)": 54.25,
+        "Suspension (75)": 70.0,
+        "Endurance (400)": 370.59,
+        "Adjustments": 80.0,
+        "Registered": "True",
+        "Passed Tech": "True",
+        "Passed Tech On Time": "True",
+        "Public Comments": "4WD Bonus",
+        "team_key": "Rochester Institute of Technology - RIOT Racing"
+      },
+      "Sales Presentation": {
+        "Rank": 9,
+        "Eval. Score": 60.5,
+        "Final Score": 60.5,
+        "Message For Team": ""
+      },
+      "Cost Event": {
+        "Rank": 4,
+        "Report Score": 16.0,
+        "Penalty Points": 0.0,
+        "Final Score": 88.0,
+        "Message For Team": ""
+      },
+      "Design": {
+        "Rank": 6,
+        "Report Score": 0.0,
+        "Eval. Score": 100.0,
+        "Bonus Points": 0.0,
+        "Penalty Points": 0.0,
+        "Final Score": 100.0,
+        "Message For Team": ""
+      },
+      "Acceleration": {
+        "Rank": 7,
+        "Time Run 1": 5.857,
+        "Time Run 2": 5.906,
+        "Best Time": 5.857,
+        "Score": 56.43
+      },
+      "Maneuverability": {
+        "Rank": 5,
+        "Time Run 1": 81.557,
+        "# Minor Penalty Run 1": 1,
+        "Total Time Run 1": 83.557,
+        "Time Run 2": 75.361,
+        "# Minor Penalty Run 2": 0,
+        "Total Time Run 2": 75.361,
+        "Best Time": 75.361,
+        "Score": 66.03
+      },
+      "Sled Pull": {
+        "Rank": 17,
+        "Distance Run 1": 164.0,
+        "Time Run 1": 8.943,
+        "Distance Run 2": 159.25,
+        "Time Run 2": 9.199,
+        "Best Time": 0.0,
+        "Best Distance": 164.0,
+        "Score": 54.25
+      },
+      "Suspension": {
+        "Rank": 1,
+        "Distance Run 1": 529.0,
+        "Time Run 1": 54.353,
+        "Distance Run 2": 529.0,
+        "Time Run 2": 49.253,
+        "Best Time": 49.253,
+        "Best Distance": 529.0,
+        "Score": 70.0
+      },
+      "Endurance": {
+        "Rank": 7,
+        "Laps": 65.0,
+        "Points (400)": 370.58824,
+        "Diff To Leader": "5 Laps",
+        "Gap To Next": "1 Lap"
+      }
+    },
+    "Oregon State University": {
+      "Overall": {
+        "Rank": 4,
+        "Car #": 52,
+        "School": "Oregon State University",
+        "Overall (1000)": 923.85,
+        "Overall Dynamic (300)": 221.0,
+        "Overall Static (300)": 246.38,
+        "Cost Event (100)": 87.2,
+        "Design (150)": 110.0,
+        "Sales Presentation (50)": 49.18,
+        "Acceleration (75)": 37.46,
+        "Maneuverability (75)": 66.61,
+        "Sled Pull (75)": 61.22,
+        "Suspension (75)": 55.71,
+        "Endurance (400)": 376.47,
+        "Adjustments": 80.0,
+        "Registered": "True",
+        "Passed Tech": "True",
+        "Passed Tech On Time": "True",
+        "Public Comments": "4WD Bonus",
+        "team_key": "Oregon State University - Beaver Racing"
+      },
+      "Sales Presentation": {
+        "Rank": 23,
+        "Eval. Score": 49.18,
+        "Final Score": 49.18,
+        "Message For Team": ""
+      },
+      "Cost Event": {
+        "Rank": 5,
+        "Report Score": 20.0,
+        "Penalty Points": 0.0,
+        "Final Score": 87.2,
+        "Message For Team": ""
+      },
+      "Design": {
+        "Rank": 4,
+        "Report Score": 0.0,
+        "Eval. Score": 110.0,
+        "Bonus Points": 0.0,
+        "Penalty Points": 0.0,
+        "Final Score": 110.0,
+        "Message For Team": "Updated"
+      },
+      "Acceleration": {
+        "Rank": 19,
+        "Time Run 1": 6.801,
+        "Time Run 2": 6.475,
+        "Best Time": 6.475,
+        "Score": 37.46
+      },
+      "Maneuverability": {
+        "Rank": 4,
+        "Time Run 1": 82.982,
+        "# Minor Penalty Run 1": 2,
+        "Total Time Run 1": 86.982,
+        "Time Run 2": 74.584,
+        "# Minor Penalty Run 2": 0,
+        "Total Time Run 2": 74.584,
+        "Best Time": 74.584,
+        "Score": 66.61
+      },
+      "Sled Pull": {
+        "Rank": 8,
+        "Distance Run 1": 152.25,
+        "Time Run 1": 8.543,
+        "Distance Run 2": 185.083,
+        "Time Run 2": 50.474,
+        "Best Time": 0.0,
+        "Best Distance": 185.083,
+        "Score": 61.22
+      },
+      "Suspension": {
+        "Rank": 2,
+        "Distance Run 1": 421.0,
+        "Time Run 1": 124.809,
+        "Distance Run 2": 276.0,
+        "Time Run 2": 64.325,
+        "Best Time": 0.0,
+        "Best Distance": 421.0,
+        "Score": 55.71
+      },
+      "Endurance": {
+        "Rank": 6,
+        "Laps": 66.0,
+        "Points (400)": 376.47059,
+        "Diff To Leader": "4 Laps",
+        "Gap To Next": "1 Lap"
+      }
+    },
     "Case Western Reserve University": {
       "Overall": {
         "Rank": 5,
@@ -74692,6 +75196,97 @@
         "Points (400)": 170.58824,
         "Diff To Leader": "39 Laps",
         "Gap To Next": "2:27.949"
+      }
+    },
+    "Oklahoma Christian University": {
+      "Overall": {
+        "Rank": 21,
+        "Car #": 84,
+        "School": "Oklahoma Christian University",
+        "Overall (1000)": 493.22,
+        "Overall Dynamic (300)": 125.39,
+        "Overall Static (300)": 81.94,
+        "Cost Event (100)": 0.0,
+        "Design (150)": 40.0,
+        "Sales Presentation (50)": 41.94,
+        "Acceleration (75)": 27.08,
+        "Maneuverability (75)": 0.0,
+        "Sled Pull (75)": 66.16,
+        "Suspension (75)": 32.16,
+        "Endurance (400)": 205.88,
+        "Adjustments": 80.0,
+        "Registered": "True",
+        "Passed Tech": "True",
+        "Passed Tech On Time": "True",
+        "Public Comments": "4WD Bonus",
+        "team_key": "Oklahoma Christian University - 8-Mile"
+      },
+      "Sales Presentation": {
+        "Rank": 36,
+        "Eval. Score": 41.94,
+        "Final Score": 41.94,
+        "Message For Team": ""
+      },
+      "Cost Event": {
+        "Rank": "",
+        "Report Score": "",
+        "Penalty Points": "",
+        "Final Score": 0.0,
+        "Message For Team": ""
+      },
+      "Design": {
+        "Rank": 22,
+        "Report Score": 0.0,
+        "Eval. Score": 40.0,
+        "Bonus Points": 0.0,
+        "Penalty Points": 0.0,
+        "Final Score": 40.0,
+        "Message For Team": ""
+      },
+      "Acceleration": {
+        "Rank": 24,
+        "Time Run 1": 6.821,
+        "Time Run 2": 6.813,
+        "Best Time": 6.813,
+        "Score": 27.08
+      },
+      "Maneuverability": {
+        "Rank": "",
+        "Time Run 1": "",
+        "# Minor Penalty Run 1": "",
+        "Total Time Run 1": "",
+        "Time Run 2": "",
+        "# Minor Penalty Run 2": "",
+        "Total Time Run 2": "",
+        "Best Time": "",
+        "Score": 0.0
+      },
+      "Sled Pull": {
+        "Rank": 3,
+        "Distance Run 1": 184.25,
+        "Time Run 1": 11.002,
+        "Distance Run 2": 200.0,
+        "Time Run 2": 22.579,
+        "Best Time": 22.579,
+        "Best Distance": 200.0,
+        "Score": 66.16
+      },
+      "Suspension": {
+        "Rank": 14,
+        "Distance Run 1": 177.0,
+        "Time Run 1": 22.646,
+        "Distance Run 2": 243.0,
+        "Time Run 2": 33.552,
+        "Best Time": 0.0,
+        "Best Distance": 243.0,
+        "Score": 32.16
+      },
+      "Endurance": {
+        "Rank": 15,
+        "Laps": 37.0,
+        "Points (400)": 205.88235,
+        "Diff To Leader": "33 Laps",
+        "Gap To Next": "1 Lap"
       }
     },
     "University of San Diego": {

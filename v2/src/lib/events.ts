@@ -29,3 +29,18 @@ export const EVENTS: BajaEvent[] = [
     desc: "A hometown event for CWRU — deep mud, tight maneuverability courses, and a grueling endurance race close to campus.",
   },
 ];
+
+// The season is the year its competitions run in.
+export const SEASON = Math.max(...EVENTS.map((event) => event.startDate.getFullYear()));
+
+// Every event runs four days from its start; after that it counts as raced.
+const RACE_MS = 4 * 86_400_000;
+
+export type EventStatus = "raced" | "live" | "upcoming";
+
+export function eventStatus(event: BajaEvent, now: number): EventStatus {
+  const start = event.startDate.getTime();
+  if (now >= start + RACE_MS) return "raced";
+  if (now >= start) return "live";
+  return "upcoming";
+}

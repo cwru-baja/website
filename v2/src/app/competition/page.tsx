@@ -1,30 +1,27 @@
-"use client";
-
-import { useState } from "react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
-import RaceCountdown from "@/components/RaceCountdown";
 import SeasonSection from "@/components/SeasonSection";
 import AllResultsSection from "@/components/AllResultsSection";
 import HiredByTheBest from "@/components/HiredByTheBest";
-import { EVENTS } from "@/lib/events";
+import { seasonResults, type BajaData } from "@/lib/results";
 
-function getDefaultIndex() {
-  const now = Date.now();
-  const idx = EVENTS.findIndex((e) => e.startDate.getTime() + 4 * 86_400_000 > now);
-  return idx === -1 ? 0 : idx;
+// Read on the server so only our results, not the whole 8 MB file, reach the page.
+function loadResults() {
+  const file = path.join(process.cwd(), "public/baja-data.json");
+  const data = JSON.parse(readFileSync(file, "utf8")) as BajaData;
+  return seasonResults(data, "Case Western Reserve University");
 }
 
 export default function CompetitionPage() {
-  const [selectedIndex, setSelectedIndex] = useState(getDefaultIndex);
-
   return (
     <>
       <Navbar />
 
       {/* Page header */}
-      <section className="bg-bg pt-40 pb-0">
+      <section className="bg-bg pt-40 pb-24">
         <PageContainer>
 
           {/* Headline */}
@@ -32,7 +29,7 @@ export default function CompetitionPage() {
             className="font-coolvetica font-bold leading-[0.88] text-white"
             style={{ fontSize: "clamp(5rem, 10vw, 11rem)" }}
           >
-            THE <span className="text-red">COMPETITION.</span>
+            THE <span className="text-livery-ink">COMPETITION.</span>
           </h1>
 
           {/* Divider */}
@@ -56,18 +53,16 @@ export default function CompetitionPage() {
             ))}
           </div>
 
-          <SeasonSection selectedIndex={selectedIndex} onSelect={setSelectedIndex} />
+          <SeasonSection />
 
         </PageContainer>
       </section>
-
-      <RaceCountdown selectedIndex={selectedIndex} />
 
       <HiredByTheBest />
 
       <section className="bg-bg py-20">
         <PageContainer>
-          <AllResultsSection />
+          <AllResultsSection results={loadResults()} />
         </PageContainer>
       </section>
 

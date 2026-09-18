@@ -1,524 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  isPodium,
+  ordinal,
+  scoreLabel,
+  type Award,
+  type CompetitionResult,
+  type SeasonResult,
+} from "@/lib/results";
 
-interface Competition {
-  name: string;
-  awards: string[];
-}
-
-interface YearResult {
-  year: string;
-  podiums: number;
-  competitions: Competition[];
-}
-
-function getAvgFinish(competitions: Competition[]): string | null {
-  const overalls: number[] = [];
-  for (const comp of competitions) {
-    for (const award of comp.awards) {
-      const match = award.match(/^(\d+)(?:st|nd|rd|th) Place Overall$/i);
-      if (match) { overalls.push(parseInt(match[1])); break; }
-    }
-  }
-  if (overalls.length === 0) return null;
-  const avg = Math.round(overalls.reduce((a, b) => a + b, 0) / overalls.length);
-  const suffix = avg === 1 ? "st" : avg === 2 ? "nd" : avg === 3 ? "rd" : "th";
-  return `${avg}${suffix}`;
-}
-
-function getOverallPlace(awards: string[]): string | null {
-  for (const award of awards) {
-    const match = award.match(/^(\d+)(st|nd|rd|th) Place Overall$/i);
-    if (match) return `${match[1]}${match[2]}`;
-  }
-  return null;
-}
-
-function getCompPodiums(awards: string[]): number {
-  return awards.filter(a => /^(1st|2nd|3rd)/i.test(a)).length;
-}
-
-function parseAward(award: string): { place: string; event: string } | null {
-  const match = award.match(/^(\d+(?:st|nd|rd|th)) Place (.+)$/i);
-  if (!match) return null;
-  return { place: match[1], event: match[2] };
-}
-
-const RESULTS: YearResult[] = [
-  {
-    year: "2025",
-    podiums: 7,
-    competitions: [
-      {
-        name: "Baja SAE Carolina",
-        awards: [
-          "7th Place Overall",
-          "19th Place Business Presentation",
-          "5th Place Cost",
-          "2nd Place Design",
-          "3rd Place Acceleration",
-          "4th Place Hill Climb",
-          "1st Place Suspension & Traction",
-          "9th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Maryland",
-        awards: [
-          "6th Place Overall",
-          "28th Place Business Presentation",
-          "10th Place Cost",
-          "1st Place Design",
-          "7th Place Acceleration",
-          "11th Place Maneuverability",
-          "9th Place Hill Climb",
-          "33rd Place Suspension & Traction",
-          "2nd Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Arizona",
-        awards: [
-          "4th Place Overall",
-          "22nd Place Business Presentation",
-          "11th Place Cost",
-          "1st Place Design",
-          "11th Place Acceleration",
-          "16th Place Maneuverability",
-          "9th Place Pilot Pull",
-          "7th Place Suspension & Traction",
-          "1st Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2024",
-    podiums: 6,
-    competitions: [
-      {
-        name: "Baja SAE Michigan",
-        awards: [
-          "6th Place Overall",
-          "32nd Place Business Presentation",
-          "16th Place Cost",
-          "7th Place Design",
-          "1st Place Acceleration",
-          "11th Place Maneuverability",
-          "3rd Place Hill Climb",
-          "6th Place Suspension & Traction",
-          "6th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Williamsport",
-        awards: [
-          "6th Place Overall",
-          "33rd Place Business Presentation",
-          "22nd Place Cost",
-          "4th Place Design",
-          "1st Place Acceleration",
-          "5th Place Maneuverability",
-          "7th Place Hill Climb",
-          "10th Place Suspension & Traction",
-          "20th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE California",
-        awards: [
-          "9th Place Overall",
-          "22nd Place Business Presentation",
-          "20th Place Cost",
-          "5th Place Design",
-          "1st Place Acceleration",
-          "2nd Place Maneuverability",
-          "1st Place Hill Climb",
-          "5th Place Suspension & Traction",
-          "19th Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2023",
-    podiums: 8,
-    competitions: [
-      {
-        name: "Baja SAE Ohio",
-        awards: [
-          "1st Place Overall",
-          "2nd Place Business Presentation",
-          "22nd Place Cost",
-          "8th Place Design",
-          "3rd Place Acceleration",
-          "2nd Place Maneuverability",
-          "28th Place Pilot Pull",
-          "1st Place Suspension & Traction",
-          "2nd Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Oregon",
-        awards: [
-          "6th Place Overall",
-          "9th Place Sales Presentation",
-          "47th Place Cost",
-          "3rd Place Design",
-          "5th Place Acceleration",
-          "4th Place Maneuverability",
-          "11th Place Hill Climb",
-          "17th Place Rock Crawl",
-          "2nd Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Oshkosh",
-        awards: [
-          "5th Place Overall",
-          "5th Place Sales Presentation",
-          "13th Place Cost",
-          "5th Place Design",
-          "2nd Place Acceleration",
-          "4th Place Maneuverability",
-          "42nd Place Sled Pull",
-          "11th Place Suspension & Traction",
-          "9th Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2022",
-    podiums: 3,
-    competitions: [
-      {
-        name: "Baja SAE Tennessee Tech",
-        awards: [
-          "12th Place Overall",
-          "5th Place Sales Presentation",
-          "13th Place Cost",
-          "4th Place Design",
-          "4th Place Acceleration",
-          "54th Place Sled Pull",
-          "40th Place Suspension & Traction",
-          "12th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Arizona",
-        awards: [
-          "5th Place Overall",
-          "2nd Place Sales Presentation",
-          "12th Place Cost",
-          "13th Place Design",
-          "3rd Place Acceleration",
-          "3rd Place Maneuverability",
-          "6th Place Sled Pull",
-          "12th Place Suspension & Traction",
-          "8th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Rochester",
-        awards: [
-          "28th Place Overall",
-          "16th Place Sales Presentation",
-          "15th Place Cost",
-          "24th Place Design",
-          "6th Place Acceleration",
-          "18th Place Maneuverability",
-          "58th Place Sled Pull",
-          "52nd Place Suspension & Traction",
-          "39th Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2019",
-    podiums: 1,
-    competitions: [
-      {
-        name: "Baja SAE Rochester",
-        awards: [
-          "11th Place Overall",
-          "13th Place Sales Presentation",
-          "25th Place Cost",
-          "20th Place Design",
-          "1st Place Acceleration",
-          "41st Place Maneuverability",
-          "4th Place Hill Climb",
-          "35th Place Suspension & Traction",
-          "15th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE California",
-        awards: [
-          "13th Place Overall",
-          "45th Place Sales Presentation",
-          "23rd Place Cost",
-          "15th Place Design",
-          "22nd Place Acceleration",
-          "31st Place Maneuverability",
-          "28th Place Hill Climb",
-          "29th Place Suspension & Traction",
-          "15th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Tennessee Tech",
-        awards: [
-          "31st Place Overall",
-          "15th Place Sales Presentation",
-          "20th Place Cost",
-          "10th Place Design",
-          "8th Place Acceleration",
-          "35th Place Maneuverability",
-          "35th Place Sled Pull",
-          "6th Place Suspension & Traction",
-          "65th Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2018",
-    podiums: 2,
-    competitions: [
-      {
-        name: "Baja SAE Oregon",
-        awards: [
-          "18th Place Overall",
-          "45th Place Sales Presentation",
-          "32nd Place Cost",
-          "11th Place Design",
-          "4th Place Acceleration",
-          "15th Place Maneuverability",
-          "24th Place Hill Climb",
-          "34th Place Rock Crawl",
-          "32nd Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Kansas",
-        awards: [
-          "23rd Place Overall",
-          "40th Place Sales Presentation",
-          "43rd Place Cost",
-          "3rd Place Design",
-          "10th Place Acceleration",
-          "25th Place Maneuverability",
-          "17th Place Sled Pull",
-          "55th Place Suspension & Traction",
-          "40th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Maryland",
-        awards: [
-          "12th Place Overall",
-          "19th Place Sales Presentation",
-          "34th Place Cost",
-          "22nd Place Design",
-          "4th Place Acceleration",
-          "3rd Place Maneuverability",
-          "9th Place Hill Climb",
-          "40th Place Suspension & Traction",
-          "16th Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2017",
-    podiums: 0,
-    competitions: [
-      {
-        name: "Baja SAE Kansas",
-        awards: [
-          "8th Place Overall",
-          "67th Place Sales Presentation",
-          "79th Place Cost",
-          "21st Place Design",
-          "11th Place Acceleration",
-          "6th Place Maneuverability",
-          "48th Place Sled Pull",
-          "14th Place Suspension & Traction",
-          "8th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE California",
-        awards: [
-          "9th Place Overall",
-          "6th Place Sales Presentation",
-          "38th Place Cost",
-          "14th Place Design",
-          "14th Place Acceleration",
-          "6th Place Maneuverability",
-          "29th Place Hill Climb",
-          "4th Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2016",
-    podiums: 1,
-    competitions: [
-      {
-        name: "Baja SAE Rochester",
-        awards: [
-          "23rd Place Overall",
-          "6th Place Sales Presentation",
-          "27th Place Cost",
-          "12th Place Design",
-          "3rd Place Acceleration",
-          "22nd Place Maneuverability",
-          "4th Place Hill Climb",
-          "26th Place Suspension & Traction",
-          "50th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE California",
-        awards: [
-          "23rd Place Overall",
-          "4th Place Sales Presentation",
-          "29th Place Cost",
-          "12th Place Design",
-          "8th Place Acceleration",
-          "32nd Place Maneuverability",
-          "30th Place Hill Climb",
-          "39th Place Suspension & Traction",
-          "40th Place Endurance",
-        ],
-      },
-      {
-        name: "Baja SAE Tennessee Tech",
-        awards: [
-          "46th Place Overall",
-          "24th Place Sales Presentation",
-          "30th Place Cost",
-          "21st Place Design",
-          "4th Place Acceleration",
-          "30th Place Maneuverability",
-          "62nd Place Sled Pull",
-          "30th Place Suspension & Traction",
-          "69th Place Endurance",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2015",
-    podiums: 0,
-    competitions: [
-      {
-        name: "Baja SAE Oregon",
-        awards: [
-          "42nd Place Overall",
-          "53rd Place Endurance",
-          "26th Place Hill Climb",
-          "20th Place Rock Crawl",
-          "17th Place Maneuverability",
-          "27th Place Acceleration",
-          "8th Place Sales Presentation",
-          "23rd Place Design",
-          "64th Place Cost",
-        ],
-      },
-      {
-        name: "Baja SAE Maryland",
-        awards: [
-          "14th Place Overall",
-          "5th Place Endurance",
-          "22nd Place Suspension & Traction",
-          "28th Place Hill Climb",
-          "23rd Place Maneuverability",
-          "38th Place Acceleration",
-          "52nd Place Sales Presentation",
-          "21st Place Design",
-          "58th Place Cost",
-        ],
-      },
-      {
-        name: "Baja SAE Auburn",
-        awards: [
-          "42nd Place Overall",
-          "59th Place Endurance",
-          "47th Place Suspension & Traction",
-          "32nd Place Hill Climb",
-          "23rd Place Maneuverability",
-          "10th Place Acceleration",
-          "14th Place Sales Presentation",
-          "20th Place Design",
-          "62nd Place Cost",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2014",
-    podiums: 0,
-    competitions: [
-      {
-        name: "Baja SAE Illinois",
-        awards: [
-          "42nd Place Overall",
-          "32nd Place Endurance",
-          "37th Place Hill Climb",
-          "59th Place Rock Crawl",
-          "55th Place Maneuverability",
-          "21st Place Acceleration",
-          "26th Place Sales Presentation",
-          "55th Place Design",
-          "34th Place Cost",
-        ],
-      },
-      {
-        name: "Baja SAE Kansas",
-        awards: [
-          "49th Place Overall",
-          "34th Place Endurance",
-          "62nd Place Suspension & Traction",
-          "71st Place Sled Pull",
-          "50th Place Maneuverability",
-          "72nd Place Acceleration",
-          "46th Place Sales Presentation",
-          "27th Place Design",
-          "43rd Place Cost",
-        ],
-      },
-    ],
-  },
-  {
-    year: "2013",
-    podiums: 0,
-    competitions: [
-      {
-        name: "Baja SAE Rochester",
-        awards: [
-          "58th Place Overall",
-          "68th Place Endurance",
-          "27th Place Suspension & Traction",
-          "60th Place Hill Climb",
-          "35th Place Maneuverability",
-          "49th Place Acceleration",
-          "30th Place Design",
-          "31st Place Cost",
-        ],
-      },
-    ],
-  },
-];
-
-function FinishDisplay({ finish, small }: { finish: string; small?: boolean }) {
+function FinishDisplay({ finish, fontSize }: { finish: string; fontSize: string }) {
   const match = finish.match(/^(\d+)(st|nd|rd|th)$/i);
-  const fontSize = small ? "clamp(1.2rem,2vw,1.8rem)" : "clamp(1.8rem,3vw,3rem)";
   if (!match)
     return (
       <span className="font-clash font-bold" style={{ fontSize }}>
@@ -542,28 +35,193 @@ function FinishDisplay({ finish, small }: { finish: string; small?: boolean }) {
 }
 
 const COLS_YEAR = "5rem 1fr 8rem 7rem";
-const COLS_COMP = "4rem 1fr 8rem 7rem";
-const COLS_EVENT = "4rem 1fr 8rem 7rem";
+const FINISH_YEAR = "clamp(1.8rem,3vw,3rem)";
+const FINISH_EVENT = "clamp(1.25rem,2vw,1.75rem)";
+const FINISH_PODIUM = "clamp(1.5rem,2.4vw,2.125rem)";
+const EVENT_NAME = "clamp(1rem,1.9vw,1.625rem)";
 
-export default function AllResultsSection() {
-  const [expanded, setExpanded] = useState<{
-    year: string | null;
-    competition: string | null;
-  }>({ year: null, competition: null });
-  const { year: openYear, competition: openComp } = expanded;
+const placeLabel = (award?: Award) =>
+  award?.place === undefined ? "—" : ordinal(award.place);
 
-  function handleYearClick(year: string) {
-    setExpanded((current) =>
-      current.year === year
-        ? { year: null, competition: null }
-        : { year, competition: null },
-    );
+const venue = (competition: CompetitionResult) =>
+  competition.name.replace(/^Baja SAE\s*/i, "").toUpperCase();
+
+// One competition at a time: venue names as tabs over a ledger of its events.
+function Ledger({ result }: { result: SeasonResult }) {
+  const [picked, setPicked] = useState(0);
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const id = (part: string, i: number) => `results-${result.year}-${part}-${i}`;
+
+  function onTabKey(event: KeyboardEvent) {
+    const last = result.competitions.length - 1;
+    const next = {
+      ArrowRight: picked === last ? 0 : picked + 1,
+      ArrowLeft: picked === 0 ? last : picked - 1,
+      Home: 0,
+      End: last,
+    }[event.key];
+    if (next === undefined) return;
+    event.preventDefault();
+    setPicked(next);
+    tabs.current[next]?.focus();
   }
+
+  return (
+    <div className="pt-7 pb-4 sm:ml-20">
+      {/* The rule is an inset shadow so the active underline can cover it
+          without a negative margin, which the scroll container would clip. */}
+      <div
+        role="tablist"
+        aria-label={`${result.year} competitions`}
+        className="flex items-baseline gap-x-6 sm:gap-x-8 overflow-x-auto whitespace-nowrap shadow-[inset_0_-1px_0_rgb(255_255_255/0.08)]"
+        onKeyDown={onTabKey}
+      >
+        {result.competitions.map((competition, i) => {
+          const active = i === picked;
+          return (
+            <button
+              key={competition.name}
+              ref={(el) => {
+                tabs.current[i] = el;
+              }}
+              type="button"
+              role="tab"
+              id={id("tab", i)}
+              aria-selected={active}
+              aria-controls={id("panel", i)}
+              tabIndex={active ? 0 : -1}
+              onClick={() => setPicked(i)}
+              className={`shrink-0 cursor-pointer border-b-[3px] pb-3 font-coolvetica font-bold leading-none ${
+                active
+                  ? "border-livery-ink text-livery-ink"
+                  : "border-transparent text-white/42 hover:text-white"
+              }`}
+              style={{ fontSize: "clamp(1.25rem,2.2vw,1.875rem)" }}
+            >
+              {venue(competition)}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Every competition's panel shares one grid cell, so the ledger is as
+          tall as the season's longest and switching tabs never moves the
+          seasons below it. */}
+      <div className="mt-3.5 grid">
+        {result.competitions.map((competition, i) => (
+          <div
+            key={competition.name}
+            role="tabpanel"
+            id={id("panel", i)}
+            aria-labelledby={id("tab", i)}
+            style={{ gridArea: "1 / 1", visibility: i === picked ? "visible" : "hidden" }}
+          >
+            <CompetitionLedger competition={competition} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CompetitionLedger({ competition }: { competition: CompetitionResult }) {
+  const overall = competition.awards.find((award) => award.event === "Overall");
+  const events = competition.awards.filter((award) => award.event !== "Overall");
+  return (
+    <>
+      <LedgerRow
+        name={
+          <span className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
+            <span>OVERALL</span>
+            <span className="font-satoshi font-normal text-[0.6rem] tracking-[0.2em] uppercase text-white/40">
+              of {competition.teams} teams
+            </span>
+          </span>
+        }
+        score={scoreLabel(overall ?? {})}
+        finish={placeLabel(overall)}
+        podium={false}
+      />
+      {events.map((award) => (
+        <LedgerRow
+          key={award.event}
+          name={award.event.toUpperCase()}
+          score={scoreLabel(award)}
+          finish={placeLabel(award)}
+          podium={isPodium(award)}
+        />
+      ))}
+    </>
+  );
+}
+
+function LedgerRow({
+  name,
+  score,
+  finish,
+  podium,
+}: {
+  name: React.ReactNode;
+  score: string;
+  finish: string;
+  podium: boolean;
+}) {
+  return (
+    <div
+      className={`grid grid-cols-[1fr_auto] items-center gap-3 sm:gap-4 border-b border-white/6 py-3 sm:py-[13px] ${
+        podium ? "text-livery-pop" : "text-white/62"
+      }`}
+    >
+      <span
+        className="font-coolvetica font-bold leading-[1.1]"
+        style={{ fontSize: EVENT_NAME }}
+      >
+        {name}
+      </span>
+      {/* Held to the event name's line height so a podium's larger numeral
+          overflows into the padding instead of making its row taller. */}
+      <div
+        className="flex items-center justify-end"
+        style={{ fontSize: EVENT_NAME, height: "1.1em" }}
+      >
+        {/* Score and place share a baseline, so the score sits level with the
+            bottom of the place digits. */}
+        <div className="flex items-baseline gap-3 sm:gap-4">
+          <span
+            className={`w-[5.5rem] sm:w-[7rem] font-clash font-medium text-right whitespace-nowrap leading-none text-[0.8rem] sm:text-[0.9375rem] tracking-[0.02em] ${
+              podium ? "text-livery-pop/90" : "text-white/55"
+            }`}
+          >
+            {score}
+          </span>
+          <div className="flex w-14 sm:w-[5.5rem] justify-end">
+            <FinishDisplay finish={finish} fontSize={podium ? FINISH_PODIUM : FINISH_EVENT} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function AllResultsSection({ results }: { results: SeasonResult[] }) {
+  const [openYear, setOpenYear] = useState<string | null>(null);
+  // Only one season is open at a time, so opening a year can close a ledger
+  // above it and pull the clicked row hundreds of pixels up the page, out of
+  // view. Hold the clicked row where it was on screen instead.
+  const pinned = useRef<{ row: HTMLElement; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const pin = pinned.current;
+    pinned.current = null;
+    if (!pin) return;
+    const shift = pin.row.getBoundingClientRect().top - pin.top;
+    if (shift !== 0) window.scrollBy({ top: shift, behavior: "instant" });
+  }, [openYear]);
 
   return (
     <div className="pb-4">
       {/* Section header */}
-      <div className="text-right">
+      <div className="text-left">
         <div
           className="font-coolvetica font-bold leading-none text-white"
           style={{ fontSize: "clamp(2rem,4.5vw,5rem)" }}
@@ -571,7 +229,7 @@ export default function AllResultsSection() {
           ALL
         </div>
         <div
-          className="font-brier font-semibold leading-none text-red -mt-2"
+          className="font-brier font-semibold leading-none text-livery-pop -mt-2"
           style={{ fontSize: "clamp(2rem,4.5vw,5rem)" }}
         >
           RESULTS
@@ -579,7 +237,8 @@ export default function AllResultsSection() {
       </div>
 
       {/* Table */}
-      <div className="mt-8">
+      {/* Scroll anchoring is off here because the effect above does the anchoring. */}
+      <div className="mt-8" style={{ overflowAnchor: "none" }}>
         {/* Column headers */}
         <div
           className="grid items-center border-b border-white/8 py-3"
@@ -592,23 +251,29 @@ export default function AllResultsSection() {
             Year
           </span>
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right pr-6">
-            Avg Finish
+            Season Rank
           </span>
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right">
             Podiums
           </span>
         </div>
 
-        {RESULTS.map((result) => {
+        {results.map((result) => {
           const isOpen = openYear === result.year;
+          const tone = isOpen ? "text-on-livery" : "text-white group-hover:text-on-livery";
           return (
             <div key={result.year}>
               {/* Year row */}
               <button
                 type="button"
-                onClick={() => handleYearClick(result.year)}
+                onClick={(event) => {
+                  const row = event.currentTarget;
+                  pinned.current = { row, top: row.getBoundingClientRect().top };
+                  setOpenYear(isOpen ? null : result.year);
+                }}
+                aria-expanded={isOpen}
                 className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
-                  isOpen ? "bg-red" : "hover:bg-red"
+                  isOpen ? "bg-livery" : "hover:bg-livery"
                 }`}
                 style={{ gridTemplateColumns: COLS_YEAR }}
               >
@@ -618,156 +283,36 @@ export default function AllResultsSection() {
                   viewBox="0 0 36 36"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
                   style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                  className={`ml-4 ${isOpen ? "text-black" : "text-red group-hover:text-black"}`}
+                  className={`ml-4 ${isOpen ? "text-on-livery" : "text-livery-ink group-hover:text-on-livery"}`}
                 >
                   <path d="M6 12L18 24L30 12" stroke="currentColor" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter" />
                 </svg>
 
                 <span
-                  className={`font-coolvetica font-bold text-left leading-none transition-none ${
-                    isOpen ? "text-black" : "text-white group-hover:text-black"
-                  }`}
+                  className={`font-coolvetica font-bold text-left leading-none transition-none ${tone}`}
                   style={{ fontSize: "clamp(2rem,4vw,4.5rem)" }}
                 >
                   {result.year}
                 </span>
 
-                <div
-                  className={`text-right pr-6 transition-none ${
-                    isOpen ? "text-black" : "text-white group-hover:text-black"
-                  }`}
-                >
-                  {getAvgFinish(result.competitions) ? (
-                    <FinishDisplay finish={getAvgFinish(result.competitions)!} />
-                  ) : (
-                    <span className="font-clash font-bold opacity-20" style={{ fontSize: "clamp(1.8rem,3vw,3rem)" }}>
-                      —
-                    </span>
-                  )}
+                <div className={`text-right pr-6 transition-none ${tone}`}>
+                  <FinishDisplay finish={ordinal(result.seasonRank)} fontSize={FINISH_YEAR} />
                 </div>
 
                 <div className="text-right pr-4">
                   <span
-                    className={`font-clash font-bold transition-none ${
-                      isOpen ? "text-black" : "text-white group-hover:text-black"
-                    }`}
-                    style={{ fontSize: "clamp(1.8rem,3vw,3rem)", lineHeight: 1 }}
+                    className={`font-clash font-bold transition-none ${tone}`}
+                    style={{ fontSize: FINISH_YEAR, lineHeight: 1 }}
                   >
                     {result.podiums}
                   </span>
                 </div>
               </button>
 
-              {/* Competition sub-rows */}
-              {isOpen && <div className="pt-1" />}
-              {isOpen && result.competitions.map((comp) => {
-                const compKey = `${result.year}-${comp.name}`;
-                const isCompOpen = openComp === compKey;
-                const overallPlace = getOverallPlace(comp.awards);
-                const compPodiums = getCompPodiums(comp.awards);
-
-                return (
-                  <div key={comp.name}>
-                    {/* Competition row — indented */}
-                    <div className="pl-10">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpanded((current) => ({
-                            ...current,
-                            competition:
-                              current.competition === compKey ? null : compKey,
-                          }))
-                        }
-                        className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
-                          isCompOpen ? "bg-red" : "hover:bg-red"
-                        }`}
-                        style={{ gridTemplateColumns: COLS_COMP }}
-                      >
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 36 36"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          style={{ transform: isCompOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-                          className={`ml-3 ${isCompOpen ? "text-black" : "text-red group-hover:text-black"}`}
-                        >
-                          <path d="M6 12L18 24L30 12" stroke="currentColor" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter" />
-                        </svg>
-
-                        <span
-                          className={`font-coolvetica font-bold text-left leading-tight transition-none ${
-                            isCompOpen ? "text-black" : "text-white group-hover:text-black"
-                          }`}
-                          style={{ fontSize: "clamp(1.1rem,2.2vw,2rem)" }}
-                        >
-                          {comp.name.replace(/^Baja SAE\s*/i, "")}
-                        </span>
-
-                        <div
-                          className={`text-right pr-6 transition-none ${
-                            isCompOpen ? "text-black" : "text-white group-hover:text-black"
-                          }`}
-                        >
-                          {overallPlace ? (
-                            <FinishDisplay finish={overallPlace} small />
-                          ) : (
-                            <span className="font-clash font-bold opacity-20" style={{ fontSize: "clamp(1.2rem,2vw,1.8rem)" }}>—</span>
-                          )}
-                        </div>
-
-                        <div className="text-right pr-4">
-                          <span
-                            className={`font-clash font-bold transition-none ${
-                              isCompOpen ? "text-black" : "text-white group-hover:text-black"
-                            }`}
-                            style={{ fontSize: "clamp(1.2rem,2vw,1.8rem)", lineHeight: 1 }}
-                          >
-                            {compPodiums}
-                          </span>
-                        </div>
-                      </button>
-
-                      {/* Event rows — indented further */}
-                      {isCompOpen && comp.awards.map((award) => {
-                        const parsed = parseAward(award);
-                        if (!parsed) return null;
-                        const isPodium = /^(1st|2nd|3rd)/i.test(parsed.place);
-
-                        return (
-                          <div key={award} className="pl-10">
-                            <div
-                              className="w-full grid items-center border-b border-white/8 py-3"
-                              style={{ gridTemplateColumns: COLS_EVENT }}
-                            >
-                              {/* Empty chevron column */}
-                              <div />
-
-                              <span
-                                className={`font-coolvetica font-bold leading-tight ${
-                                  isPodium ? "text-red" : "text-white/40"
-                                }`}
-                                style={{ fontSize: "clamp(0.9rem,1.6vw,1.4rem)" }}
-                              >
-                                {parsed.event}
-                              </span>
-
-                              <div className={`text-right pr-6 ${isPodium ? "text-red" : "text-white/40"}`}>
-                                <FinishDisplay finish={parsed.place} small />
-                              </div>
-
-                              <div />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-              {isOpen && <div className="pb-6" />}
+              {/* Keyed by year so reopening a season starts on its first competition. */}
+              {isOpen && <Ledger key={result.year} result={result} />}
             </div>
           );
         })}
