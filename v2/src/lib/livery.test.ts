@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -64,5 +66,36 @@ describe("liveryTheme", () => {
 
   it("uses SR26 as the current car", () => {
     expect(CURRENT_CAR).toBe("sr26");
+  });
+});
+
+// The accent used to be a hardcoded red. Anything that still names it will not
+// follow the livery, so fail loudly instead of shipping a stray red element.
+describe("no hardcoded accent red", () => {
+  const srcDir = join(__dirname, "..");
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(dir)) {
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) walk(path);
+      else if (/\.(tsx?|css|svg)$/.test(name) && !name.endsWith(".test.ts")) files.push(path);
+    }
+  };
+  walk(srcDir);
+
+  const patterns = [
+    /#(bc2121|8a1818|3d0a0a|600d0d|be2026)\b/i,
+    /rgba?\(\s*(188,\s*33,\s*33|169,\s*10,\s*28)/,
+    // Utilities on the old --color-red token. Stock scale reds (red-300) are a
+    // separate categorical palette and stay.
+    /\b[a-z-]+-red(?:-dim)?(?![\w-])/,
+  ];
+
+  it.each(files.map((f) => [relative(srcDir, f), f]))("%s", (_rel, file) => {
+    const offending = readFileSync(file, "utf8")
+      .split("\n")
+      .map((line, i) => ({ line: line.trim(), n: i + 1 }))
+      .filter(({ line }) => patterns.some((p) => p.test(line)));
+    expect(offending).toEqual([]);
   });
 });

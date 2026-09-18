@@ -1,0 +1,282 @@
+{
+  "brakes": [
+    {
+      "id": "brakes-caliper",
+      "text": "Caliper",
+      "part": "caliper",
+      "dot": {
+        "x": 34.95,
+        "y": 68.75
+      },
+      "end": {
+        "x": 15,
+        "y": 60.78
+      }
+    },
+    {
+      "id": "brakes-rotor",
+      "text": "Rotor",
+      "part": "rotor",
+      "dot": {
+        "x": 36.53,
+        "y": 83.48
+      },
+      "end": {
+        "x": 15,
+        "y": 88
+      }
+    },
+    {
+      "id": "brakes-master-cylinders",
+      "text": "Master cylinders",
+      "part": "master-cylinders",
+      "dot": {
+        "x": 64.54,
+        "y": 17.82
+      },
+      "end": {
+        "x": 84.75,
+        "y": 6.2
+      }
+    },
+    {
+      "id": "brakes-lines",
+      "text": "Brake lines",
+      "part": "brake-lines",
+      "dot": {
+        "x": 56.88,
+        "y": 43.49
+      },
+      "end": {
+        "x": 80,
+        "y": 56
+      }
+    }
+  ],
+  "frame": [
+    {
+      "id": "frame-ljpmwi",
+      "text": "4130 chromoly steel",
+      "dot": {
+        "x": 64.86,
+        "y": 28.87
+      },
+      "end": {
+        "x": 89.68,
+        "y": 17.73
+      }
+    },
+    {
+      "id": "frame-nqbhyw",
+      "text": "tubes bent & notched in house",
+      "dot": {
+        "x": 31.5,
+        "y": 23.28
+      },
+      "end": {
+        "x": 13.68,
+        "y": 17.58
+      }
+    }
+  ],
+  "drivetrain": [
+    {
+      "id": "drivetrain-7g5fst",
+      "text": "gearbox",
+      "part": "gearbox",
+      "dot": {
+        "x": 20.78,
+        "y": 49.64
+      },
+      "end": {
+        "x": 8.75,
+        "y": 42.69
+      }
+    },
+    {
+      "id": "drivetrain-h56u76",
+      "text": "CVT",
+      "part": "cvt",
+      "dot": {
+        "x": 37.2,
+        "y": 31.34
+      },
+      "end": {
+        "x": 44.41,
+        "y": 26.52
+      }
+    },
+    {
+      "id": "drivetrain-3o87ya",
+      "text": "front transfer case",
+      "part": "front-transfer-case",
+      "dot": {
+        "x": 75.52,
+        "y": 49.97
+      },
+      "end": {
+        "x": 91.88,
+        "y": 44.09
+      }
+    },
+    {
+      "id": "drivetrain-n76jqf",
+      "text": "engine",
+      "part": "engine",
+      "dot": {
+        "x": 41.43,
+        "y": 51.76
+      },
+      "end": {
+        "x": 51.17,
+        "y": 46.77
+      }
+    },
+    {
+      "id": "drivetrain-30x3i5",
+      "text": "load-bearing half shafts",
+      "part": "rear-half-shafts",
+      "dot": {
+        "x": 23.42,
+        "y": 31.11
+      },
+      "end": {
+        "x": 46.37,
+        "y": 20.57
+      }
+    },
+    {
+      "id": "drivetrain-2ev18x",
+      "text": "propshaft",
+      "part": "propshaft",
+      "dot": {
+        "x": 48.23,
+        "y": 62.52
+      },
+      "end": {
+        "x": 59.57,
+        "y": 77.01
+      }
+    },
+    {
+      "id": "drivetrain-cxkb2h",
+      "text": "rear transfer case",
+      "part": "bevel-box",
+      "dot": {
+        "x": 26.39,
+        "y": 63.05
+      },
+      "end": {
+        "x": 40.6,
+        "y": 71.14
+      }
+    },
+    {
+      "id": "drivetrain-ysfwuc",
+      "text": "torque limiters",
+      "part": "torque-limiter",
+      "dot": {
+        "x": 74.3,
+        "y": 55.5
+      },
+      "end": {
+        "x": 91.0,
+        "y": 63.0
+      }
+    },
+    {
+      "id": "drivetrain-ghmksw",
+      "text": "dog clutch",
+      "part": "dog-clutch",
+      "dot": {
+        "x": 25.7,
+        "y": 55.6
+      },
+      "end": {
+        "x": 11.0,
+        "y": 62.0
+      }
+    },
+    {
+      "id": "drivetrain-otkb6r",
+      "text": "front hub and spindle",
+      "part": "front-hub-and-spindle",
+      "dot": {
+        "x": 76.35,
+        "y": 89.2
+      },
+      "end": {
+        "x": 92.0,
+        "y": 82.0
+      }
+    },
+    {
+      "id": "drivetrain-ulv51s",
+      "text": "rear hub and spindle",
+      "part": "rear-hub-and-spindle",
+      "dot": {
+        "x": 23.55,
+        "y": 85.4
+      },
+      "end": {
+        "x": 9.0,
+        "y": 78.0
+      }
+    }
+  ],
+  "electronics": [],
+  "suspension": [
+    {
+      "id": "suspension-ihr12s",
+      "text": "fox float 3 shocks",
+      "part": "shocks",
+      "dot": {
+        "x": 53.3,
+        "y": 35.77
+      },
+      "end": {
+        "x": 67.81,
+        "y": 40.77
+      }
+    },
+    {
+      "id": "suspension-2s6a4o",
+      "text": "custom hubs",
+      "part": "hubs",
+      "dot": {
+        "x": 69.45,
+        "y": 77.04
+      },
+      "end": {
+        "x": 81.94,
+        "y": 67.01
+      }
+    },
+    {
+      "id": "suspension-whlwf7",
+      "text": "custom uprights",
+      "part": "uprights",
+      "dot": {
+        "x": 61.33,
+        "y": 82.94
+      },
+      "end": {
+        "x": 43.07,
+        "y": 92.81
+      }
+    },
+    {
+      "id": "suspension-d9fdcc",
+      "text": "double wishbone suspension",
+      "part": "wishbones",
+      "dot": {
+        "x": 43.28,
+        "y": 64.65
+      },
+      "end": {
+        "x": 39.26,
+        "y": 76.82
+      }
+    }
+  ]
+}
