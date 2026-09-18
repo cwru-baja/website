@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch: render and export output, headless-browser profiles, QA captures.
+# The Blender render/export scripts in artifacts/ stay tracked.
+/artifacts/*
+!/artifacts/*.py
+!/artifacts/*.mjs
+!/artifacts/orbit-preview/
+/artifacts/orbit-preview/*
+!/artifacts/orbit-preview/*.py
+/prof-*/
+/.codex-tmp/
+/public/renders-sr26/temp/
+/design-qa*.md
+/*.png
