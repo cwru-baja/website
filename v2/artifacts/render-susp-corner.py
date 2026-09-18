@@ -26,11 +26,17 @@ turned is chosen entirely by which frame the move leaves from.
   STAGE   = base | wheel | all
   QUALITY = preview (64 spp, 50%, PNG) | final (256 spp, 100%, WEBP)
   I0/I1   = chunk bounds, to keep any one call short
+  PROFILE = landscape (default) | portrait: KOPT's K and lens shift from
+            portrait-plan.json, easing from the orbit still to the corner still
 """
 
 import bpy, os, math, time
 from mathutils import Vector, Matrix
 import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(globals().get(
+    "__file__", "/Users/aretelew/Developer/baja/baja-website/v2/artifacts/render-susp-corner.py")))
+exec(open(os.path.join(HERE, "render_profile.py")).read())
 
 STAGE   = globals().get("STAGE", "all")
 QUALITY = globals().get("QUALITY", "preview")
@@ -325,6 +331,8 @@ else:
     cy.samples = 256; r.resolution_percentage = 100
     r.image_settings.file_format = 'WEBP'; r.image_settings.color_mode = 'RGBA'
     r.image_settings.quality = 80
+if PORTRAIT:
+    portrait_output(QUALITY)
 
 tmp = bpy.data.objects.new("TMP_CORNERCAM", bpy.data.cameras.new("TMP_CORNERCAM"))
 tmp.data.lens = src_cam.lens
@@ -352,6 +360,10 @@ def place(i):
     tmp.data.dof.focus_object = None
     tmp.data.dof.focus_distance = focus
     tmp.data.dof.aperture_fstop = fstop
+    if PORTRAIT:
+        # from the orbit still at frame 1 to the corner still at frame N; a push
+        # the whole way, so the plan gives both ends one K
+        set_portrait_camera(tmp.data, *leg_cam("orbit-%03d" % SIDE_BF, "corner", ease(i / (N - 1))))
     bpy.context.view_layer.update()
 
 lo = I0
@@ -391,6 +403,8 @@ finally:
     r.image_settings.file_format = prev["fmt"]; r.image_settings.color_mode = prev["cm"]
     r.image_settings.quality = prev["q"]; r.filepath = prev["fp"]
     scn.frame_set(prev["frame"])
+    if PORTRAIT:
+        landscape_restore()
 
 RESULT = {"stage": STAGE, "quality": QUALITY, "N": N, "part_n": PART_N,
           "range": [lo, hi], "side_bf": SIDE_BF,

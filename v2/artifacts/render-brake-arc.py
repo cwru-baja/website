@@ -28,13 +28,23 @@ in the file is modified: the copies and the faded material copies are removed on
 the way out.
 
   STAGE   = base | part | all | probe   (probe renders the landing pose only)
+          | verify   (portrait or landscape: checks the seams, renders nothing)
   QUALITY = preview (64 spp, 50%, PNG) | final (256 spp, 100%, WEBP)
   I0/I1   = chunk bounds, to keep any one call short
+  PROFILE = landscape (default, what ships) | portrait (4:5 phone set, same poses;
+            see render_profile.py); KOPT picks the K option in portrait-plan.json.
+
+The shipped leg was rendered with N=30, PART_N=18, EL_END=32, NOSE_PICK="deck" -
+not the defaults below (see render-part-mattes.py PAUSES["brakes"]).
 """
 
 import bpy, os, math, time
 from mathutils import Vector, Matrix
 import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(globals().get(
+    "__file__", "/Users/aretelew/Developer/baja/baja-website/v2/artifacts/render-brake-arc.py")))
+exec(open(os.path.join(HERE, "render_profile.py")).read())
 
 STAGE   = globals().get("STAGE", "all")
 QUALITY = globals().get("QUALITY", "preview")
@@ -43,9 +53,10 @@ PART_N  = globals().get("PART_N", 14)
 I0      = globals().get("I0", 0)
 I1      = globals().get("I1", None)
 # Its own directory, so the straight-push layers this replaces stay untouched and
-# the beat can be put back by flipping the prefixes in carSequenceModel.ts.
-OUTDIR  = globals().get("OUTDIR",
-    "/Users/aretelew/Developer/baja/baja-website/v2/public/renders-sr26/layers/brake-arc/")
+# the beat can be put back by flipping the prefixes in carSequenceModel.ts. The
+# portrait set mirrors it under renders-sr26/portrait/.
+OUTDIR  = globals().get("OUTDIR", profile_dir(
+    "/Users/aretelew/Developer/baja/baja-website/v2/public/renders-sr26/layers/brake-arc/"))
 os.makedirs(OUTDIR, exist_ok=True)
 
 scn = bpy.context.scene
@@ -219,27 +230,44 @@ ORBIT_OUT = (TGT, d_exit,  R_exit)
 CLOSEUP   = (BRK, d_end,   R_close)
 A, B = (ORBIT_IN, CLOSEUP) if LEG == "in" else (CLOSEUP, ORBIT_OUT)
 
-def pose(i):
+def pose(i, leg=None):
     """i-th camera matrix, plus the focus depth and f-stop that go with it.
+    `leg` defaults to LEG; verify passes the other one to check the seam between.
 
     Direction is slerped rather than lerped so the swing keeps a constant angular
     rate, and distance is interpolated geometrically for the same reason the
     straight push was: a linear ramp barely changes the subject size for most of
     its length and then lunges the last metre.
     """
+    leg = leg or LEG
+    a, b = (ORBIT_IN, CLOSEUP) if leg == "in" else (CLOSEUP, ORBIT_OUT)
     te  = ease(i / (N - 1))
-    tgt = A[0].lerp(B[0], te)
-    dirv = A[1].slerp(B[1], te)
-    rad = A[2] * (B[2] / A[2]) ** te
+    tgt = a[0].lerp(b[0], te)
+    dirv = a[1].slerp(b[1], te)
+    rad = a[2] * (b[2] / a[2]) ** te
     M   = look_at(tgt + dirv * rad, tgt, UP_Z)
     fwd = (M.to_quaternion() @ Vector((0, 0, -1))).normalized()
     depth = lambda p: abs((p - M.translation).dot(fwd))
     # focus rides with the target: whichever end is the orbit focuses where the
     # orbit camera does, and the closeup end focuses on the subject
     f_orbit, f_close = depth(FOCUS_OBJ.matrix_world.translation), depth(BRK)
-    if LEG == "in":
+    if leg == "in":
         return M, (1 - te) * f_orbit + te * f_close, FSTOP_A + (FSTOP_B - FSTOP_A) * te
     return M, (1 - te) * f_close + te * f_orbit, FSTOP_B + (FSTOP_A - FSTOP_B) * te
+
+# ---------- portrait: K and lens shift along the leg ----------
+# Each end of a leg is a still whose K and shift are in portrait-plan.json: the
+# orbit frames centre the whole car (or the frame tubes at the side profile, where
+# the frame beat plays), the closeup centres the brake parts the labels point at.
+# Both ease on the camera's own curve and are each still's exactly at the ends.
+# The push dollies the whole way, so the plan gives both ends one K.
+STILL_OPEN, STILL_CLOSE, STILL_LAND = "orbit-%03d" % START_BF, "brake-close", "orbit-%03d" % END_BF
+
+def portrait_cam(i, leg=None):
+    """(K, shift) at pose i of the given leg."""
+    leg = leg or LEG
+    a, b = (STILL_OPEN, STILL_CLOSE) if leg == "in" else (STILL_CLOSE, STILL_LAND)
+    return leg_cam(a, b, ease(i / (N - 1)))
 
 # ---------- the covers have to stop blocking light, without a step ----------
 def fade_rig(objs):
@@ -285,7 +313,8 @@ def fade_restore(undo):
 # ---------- render ----------
 prev = dict(cam=scn.camera, samples=cy.samples, pct=r.resolution_percentage,
             fmt=r.image_settings.file_format, cm=r.image_settings.color_mode,
-            q=r.image_settings.quality, fp=r.filepath, frame=scn.frame_current)
+            q=r.image_settings.quality, fp=r.filepath, frame=scn.frame_current,
+            res=(r.resolution_x, r.resolution_y))
 
 prefs = bpy.context.preferences.addons['cycles'].preferences
 prefs.compute_device_type = 'METAL'
@@ -307,11 +336,15 @@ else:
     cy.samples = 256; r.resolution_percentage = 100
     r.image_settings.file_format = 'WEBP'; r.image_settings.color_mode = 'RGBA'
     r.image_settings.quality = 80
+if PORTRAIT:
+    portrait_output(QUALITY)
 
 tmp = bpy.data.objects.new("TMP_ARCCAM", bpy.data.cameras.new("TMP_ARCCAM"))
 tmp.data.lens = src_cam.lens
 tmp.data.sensor_width = src_cam.sensor_width
 tmp.data.sensor_fit = src_cam.sensor_fit
+if PORTRAIT:
+    set_portrait_camera(tmp.data, *portrait_cam(0))
 tmp.data.dof.use_dof = True
 scn.collection.objects.link(tmp); scn.camera = tmp
 scn.frame_set(START_BF)
@@ -334,18 +367,47 @@ def shoot(name):
     bpy.ops.render.render(write_still=True)
     print("[arc] %s  %.1fs" % (name, time.time() - t0), flush=True)
 
-def place(i):
-    M, focus, fstop = pose(i)
+def place(i, leg=None):
+    M, focus, fstop = pose(i, leg)
     tmp.matrix_world = M
     tmp.data.dof.focus_object = None
     tmp.data.dof.focus_distance = focus
     tmp.data.dof.aperture_fstop = fstop
+    if PORTRAIT:
+        set_portrait_camera(tmp.data, *portrait_cam(i, leg))
     bpy.context.view_layer.update()
 
 lo = I0
 hi = I1 if I1 is not None else max(N, PART_N)
 
+VERIFY = None
 try:
+    if STAGE == "verify":
+        # Every seam this beat has, for the profile being run: the orbit frame it
+        # lifts off, the held closeup where "in" hands to "out", and the orbit
+        # frame "out" lands on. Each side is the camera exactly as its render
+        # sets it up - pose, focal length, sensor (K) and lens shift.
+        def leg_key(i, leg):
+            place(i, leg)
+            return camera_key(tmp.matrix_world, tmp.data)
+        def orbit_key(bf):
+            M, cd, undo = orbit_camera(bf, prev["cam"])
+            try:
+                return camera_key(M, cd)
+            finally:
+                undo()
+        VERIFY = {
+            "profile": PROFILE,
+            "seams": {
+                "orbit f%d -> in[0]" % START_BF: seam(orbit_key(START_BF), leg_key(0, "in")),
+                "in[%d] -> out[0] (the still)" % (N - 1): seam(leg_key(N - 1, "in"), leg_key(0, "out")),
+                "out[%d] -> orbit f%d" % (N - 1, END_BF): seam(leg_key(N - 1, "out"), orbit_key(END_BF)),
+            },
+        }
+        if PORTRAIT:
+            VERIFY.update(KOPT=KOPT, stills={k: still(k) for k in (STILL_OPEN, STILL_CLOSE, STILL_LAND)})
+        print("[arc] VERIFY", VERIFY, flush=True)
+
     if STAGE in ("all", "base", "probe"):
         facs, undo = fade_rig(COVER)
         try:
@@ -388,6 +450,7 @@ finally:
     cy.samples = prev["samples"]; r.resolution_percentage = prev["pct"]
     r.image_settings.file_format = prev["fmt"]; r.image_settings.color_mode = prev["cm"]
     r.image_settings.quality = prev["q"]; r.filepath = prev["fp"]
+    r.resolution_x, r.resolution_y = prev["res"]
     scn.frame_set(prev["frame"])
 
 RESULT = {"stage": STAGE, "quality": QUALITY, "N": N, "part_n": PART_N,
@@ -397,3 +460,7 @@ RESULT = {"stage": STAGE, "quality": QUALITY, "N": N, "part_n": PART_N,
           "R_start": round(R_start, 4), "R_close": round(R_close, 4),
           "cam_close": [round(v, 4) for v in (BRK + d_end * R_close)],
           "outdir": OUTDIR}
+if PORTRAIT:
+    RESULT.update(profile=PROFILE, KOPT=KOPT, verify=VERIFY)
+elif VERIFY:
+    RESULT.update(verify=VERIFY)

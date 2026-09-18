@@ -1,6 +1,12 @@
 import bpy, math, os
 from mathutils import Vector, Matrix, Quaternion
 
+# PROFILE "portrait" (with KOPT, see render_profile.py) renders the approach and
+# the isolate for phones: same poses, K and lens shift from portrait-plan.json.
+HERE = os.path.dirname(os.path.abspath(globals().get(
+    "__file__", "/Users/aretelew/Developer/baja/baja-website/v2/artifacts/render-crane.py")))
+exec(open(os.path.join(HERE, "render_profile.py")).read())
+
 scn = bpy.context.scene; r = scn.render; cy = scn.cycles
 ARC     = globals().get("ARC", "verify")        # verify | approach | depart | isolate
 QUALITY = globals().get("QUALITY", "preview")   # preview | final
@@ -188,11 +194,18 @@ else:
         return out
 
     UP_Z = Vector((0, 0, 1))
+    if PORTRAIT and ARC not in ("approach", "isolate"):
+        raise ValueError("portrait renders only the approach and the isolate; the page plays nothing else")
     if ARC == "approach":      # side view -> straight overhead
         setvis(None)
         poses = arc_poses(N, d_side, R_side, UP_Z, d_top, TOP_DIST, TOP_UP)
+        if PORTRAIT:           # only now: the poses were fitted at the desktop resolution
+            portrait_output(QUALITY)
         for i in range(I0, I1 if I1 is not None else N):
             tmp.matrix_world = poses[i]
+            if PORTRAIT:
+                set_portrait_camera(tmp.data, *leg_cam("orbit-%03d" % SIDE_BF, "crane-top",
+                                                       ease(i / (N - 1))))
             bpy.context.view_layer.update(); shoot(NAME_UP % (i + 1))
     elif ARC == "depart":      # straight overhead -> rear view
         setvis(None)
@@ -203,9 +216,14 @@ else:
     elif ARC == "isolate":     # drivetrain, seen from directly overhead
         setvis(DRIVE)
         tmp.matrix_world = look_at(TGT + d_top * TOP_DIST, TGT, TOP_UP)
+        if PORTRAIT:
+            portrait_output(QUALITY)
+            set_portrait_camera(tmp.data, *still("crane-top"))
         bpy.context.view_layer.update(); shoot(NAME_ISO)
 
     setvis(None)
+    if PORTRAIT:
+        landscape_restore()
     scn.camera = prev["cam"]; bpy.data.objects.remove(tmp, do_unlink=True)
     cy.samples = prev["samples"]; r.resolution_percentage = prev["pct"]
     r.image_settings.file_format = prev["fmt"]; r.image_settings.color_mode = prev["cm"]

@@ -58,6 +58,9 @@ to by less than a pixel of motion.
   QUALITY  preview (45%, 48 spp, PNG) | final (100%, 256 spp, WEBP)
   N        frames in the leg
   I0/I1    chunk bounds, to keep any one call short
+  PROFILE  landscape (default) | portrait: KOPT's K and lens shift from
+           portrait-plan.json. K may change here, and only on the focal ramp's
+           own schedule - the last stretch, once the camera has nearly stopped.
 """
 
 import bpy, os, math, json, time
@@ -68,6 +71,7 @@ from mathutils.bvhtree import BVHTree
 HERE = os.path.dirname(os.path.abspath(globals().get(
     "__file__", "/Users/aretelew/Developer/baja/baja-website/v2/artifacts/render-cockpit-susp.py")))
 REPO = os.path.dirname(HERE)
+exec(open(os.path.join(HERE, "render_profile.py")).read())
 
 STAGE   = globals().get("STAGE", "plan")
 QUALITY = globals().get("QUALITY", "preview")
@@ -105,9 +109,11 @@ scn = bpy.context.scene
 r, cy = scn.render, scn.cycles
 
 # ---------- the two poses this leg has to join, from the scripts that own them ----------
-dive = dict(STAGE="verify", OUTDIR=OUTDIR)
+# __file__ goes along so each finds render_profile.py beside itself; neither is
+# given PROFILE, so both only work out their desktop poses.
+dive = dict(STAGE="verify", OUTDIR=OUTDIR, __file__=os.path.join(HERE, "render-dive.py"))
 exec(open(os.path.join(HERE, "render-dive.py")).read(), dive)
-corner = dict(STAGE="none", OUTDIR=OUTDIR)
+corner = dict(STAGE="none", OUTDIR=OUTDIR, __file__=os.path.join(HERE, "render-susp-corner.py"))
 exec(open(os.path.join(HERE, "render-susp-corner.py")).read(), corner)
 
 look_at, slerp_dir, ease = dive["look_at"], dive["slerp_dir"], dive["ease"]
@@ -198,6 +204,14 @@ def pose(i, n=None):
     fwd = (M.to_quaternion() @ Vector((0, 0, -1))).normalized()
     # Blender measures focus along the view axis, not as a euclidean distance.
     return M, lens, abs((tgt - pos).dot(fwd)), fstop
+
+
+def portrait_cam(i, n=None):
+    """Portrait (K, shift) at leg frame i: shift eases on the target's curve, K
+    only on the focal ramp's - so K, like the lens, holds through the flight."""
+    g = ease(travel(i, n))
+    z = smootherstep((g - ZOOM_FROM) / (1 - ZOOM_FROM))
+    return leg_cam("wheel", "corner", g, z)
 
 
 def wheel_fade(i, n=None):
@@ -324,6 +338,8 @@ else:
         r.image_settings.file_format = 'WEBP'; r.image_settings.color_mode = 'RGBA'
         r.image_settings.quality = 80
         r.film_transparent = True
+    if PORTRAIT:
+        portrait_output(QUALITY)
 
     # The car is static; the frame only drives the orbit camera, which is unused.
     scn.frame_set(32)
@@ -345,6 +361,8 @@ else:
             tmp.data.dof.focus_object = None
             tmp.data.dof.focus_distance = focus
             tmp.data.dof.aperture_fstop = fstop
+            if PORTRAIT:
+                set_portrait_camera(tmp.data, *portrait_cam(i))
             for v in cam_facs:
                 v.outputs[0].default_value = wheel_fade(i)
             for v in light_facs:
@@ -364,6 +382,8 @@ else:
         r.image_settings.quality = prev["q"]; r.filepath = prev["fp"]
         cy.transparent_max_bounces = prev["tmb"]
         r.film_transparent = prev["transp"]; scn.frame_set(prev["frame"])
+        if PORTRAIT:
+            landscape_restore()
 
     RESULT = {"stage": STAGE, "quality": QUALITY, "frames": shot,
               "seconds": round(time.time() - t_start, 1), "outdir": OUTDIR}

@@ -1,0 +1,570 @@
+{
+ "generated": "artifacts/portrait-plan.py STAGE=plan - do not edit",
+ "margin": 0.03,
+ "k_cap": 0.8,
+ "rule": "kvar: each still's largest K (3% margin a side, cap 0.8). A push must hold one K, so every still joined by pushes takes the smallest K among them. K eases only across orbit frames (linear in frame, as the orbit turns), the roll (the camera turns in place, on the roll's own easing) and cockpit-susp's focal ramp (the last stretch, once the camera has nearly stopped). Shift eases on each leg's own curve. Both are each still's value exactly at every seam.",
+ "legs": [
+  [
+   "orbit-001",
+   "orbit-032",
+   "orbit",
+   "full/0001-0032"
+  ],
+  [
+   "orbit-001",
+   "brake-close",
+   "push",
+   "000-brake-arc (+ cover)"
+  ],
+  [
+   "brake-close",
+   "orbit-032",
+   "push",
+   "brake-exit (+ cover)"
+  ],
+  [
+   "orbit-032",
+   "crane-top",
+   "push",
+   "059-crane-up"
+  ],
+  [
+   "crane-top",
+   "roll-end",
+   "rotate",
+   "cockpit-roll"
+  ],
+  [
+   "roll-end",
+   "wheel",
+   "push",
+   "cockpit-dive"
+  ],
+  [
+   "wheel",
+   "corner",
+   "tail",
+   "cockpit-susp"
+  ],
+  [
+   "corner",
+   "orbit-109",
+   "push",
+   "108-susp-corner (+ wheels), played back out"
+  ],
+  [
+   "orbit-109",
+   "orbit-120",
+   "orbit",
+   "full/0109-0120"
+  ]
+ ],
+ "stills": {
+  "orbit-001": {
+   "files": "full/0001",
+   "subject": "whole car (vertices)",
+   "lens": 70.0,
+   "pose": [
+    0.0,
+    6.32006,
+    0.15821,
+    -0.0,
+    -0.9991,
+    0.04238
+   ],
+   "extent": [
+    0.20684,
+    0.79301,
+    0.04642,
+    0.93099
+   ],
+   "kmax": 0.7216
+  },
+  "orbit-109": {
+   "files": "full/0109",
+   "subject": "whole car (vertices)",
+   "lens": 70.0,
+   "pose": [
+    -3.46083,
+    5.27361,
+    0.15821,
+    0.56089,
+    -0.82681,
+    0.04227
+   ],
+   "extent": [
+    0.08106,
+    0.84397,
+    0.03331,
+    0.93641
+   ],
+   "kmax": 0.5545
+  },
+  "orbit-120": {
+   "files": "full/0120",
+   "subject": "whole car (vertices)",
+   "lens": 70.0,
+   "pose": [
+    0.0,
+    6.32006,
+    0.15821,
+    -0.0,
+    -0.9991,
+    0.04238
+   ],
+   "extent": [
+    0.20684,
+    0.79301,
+    0.04642,
+    0.93099
+   ],
+   "kmax": 0.7216
+  },
+  "orbit-032": {
+   "files": "full/0032, 031-frame",
+   "subject": "frame tubes (vertices)",
+   "lens": 70.0,
+   "pose": [
+    6.29207,
+    -0.41593,
+    0.15821,
+    -0.99482,
+    0.09296,
+    0.04123
+   ],
+   "extent": [
+    0.2143,
+    0.81822,
+    0.25725,
+    0.91492
+   ],
+   "kmax": 0.7004,
+   "car_kmax": 0.5599
+  },
+  "brake-close": {
+   "files": "000-brake-arc-0030, brake-exit-0001",
+   "subject": "brakes mattes: caliper, rotor, master-cylinders (not brake-lines)",
+   "lens": 70.0,
+   "pose": [
+    2.72627,
+    3.38768,
+    2.30939,
+    -0.59966,
+    -0.59966,
+    -0.52992
+   ],
+   "extent": [
+    0.33854,
+    0.67812,
+    0.15741,
+    0.9287
+   ],
+   "kmax": 1.2187,
+   "with_brake_lines_kmax": 0.6162
+  },
+  "crane-top": {
+   "files": "059-crane-up-0030, 059-drivetrain-top, cockpit-roll-0001",
+   "subject": "drivetrain mattes (all 11 parts)",
+   "lens": 70.0,
+   "pose": [
+    0.0,
+    0.172,
+    5.919,
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "extent": [
+    0.19844,
+    0.79167,
+    0.08056,
+    0.91944
+   ],
+   "kmax": 0.713
+  },
+  "roll-end": {
+   "files": "cockpit-roll-0020, cockpit-dive-0001",
+   "subject": "drivetrain mattes, turned with the roll",
+   "lens": 70.0,
+   "pose": [
+    0.0,
+    0.172,
+    5.919,
+    0.0,
+    0.0,
+    -1.0
+   ],
+   "extent": [
+    0.26406,
+    0.73594,
+    -0.03611,
+    1.01852
+   ],
+   "kmax": 0.8913
+  },
+  "wheel": {
+   "files": "cockpit-dive-0040, cockpit-susp-0001",
+   "subject": "steering wheel face (vertices, column cut at 0.12 m)",
+   "lens": 43.0,
+   "pose": [
+    -0.00088,
+    -0.1642,
+    0.61854,
+    0.0011,
+    0.97291,
+    -0.2312
+   ],
+   "extent": [
+    0.21772,
+    0.7829,
+    0.06286,
+    0.68067
+   ],
+   "kmax": 0.7484
+  },
+  "corner": {
+   "files": "108-susp-corner-0024, cockpit-susp-0040",
+   "subject": "suspension mattes (shocks, wishbones, uprights, hubs)",
+   "lens": 70.0,
+   "pose": [
+    -1.73029,
+    2.8909,
+    1.53249,
+    0.48618,
+    -0.71668,
+    -0.5
+   ],
+   "extent": [
+    0.28698,
+    0.71094,
+    0.06667,
+    0.94352
+   ],
+   "kmax": 0.9977
+  }
+ },
+ "kvar_groups": [
+  [
+   "brake-close",
+   "crane-top",
+   "orbit-001",
+   "orbit-032"
+  ],
+  [
+   "corner",
+   "orbit-109"
+  ],
+  [
+   "orbit-120"
+  ],
+  [
+   "roll-end",
+   "wheel"
+  ]
+ ],
+ "options": {
+  "k055": {
+   "orbit-001": {
+    "K": 0.55,
+    "shift": [
+     -7.3e-05,
+     -0.006212
+    ],
+    "span": [
+     0.7164,
+     0.4865
+    ]
+   },
+   "orbit-109": {
+    "K": 0.55,
+    "shift": [
+     -0.036652,
+     -0.008327
+    ],
+    "span": [
+     0.9324,
+     0.4967
+    ]
+   },
+   "orbit-120": {
+    "K": 0.55,
+    "shift": [
+     -7.3e-05,
+     -0.006212
+    ],
+    "span": [
+     0.7164,
+     0.4865
+    ]
+   },
+   "orbit-032": {
+    "K": 0.55,
+    "shift": [
+     0.015899,
+     0.047347
+    ],
+    "span": [
+     0.7381,
+     0.3617
+    ]
+   },
+   "brake-close": {
+    "K": 0.55,
+    "shift": [
+     0.008145,
+     0.02368
+    ],
+    "span": [
+     0.415,
+     0.4242
+    ]
+   },
+   "crane-top": {
+    "K": 0.55,
+    "shift": [
+     -0.004835,
+     0.0
+    ],
+    "span": [
+     0.7251,
+     0.4614
+    ]
+   },
+   "roll-end": {
+    "K": 0.55,
+    "shift": [
+     0.0,
+     -0.004837
+    ],
+    "span": [
+     0.5767,
+     0.58
+    ]
+   },
+   "wheel": {
+    "K": 0.55,
+    "shift": [
+     0.000303,
+     -0.070529
+    ],
+    "span": [
+     0.6908,
+     0.3398
+    ]
+   },
+   "corner": {
+    "K": 0.55,
+    "shift": [
+     -0.001017,
+     0.002802
+    ],
+    "span": [
+     0.5182,
+     0.4823
+    ]
+   }
+  },
+  "k070": {
+   "orbit-001": {
+    "K": 0.7,
+    "shift": [
+     -9.3e-05,
+     -0.007906
+    ],
+    "span": [
+     0.9118,
+     0.6192
+    ]
+   },
+   "orbit-109": {
+    "K": 0.7,
+    "shift": [
+     -0.046648,
+     -0.010598
+    ],
+    "span": [
+     1.1867,
+     0.6322
+    ]
+   },
+   "orbit-120": {
+    "K": 0.7,
+    "shift": [
+     -9.3e-05,
+     -0.007906
+    ],
+    "span": [
+     0.9118,
+     0.6192
+    ]
+   },
+   "orbit-032": {
+    "K": 0.7,
+    "shift": [
+     0.020235,
+     0.060259
+    ],
+    "span": [
+     0.9394,
+     0.4604
+    ]
+   },
+   "brake-close": {
+    "K": 0.7,
+    "shift": [
+     0.010366,
+     0.030138
+    ],
+    "span": [
+     0.5282,
+     0.5399
+    ]
+   },
+   "crane-top": {
+    "K": 0.7,
+    "shift": [
+     -0.006154,
+     0.0
+    ],
+    "span": [
+     0.9228,
+     0.5872
+    ]
+   },
+   "roll-end": {
+    "K": 0.7,
+    "shift": [
+     0.0,
+     -0.006156
+    ],
+    "span": [
+     0.734,
+     0.7382
+    ]
+   },
+   "wheel": {
+    "K": 0.7,
+    "shift": [
+     0.000386,
+     -0.089764
+    ],
+    "span": [
+     0.8792,
+     0.4325
+    ]
+   },
+   "corner": {
+    "K": 0.7,
+    "shift": [
+     -0.001294,
+     0.003566
+    ],
+    "span": [
+     0.6595,
+     0.6138
+    ]
+   }
+  },
+  "kvar": {
+   "orbit-001": {
+    "K": 0.7004,
+    "shift": [
+     -9.3e-05,
+     -0.007911
+    ],
+    "span": [
+     0.9123,
+     0.6196
+    ]
+   },
+   "orbit-109": {
+    "K": 0.5545,
+    "shift": [
+     -0.036952,
+     -0.008395
+    ],
+    "span": [
+     0.9401,
+     0.5008
+    ]
+   },
+   "orbit-120": {
+    "K": 0.7216,
+    "shift": [
+     -9.6e-05,
+     -0.00815
+    ],
+    "span": [
+     0.94,
+     0.6383
+    ]
+   },
+   "orbit-032": {
+    "K": 0.7004,
+    "shift": [
+     0.020246,
+     0.060294
+    ],
+    "span": [
+     0.94,
+     0.4606
+    ]
+   },
+   "brake-close": {
+    "K": 0.7004,
+    "shift": [
+     0.010372,
+     0.030156
+    ],
+    "span": [
+     0.5285,
+     0.5402
+    ]
+   },
+   "crane-top": {
+    "K": 0.7004,
+    "shift": [
+     -0.006157,
+     0.0
+    ],
+    "span": [
+     0.9233,
+     0.5876
+    ]
+   },
+   "roll-end": {
+    "K": 0.7484,
+    "shift": [
+     0.0,
+     -0.006582
+    ],
+    "span": [
+     0.7848,
+     0.7893
+    ]
+   },
+   "wheel": {
+    "K": 0.7484,
+    "shift": [
+     0.000412,
+     -0.095971
+    ],
+    "span": [
+     0.94,
+     0.4624
+    ]
+   },
+   "corner": {
+    "K": 0.5545,
+    "shift": [
+     -0.001025,
+     0.002825
+    ],
+    "span": [
+     0.5224,
+     0.4862
+    ]
+   }
+  }
+ }
+}
