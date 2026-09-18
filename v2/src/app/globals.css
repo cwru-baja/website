@@ -23,8 +23,13 @@
 
 .logo-intro-mask {
   background-color: #0a0a0a;
-  mask-image: url("/logo/team/m-logo.svg"), linear-gradient(black, black);
-  -webkit-mask-image: url("/logo/team/m-logo.svg"), linear-gradient(black, black);
+  /* Inlined, not a url() to the M logo: Chromium paints an element whose
+     mask-image is still loading as fully masked out, so a networked mask left
+     this overlay invisible and the landing page showing until it arrived. A
+     data URI is ready as soon as this render-blocking stylesheet is parsed.
+     Geometry is identical to components/MLogo.tsx — keep the two in sync. */
+  mask-image: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2086.032411%2033.80959%22%3E%3Cg%20transform=%22matrix(0.26458333,0,0,0.26458334,-237.72456,-27.618232)%22%20fill-rule=%22evenodd%22%3E%3Cpath%20d=%22m%200,0%20h%20-36.798%20l%20-55.447,-95.838%20h%2036.796%20z%22%20transform=%22matrix(1.3333333,0,0,-1.3333333,1223.6484,104.38413)%22/%3E%3Cpath%20d=%22M%200,0%20H%2037.049%20L%2092.345,95.838%20H%2055.297%20Z%22%20transform=%22matrix(1.3333333,0,0,-1.3333333,1026.724,232.168)%22/%3E%3Cpath%20d=%22M%200,0%20-36.949,-63.892%20H%200%20L%2055.447,31.946%20H%20-77.552%20Z%22%20transform=%22matrix(1.3333333,0,0,-1.3333333,1001.8893,146.97853)%22/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(black, black);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2086.032411%2033.80959%22%3E%3Cg%20transform=%22matrix(0.26458333,0,0,0.26458334,-237.72456,-27.618232)%22%20fill-rule=%22evenodd%22%3E%3Cpath%20d=%22m%200,0%20h%20-36.798%20l%20-55.447,-95.838%20h%2036.796%20z%22%20transform=%22matrix(1.3333333,0,0,-1.3333333,1223.6484,104.38413)%22/%3E%3Cpath%20d=%22M%200,0%20H%2037.049%20L%2092.345,95.838%20H%2055.297%20Z%22%20transform=%22matrix(1.3333333,0,0,-1.3333333,1026.724,232.168)%22/%3E%3Cpath%20d=%22M%200,0%20-36.949,-63.892%20H%200%20L%2055.447,31.946%20H%20-77.552%20Z%22%20transform=%22matrix(1.3333333,0,0,-1.3333333,1001.8893,146.97853)%22/%3E%3C/g%3E%3C/svg%3E"), linear-gradient(black, black);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   mask-position: center, center;
@@ -35,6 +40,14 @@
   -webkit-mask-size: var(--logo-intro-mask-size), 100%;
   transform: translateZ(0);
   backface-visibility: hidden;
+}
+
+/* app/layout.tsx renders <html data-intro="play"> and its pre-paint script
+   rewrites it to "skip" when the M intro should not run (already seen this
+   session, or reduced motion). Hiding the overlay in CSS means the skip costs
+   no flash and no hydration mismatch in the rendered tree. */
+[data-intro="skip"] .logo-intro-root {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
