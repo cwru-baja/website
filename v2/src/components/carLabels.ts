@@ -1,5 +1,6 @@
 import partMattes from "../data/car-part-mattes.json";
 import savedLabels from "./carLabels.json";
+import { matteUrl, type FrameSet } from "./carSequenceModel";
 
 /** A point in percent of the still a pause shows, so it holds at any display size. */
 export interface LabelPoint {
@@ -54,15 +55,18 @@ export const CAR_PART_MATTES = Object.fromEntries(
   Object.entries(partMattes).filter(([key]) => !key.startsWith("_")),
 ) as PartMattes;
 
-const MATTES_PATH = "/renders-sr26/mattes";
-
+/**
+ * A part's mask in the frame set on screen. Both sets name their masks alike, so
+ * the manifest's file (and its content hash) serves either one.
+ */
 export const partMatteUrl = (
+  set: FrameSet,
   chapterId: string,
   part: string,
   mattes: PartMattes = CAR_PART_MATTES,
 ) => {
   const file = mattes[chapterId]?.[part];
-  return file ? `${MATTES_PATH}/${chapterId}/${file}` : null;
+  return file ? matteUrl(set, chapterId, file) : null;
 };
 
 /** "master-cylinders" reads as "Master cylinders" in the placement tool. */

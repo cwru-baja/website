@@ -201,13 +201,13 @@ describe("car labels", () => {
   it("serves every listed mask from public, versioned by its content", () => {
     Object.entries(CAR_PART_MATTES).forEach(([chapterId, parts]) => {
       Object.keys(parts).forEach((part) => {
-        const url = partMatteUrl(chapterId, part);
+        const url = partMatteUrl("landscape", chapterId, part);
         expect(url).toMatch(/\.webp\?v=[0-9a-f]{8}$/);
         const file = path.join(process.cwd(), "public", url!.split("?")[0]);
         expect(existsSync(file)).toBe(true);
       });
     });
-    expect(partMatteUrl("brakes", "pedal-box")).toBeNull();
+    expect(partMatteUrl("landscape", "brakes", "pedal-box")).toBeNull();
     expect(partName("master-cylinders")).toBe("Master cylinders");
   });
 

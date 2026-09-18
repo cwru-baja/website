@@ -1,10 +1,19 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import CarCaptionBand from "./CarCaptionBand";
 import CarLabelsLayer, {
+  PartHighlight,
   type LabelElements,
   type LabelHandle,
 } from "./CarLabelsLayer";
@@ -23,15 +32,20 @@ import {
   CAR_LABELS,
   CAR_PART_MATTES,
   labelSide,
+  partMatteUrl,
   type CarLabel,
   type CarLabelSet,
   type LabelPoint,
 } from "./carLabels";
 import {
+  FrameStream,
+  StreamSchedule,
+  nearestReady,
+} from "./carFrameStream";
+import {
   CAR_CHAPTERS,
   CAR_EXCURSION,
   CAR_REVEALS,
-  type CarReveal,
   CHAPTER_TIMING,
   LABEL_HOLD,
   LABEL_MOTION,
@@ -48,10 +62,16 @@ import {
   orbitFrameSet,
   pauseLayerUrl,
   nearestLoadedFrame,
+  openingLayerUrls,
+  pickFrameSet,
+  revealBaseSrc,
+  revealPartSrc,
   revealsForFrame,
   rotationDuration,
   sequenceLayerUrl,
+  warmLayerUrls,
   type CarChapter,
+  type FrameSet,
   type LabelWindow,
 } from "./carSequenceModel";
 
@@ -78,26 +98,36 @@ const HIDDEN_TEXT_CLIP = {
 } as const;
 const SHOWN_TEXT_CLIP = "inset(-80% -15% -80% -15%)";
 
-// What a beat's <img> holds before it plays. A landed beat opens on the LAST
-// frame of its push, so that is the frame its element carries from the start: a
-// hidden <img> is decoded lazily, so revealing one whose decoded content is still
-// the push's first frame paints that frame for a tick - and for the suspension
-// beat, the push's first frame is the wide orbit pose this whole leg exists to
-// skip. See https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode
-const revealBaseSrc = (reveal: CarReveal) =>
-  reveal.push?.landed
-    ? sequenceLayerUrl(reveal.push.base, reveal.push.count - 1)
-    : layerUrl(reveal.base ?? "");
+// Which frame set this page load plays, chosen the first time /car mounts and
+// kept for the rest of the visit: turning a phone letterboxes the set it already
+// has rather than fetching the other one, and so does leaving /car and coming
+// back. The server can't know it, so it renders no frame URLs at all, and the
+// client's first render (hydration) doesn't either - the set arrives with the
+// render straight after, before anything has been requested.
+let pageFrameSet: FrameSet | null = null;
+const choosePageFrameSet = () =>
+  (pageFrameSet ??= pickFrameSet((query) => window.matchMedia(query).matches));
+const neverChanges = () => () => {};
+const useFrameSet = () =>
+  useSyncExternalStore(neverChanges, choosePageFrameSet, () => null);
 
-const revealPartSrc = (reveal: CarReveal) =>
-  reveal.push?.landed
-    ? sequenceLayerUrl(reveal.push.part, reveal.push.partCount - 1)
-    : layerUrl(reveal.part ?? "");
+/**
+ * Where the caption band switches to a chapter, ahead of its still: the name
+ * changes as the camera arrives rather than once it has stopped.
+ */
+const CAPTION_LEAD = 0.3;
+
+interface BandState {
+  chapter: number;
+  live: boolean;
+}
 
 const newLabelId = (chapterId: string) =>
   `${chapterId}-${Math.random().toString(36).slice(2, 8)}`;
 
 export default function CarSequence() {
+  const frameSet = useFrameSet();
+  const portrait = frameSet === "portrait";
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -121,6 +151,14 @@ export default function CarSequence() {
   const eggRef = useRef<HTMLDivElement>(null);
   const freezeRef = useRef<Freeze | null>(null);
   const [eggArmed, setEggArmed] = useState(false);
+  // The portrait set's loader, which the timeline steers once it exists.
+  const streamRef = useRef<FrameStream | null>(null);
+  // Frames the portrait set had to stand in for, for measuring the streaming:
+  // how many distinct frames were asked for on screen, and how many of them
+  // were drawn from a neighbour because they were not here yet.
+  const streamStatsRef = useRef({ shown: 0, misses: 0 });
+  const [band, setBand] = useState<BandState>({ chapter: 0, live: false });
+  const [litLabel, setLitLabel] = useState<string | null>(null);
 
   const labelElementsRef = useRef<LabelElements>({
     dots: {},
@@ -146,6 +184,46 @@ export default function CarSequence() {
   );
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
 
+  // What the canvas and each layer last asked for, so a frame that is asked
+  // for on every update is only counted once.
+  const lastAskedRef = useRef(new Map<HTMLElement, string>());
+  // Only what is on screen once a render is done counts: the canvas keeps
+  // drawing the orbit while a leg covers it, and one render can pass through a
+  // layer's frames - a scrub back past it, ScrollTrigger measuring the page -
+  // before settling on the one it shows. So each render's last word per layer
+  // is counted, after it.
+  const pendingCountsRef = useRef(
+    new Map<HTMLElement, { key: string; requested: number; shown: number | null }>(),
+  );
+  const countShown = useCallback(
+    (element: HTMLElement, key: string, requested: number, shown: number | null) => {
+      const pending = pendingCountsRef.current;
+      if (!pending.size) {
+        queueMicrotask(() => {
+          const stats = streamStatsRef.current;
+          const section = sectionRef.current;
+          pending.forEach((ask, element) => {
+            if (element.style.visibility === "hidden") return;
+            const frame = `${ask.key} ${ask.requested}`;
+            if (lastAskedRef.current.get(element) === frame) return;
+            lastAskedRef.current.set(element, frame);
+            stats.shown += 1;
+            if (ask.shown === ask.requested) return;
+            stats.misses += 1;
+            if (section) section.dataset.streamLastMiss = `${frame}->${ask.shown}`;
+          });
+          pending.clear();
+          if (section) {
+            section.dataset.streamShown = String(stats.shown);
+            section.dataset.streamMisses = String(stats.misses);
+          }
+        });
+      }
+      pending.set(element, { key, requested, shown });
+    },
+    [],
+  );
+
   const drawFrame = useCallback((requestedIndex: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -162,6 +240,7 @@ export default function CarSequence() {
       loadedFramesRef.current,
       SEQUENCE_CONFIG.frameCount,
     );
+    if (streamRef.current) countShown(canvas, "canvas", requested, actual);
     if (actual === null || actual === drawnFrameRef.current) return;
 
     const image = imagesRef.current[actual];
@@ -172,19 +251,84 @@ export default function CarSequence() {
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     drawnFrameRef.current = actual;
     canvas.dataset.frame = String(actual);
-  }, []);
+  }, [countShown]);
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
     const params = new URLSearchParams(window.location.search);
     const timer = window.setTimeout(() => {
-      setCalibrationMode(params.get("calibrateCar") === "1");
+      // Labels are placed on the 16:9 stills, so the placement tool only runs
+      // on the landscape set.
+      setCalibrationMode(
+        params.get("calibrateCar") === "1" && choosePageFrameSet() === "landscape",
+      );
       setCalibrationChecked(true);
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
 
+  // The portrait set streams: frame 0 first, which is what the section waits
+  // on, and then whatever the timeline schedules near the scroll position.
   useEffect(() => {
+    if (frameSet !== "portrait") return;
+    const loaded = loadedFramesRef.current;
+    const images = imagesRef.current;
+    // Frame 0 is painted the moment it arrives, but the timeline waits for the
+    // opening beat's layers too: it shows them from its first frame.
+    const opening = [frameUrl("portrait", 0), ...openingLayerUrls("portrait")];
+    const waiting = new Set(opening);
+    let ready = false;
+    let sized = false;
+    const settleOpening = (url: string) => {
+      waiting.delete(url);
+      if (ready || waiting.size || !loaded.has(0)) return;
+      ready = true;
+      drawnFrameRef.current = -1;
+      setSequenceReady(true);
+    };
+    const stream = new FrameStream({
+      onReady: (asset, image) => {
+        const index = asset.canvasFrame;
+        if (index !== undefined) {
+          images[index] = image;
+          loaded.add(index);
+          const canvas = canvasRef.current;
+          if (index === 0 && canvas && !sized) {
+            sized = true;
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+          }
+          drawFrame(requestedFrameRef.current);
+        }
+        settleOpening(asset.url);
+      },
+      onRelease: (asset) => {
+        const index = asset.canvasFrame;
+        if (index === undefined) return;
+        loaded.delete(index);
+        images[index] = undefined;
+      },
+      onError: (asset) => {
+        if (!ready && asset.canvasFrame === 0) setLoadFailed(true);
+        else settleOpening(asset.url);
+      },
+    });
+    streamRef.current = stream;
+    const schedule = new StreamSchedule();
+    opening.forEach((url, index) =>
+      schedule.add(url, 0, 0, 0, index === 0 ? 0 : undefined),
+    );
+    stream.setSchedule(schedule.build());
+    return () => {
+      stream.dispose();
+      streamRef.current = null;
+      loaded.clear();
+      images.length = 0;
+    };
+  }, [drawFrame, frameSet]);
+
+  useEffect(() => {
+    if (frameSet !== "landscape") return;
     let cancelled = false;
     let batchTimer: ReturnType<typeof setTimeout> | undefined;
     const pending = new Map<number, Promise<boolean>>();
@@ -243,7 +387,7 @@ export default function CarSequence() {
           );
         };
         image.onerror = () => finish(false);
-        image.src = frameUrl(index);
+        image.src = frameUrl("landscape", index);
       });
 
       pending.set(index, promise);
@@ -269,39 +413,7 @@ export default function CarSequence() {
       setSequenceReady(true);
 
       // Warm the reveal layers so they never pop in mid-scroll.
-      const layerUrls: string[] = [];
-      CAR_REVEALS.forEach((reveal) => {
-        if (reveal.base) layerUrls.push(layerUrl(reveal.base));
-        if (reveal.part) layerUrls.push(layerUrl(reveal.part));
-        if (reveal.isolate) layerUrls.push(layerUrl(reveal.isolate));
-        if (reveal.push) {
-          for (let index = 0; index < reveal.push.count; index += 1) {
-            layerUrls.push(sequenceLayerUrl(reveal.push.base, index));
-          }
-          for (let index = 0; index < reveal.push.partCount; index += 1) {
-            layerUrls.push(sequenceLayerUrl(reveal.push.part, index));
-          }
-          const exit = reveal.push.exit;
-          if (exit) {
-            for (let index = 0; index < exit.count; index += 1) {
-              layerUrls.push(sequenceLayerUrl(exit.base, index));
-            }
-            for (let index = 0; index < exit.partCount; index += 1) {
-              layerUrls.push(sequenceLayerUrl(exit.part, index));
-            }
-          }
-        }
-      });
-      CAR_EXCURSION.steps.forEach((step) => {
-        if (step.kind === "move") {
-          for (let index = 0; index < step.count; index += 1) {
-            layerUrls.push(sequenceLayerUrl(step.prefix, index));
-          }
-        } else if (step.kind === "isolate") {
-          layerUrls.push(layerUrl(step.layer));
-        }
-      });
-      layerUrls.forEach((url) => {
+      warmLayerUrls("landscape").forEach((url) => {
         const image = new Image();
         image.decoding = "async";
         image.src = url;
@@ -355,7 +467,7 @@ export default function CarSequence() {
         image.onerror = null;
       });
     };
-  }, [drawFrame]);
+  }, [drawFrame, frameSet]);
 
   const calibrationChapter =
     CAR_CHAPTERS.find((chapter) => chapter.id === selectedChapterId) ??
@@ -389,7 +501,78 @@ export default function CarSequence() {
             return;
           }
 
-          const mode: ResponsiveMode = conditions.desktop ? "desktop" : "mobile";
+          // Labels, their scroll holds and Pong were all laid out on the 16:9
+          // stills, so a tablet turned wide keeps the phone's behaviour if it
+          // loaded the portrait set.
+          const mode: ResponsiveMode =
+            conditions.desktop && frameSet === "landscape" ? "desktop" : "mobile";
+          const set: FrameSet = frameSet ?? "landscape";
+          // The portrait set streams: as the timeline is laid down it records
+          // which file is on screen when, and the stream fetches what is near
+          // the scroll position. Every layer shown goes through `showRun`, which
+          // on the landscape set is exactly the old src assignment.
+          const stream = frameSet === "portrait" ? streamRef.current : null;
+          const schedule = stream ? new StreamSchedule() : null;
+          const runUrl = (prefix: string) => (index: number) =>
+            sequenceLayerUrl(set, prefix, index);
+          const showRun = (
+            image: HTMLImageElement,
+            key: string,
+            count: number,
+            requested: number,
+            urlAt: (index: number) => string,
+            partner?: {
+              image: HTMLImageElement;
+              count: number;
+              urlAt: (index: number) => string;
+            },
+          ) => {
+            if (!stream) {
+              image.src = urlAt(requested);
+              if (partner) {
+                partner.image.src = partner.urlAt(
+                  Math.min(requested, partner.count - 1),
+                );
+              }
+              return;
+            }
+            // A base and its part are one picture, so they move together: the
+            // nearest frame both are here for, never one ahead of the other.
+            const shown = nearestReady(
+              requested,
+              count,
+              (index) =>
+                stream.isReady(urlAt(index)) &&
+                (!partner ||
+                  stream.isReady(
+                    partner.urlAt(Math.min(index, partner.count - 1)),
+                  )),
+            );
+            countShown(image, key, requested, shown);
+            // Standing in for a frame that isn't here yet: show it when it is,
+            // whether or not the timeline asks again.
+            if (shown === requested) {
+              stream.settle(image);
+            } else {
+              const partSrc = partner
+                ? [partner.urlAt(Math.min(requested, partner.count - 1))]
+                : [];
+              stream.retryWhenReady(image, [urlAt(requested), ...partSrc], () =>
+                showRun(image, key, count, requested, urlAt, partner),
+              );
+            }
+            if (shown === null) return;
+            const src = urlAt(shown);
+            if (image.getAttribute("src") !== src) image.src = src;
+            if (partner) {
+              const partSrc = partner.urlAt(Math.min(shown, partner.count - 1));
+              if (partner.image.getAttribute("src") !== partSrc) {
+                partner.image.src = partSrc;
+              }
+            }
+          };
+          // Where each chapter's still is on screen, for the caption band.
+          const poseWindows: { chapter: number; from: number; to: number }[] = [];
           // Labels are only laid out at desktop widths for now; the layer is not
           // displayed below that, so there is nothing to animate.
           const labelsFor = (chapter: CarChapter): CarLabel[] =>
@@ -447,6 +630,14 @@ export default function CarSequence() {
           // Each label draws out of its part: the dot lands, the line runs out to
           // the end, then the name opens from the knee along the run.
           const labelsBetween = (chapter: CarChapter, from: number, to: number) => {
+            poseWindows.push({ chapter: CAR_CHAPTERS.indexOf(chapter), from, to });
+            // The pause's masks, for the caption band's chips to light parts with.
+            if (schedule) {
+              Object.keys(CAR_PART_MATTES[chapter.id] ?? {}).forEach((part) => {
+                const matte = partMatteUrl(set, chapter.id, part);
+                if (matte) schedule.add(matte, from, to);
+              });
+            }
             const labels = labelsFor(chapter);
             if (!labels.length) return;
             const timeline = gsap.timeline({ paused: true });
@@ -566,6 +757,11 @@ export default function CarSequence() {
                   .find((slot) => slot.step.kind === "move");
                 const until = startAt + (next ? next.start : total);
                 const cursor = { index: 0 };
+                const urlAt = runUrl(step.prefix);
+                schedule?.run(urlAt, 0, step.count - 1, at, duration);
+                // It holds its last pose through the beats that follow.
+                schedule?.add(urlAt(step.count - 1), at + duration, until);
+                stream?.prime(image, urlAt(0));
                 master.set(image, { autoAlpha: 1, filter: "blur(0px)" }, at);
                 master.to(
                   cursor,
@@ -574,9 +770,12 @@ export default function CarSequence() {
                     duration,
                     ease: "none",
                     onUpdate: () => {
-                      image.src = sequenceLayerUrl(
+                      showRun(
+                        image,
                         step.prefix,
+                        step.count,
                         Math.round(cursor.index),
+                        urlAt,
                       );
                     },
                   },
@@ -593,6 +792,8 @@ export default function CarSequence() {
                 const isolate = excursionIsolateRefs.current[step.layer];
                 const surface = cover;
                 const back = at + duration - CHAPTER_TIMING.hide;
+                schedule?.add(layerUrl(set, step.layer), at, at + duration);
+                stream?.prime(isolate, layerUrl(set, step.layer));
                 if (isolate) master.set(isolate, { autoAlpha: 1 }, at);
                 if (surface) {
                   master.to(
@@ -646,7 +847,11 @@ export default function CarSequence() {
               // that frame. If the sequence ever lands somewhere else it just stays
               // hidden rather than drifting off the wheel.
               const egg = eggRef.current;
-              if (egg && mode === "desktop" && pauseLayerUrl(step.frame) === COCKPIT_STILL) {
+              if (
+                egg &&
+                mode === "desktop" &&
+                pauseLayerUrl(set, step.frame) === COCKPIT_STILL
+              ) {
                 cockpitHold = { from: at, to: at + duration };
                 // Mount it (and start its ~1 MB of press crops) a viewport and a half
                 // early, so nothing is still loading by the time a button is pressed.
@@ -668,10 +873,23 @@ export default function CarSequence() {
             }
           };
 
+          // The canvas opens the page on frame 0, before anything has played.
+          schedule?.add(frameUrl(set, 0), 0, 0, 0, 0);
+          const scheduleRotation = (from: number, to: number) =>
+            schedule?.run(
+              (index) => frameUrl(set, index),
+              from,
+              to,
+              master.duration(),
+              rotationDuration(from, to),
+              true,
+            );
+
           orbitStops.forEach((chapter) => {
             // The excursion may have already carried the playhead here, in which
             // case a rotation would only be a viewport of stalled scroll.
             if (chapter.pauseFrame !== currentFrame) {
+              scheduleRotation(currentFrame, chapter.pauseFrame);
               master.to(playhead, {
                 frame: chapter.pauseFrame,
                 duration: rotationDuration(currentFrame, chapter.pauseFrame),
@@ -723,18 +941,25 @@ export default function CarSequence() {
               // top of it returns: a landed beat must never leave its element
               // holding the push's first frame.
               const cursor = { index: push.landed ? push.count - 1 : 0 };
-              const applyFrame = () => {
-                const index = Math.round(cursor.index);
-                base.src = sequenceLayerUrl(push.base, index);
-                // The part is only rendered for the stretch it is still visible
-                // over, so hold its last frame rather than reaching past the set.
-                if (part) {
-                  part.src = sequenceLayerUrl(
-                    push.part,
-                    Math.min(index, push.partCount - 1),
-                  );
-                }
+              const baseAt = runUrl(push.base);
+              const partAt = runUrl(push.part);
+              // The part is only rendered for the stretch it is still visible
+              // over, so hold its last frame rather than reaching past the set.
+              const partAtBase = (index: number) =>
+                partAt(Math.min(index, push.partCount - 1));
+              const applyFrameAt = (index: number) => {
+                showRun(
+                  base,
+                  push.base,
+                  push.count,
+                  index,
+                  baseAt,
+                  part ? { image: part, count: push.partCount, urlAt: partAt } : undefined,
+                );
               };
+              const applyFrame = () => applyFrameAt(Math.round(cursor.index));
+              stream?.prime(base, revealBaseSrc(set, reveal));
+              stream?.prime(part, revealPartSrc(set, reveal));
 
               const travel = CHAPTER_TIMING.push;
               const fade = travel * CHAPTER_TIMING.pushPartFade;
@@ -783,10 +1008,25 @@ export default function CarSequence() {
               }
 
               const pushHold = inStart + (push.landed ? 0 : travel);
-              master.to({}, { duration: pushStill }, pushHold);
+              // Streaming, the hold says which frame it holds: the element may
+              // have been left on a stand-in, or on the exit leg's first frame
+              // (the same picture under another name) by a scroll back up.
+              const holdStill = () => applyFrameAt(push.count - 1);
+              master.to(
+                {},
+                stream
+                  ? { duration: pushStill, onUpdate: holdStill }
+                  : { duration: pushStill },
+                pushHold,
+              );
 
               const outStart = pushHold + pushStill;
               const exit = push.exit;
+              if (!push.landed) {
+                schedule?.run(baseAt, 0, push.count - 1, inStart, travel);
+                schedule?.run(partAtBase, 0, push.count - 1, inStart, travel);
+              }
+              schedule?.add(baseAt(push.count - 1), pushHold, outStart);
 
               if (exit) {
                 // Leave along a rendered leg to a different orbit frame instead
@@ -795,16 +1035,28 @@ export default function CarSequence() {
                 // sequence they point at changes. The part fades back in over
                 // the leg's first stretch, mirroring the way it left.
                 const exitCursor = { index: 0 };
+                const exitBaseAt = runUrl(exit.base);
+                const exitPartAt = runUrl(exit.part);
                 const applyExit = () => {
-                  const index = Math.round(exitCursor.index);
-                  base.src = sequenceLayerUrl(exit.base, index);
-                  if (part) {
-                    part.src = sequenceLayerUrl(
-                      exit.part,
-                      Math.min(index, exit.partCount - 1),
-                    );
-                  }
+                  showRun(
+                    base,
+                    exit.base,
+                    exit.count,
+                    Math.round(exitCursor.index),
+                    exitBaseAt,
+                    part
+                      ? { image: part, count: exit.partCount, urlAt: exitPartAt }
+                      : undefined,
+                  );
                 };
+                schedule?.run(exitBaseAt, 0, exit.count - 1, outStart, travel);
+                schedule?.run(
+                  (index) => exitPartAt(Math.min(index, exit.partCount - 1)),
+                  0,
+                  exit.count - 1,
+                  outStart,
+                  travel,
+                );
                 master.call(applyExit, undefined, outStart);
                 master.to(
                   exitCursor,
@@ -837,6 +1089,8 @@ export default function CarSequence() {
               } else {
                 // Back out along the same frames, with the part fading in over
                 // the tail so the last one is the orbit pose again, part and all.
+                schedule?.run(baseAt, push.count - 1, 0, outStart, travel);
+                schedule?.run(partAtBase, push.count - 1, 0, outStart, travel);
                 master.to(
                   cursor,
                   { index: 0, duration: travel, ease: "none", onUpdate: applyFrame },
@@ -862,6 +1116,8 @@ export default function CarSequence() {
               // The canvas resumes on whichever orbit frame the beat actually
               // left the camera on, which the exit leg has already arrived at.
               if (exit) master.set(playhead, { frame: exit.toFrame }, landed);
+              const resumeFrame = exit ? exit.toFrame : chapter.pauseFrame;
+              schedule?.add(frameUrl(set, resumeFrame), landed, landed, 0, resumeFrame);
               if (canvasRef.current) {
                 master.set(
                   canvasRef.current,
@@ -885,6 +1141,25 @@ export default function CarSequence() {
             }
 
             // The car blurs away to expose an isolated subsystem rendered under it.
+            if (isolates.length && schedule) {
+              const shownUntil =
+                revealStart +
+                beatHold(labelCount, CHAPTER_TIMING.reveal + CHAPTER_TIMING.hide) +
+                CHAPTER_TIMING.reveal +
+                CHAPTER_TIMING.hide;
+              schedule.add(
+                frameUrl(set, chapter.pauseFrame),
+                revealStart,
+                shownUntil,
+                0,
+                chapter.pauseFrame,
+              );
+              isolates.forEach((reveal) => {
+                const url = layerUrl(set, reveal.isolate ?? "");
+                schedule.add(url, revealStart, shownUntil);
+                stream?.prime(revealIsolateRefs.current[reveal.id], url);
+              });
+            }
             if (isolates.length && canvasRef.current) {
               isolates.forEach((reveal) => {
                 const isolate = revealIsolateRefs.current[reveal.id];
@@ -962,6 +1237,7 @@ export default function CarSequence() {
             }
           });
 
+          scheduleRotation(currentFrame, SEQUENCE_CONFIG.frameCount - 1);
           master.to(playhead, {
             frame: SEQUENCE_CONFIG.frameCount - 1,
             duration: rotationDuration(
@@ -971,9 +1247,28 @@ export default function CarSequence() {
             ease: "none",
           });
 
+          // The caption band follows the playhead: a chapter's name comes up as
+          // the camera arrives at its still, and its chips can light parts only
+          // while that still is on screen.
+          poseWindows.sort((left, right) => left.from - right.from);
+          let bandNow: BandState = { chapter: 0, live: false };
+          const syncBand = () => {
+            const time = master.time();
+            let current = poseWindows[0];
+            poseWindows.forEach((pose) => {
+              if (pose.from - CAPTION_LEAD <= time) current = pose;
+            });
+            if (!current) return;
+            const next = { chapter: current.chapter, live: labelsUp(current, time) };
+            if (next.chapter === bandNow.chapter && next.live === bandNow.live) return;
+            bandNow = next;
+            setBand(next);
+          };
+
           master.eventCallback("onUpdate", () => {
             drawFrame(playhead.frame);
             syncLabels();
+            if (stream) syncBand();
           });
 
           // Scrolling down onto a labelled pause holds the page there until its
@@ -1133,6 +1428,9 @@ export default function CarSequence() {
             onUpdate: (self) => {
               watchForHold(self);
               paintRail(self.progress);
+              // The scroll position leads the scrubbed playhead by the scrub's
+              // lag, so the stream plans from where the car is going to be.
+              stream?.seek(self.progress * master.duration(), self.direction);
             },
             onRefresh: (self) => paintRail(self.progress),
           });
@@ -1302,6 +1600,11 @@ export default function CarSequence() {
           };
 
           paintRail(trigger.progress);
+          if (stream && schedule) {
+            stream.setSchedule(schedule.build());
+            stream.seek(trigger.progress * master.duration(), 1);
+            syncBand();
+          }
           const refreshFrame = window.requestAnimationFrame(() =>
             ScrollTrigger.refresh(),
           );
@@ -1339,7 +1642,7 @@ export default function CarSequence() {
     },
     {
       scope: sectionRef,
-      dependencies: [sequenceReady, calibrationMode, calibrationChecked],
+      dependencies: [sequenceReady, calibrationMode, calibrationChecked, frameSet],
       revertOnUpdate: true,
     },
   );
@@ -1448,8 +1751,20 @@ export default function CarSequence() {
   // What is on screen while this pause's labels are up, when it is not the
   // orbit canvas - they have to be placed on that, not on the frame it is keyed to.
   const calibrationPose = calibrationMode
-    ? pauseLayerUrl(calibrationChapter.pauseFrame)
+    ? pauseLayerUrl("landscape", calibrationChapter.pauseFrame)
     : null;
+
+  // A part lit from the caption band. It only lasts while the pause's still is
+  // on screen, and like a desktop hover, any scroll puts it out.
+  const lit = band.live ? litLabel : null;
+  useEffect(() => {
+    if (!lit) return;
+    const clear = () => setLitLabel(null);
+    window.addEventListener("scroll", clear, { passive: true });
+    return () => window.removeEventListener("scroll", clear);
+  }, [lit]);
+  const bandChapter = CAR_CHAPTERS[band.chapter] ?? CAR_CHAPTERS[0];
+  const bandStill = portrait ? pauseLayerUrl("portrait", bandChapter.pauseFrame) : null;
 
   return (
     <section
@@ -1460,6 +1775,10 @@ export default function CarSequence() {
     >
       <div
         ref={stageRef}
+        // Which frame set is on screen, which is what lays the stage out: the
+        // portrait set's 4:5 frame and caption band are styled in globals.css.
+        // "pending" is the server render, before the set is known.
+        data-car-stage={frameSet ?? "pending"}
         className="relative flex h-[100svh] items-center justify-center overflow-hidden bg-bg pt-16"
       >
         {!sequenceReady && !loadFailed && (
@@ -1473,7 +1792,7 @@ export default function CarSequence() {
           </p>
         )}
 
-        <div className="relative inline-block max-w-full leading-none">
+        <div data-car-frame className="relative inline-block max-w-full leading-none">
           {CAR_REVEALS.filter((reveal) => reveal.kind === "isolate").map(
             (reveal) => (
               <img
@@ -1481,7 +1800,13 @@ export default function CarSequence() {
                 ref={(element) => {
                   revealIsolateRefs.current[reveal.id] = element;
                 }}
-                src={layerUrl(reveal.isolate ?? "")}
+                // No frame URL until the set is known; the portrait set's
+                // stream gives it one when it has fetched the file.
+                src={
+                  frameSet === "landscape"
+                    ? layerUrl("landscape", reveal.isolate ?? "")
+                    : undefined
+                }
                 alt=""
                 aria-hidden="true"
                 data-reveal-isolate={reveal.id}
@@ -1498,7 +1823,11 @@ export default function CarSequence() {
                 ref={(element) => {
                   excursionIsolateRefs.current[step.layer] = element;
                 }}
-                src={layerUrl(step.layer)}
+                src={
+                  frameSet === "landscape"
+                    ? layerUrl("landscape", step.layer)
+                    : undefined
+                }
                 alt=""
                 aria-hidden="true"
                 data-excursion-isolate={step.layer}
@@ -1522,7 +1851,11 @@ export default function CarSequence() {
                 ref={(element) => {
                   legRefs.current[step.prefix] = element;
                 }}
-                src={sequenceLayerUrl(step.prefix, 0)}
+                src={
+                  frameSet === "landscape"
+                    ? sequenceLayerUrl("landscape", step.prefix, 0)
+                    : undefined
+                }
                 alt=""
                 aria-hidden="true"
                 data-excursion-leg={step.prefix}
@@ -1551,7 +1884,11 @@ export default function CarSequence() {
                   ref={(element) => {
                     revealBaseRefs.current[reveal.id] = element;
                   }}
-                  src={revealBaseSrc(reveal)}
+                  src={
+                    frameSet === "landscape"
+                      ? revealBaseSrc("landscape", reveal)
+                      : undefined
+                  }
                   alt=""
                   aria-hidden="true"
                   // Decode before painting rather than after: these elements swap
@@ -1565,7 +1902,11 @@ export default function CarSequence() {
                   ref={(element) => {
                     revealPartRefs.current[reveal.id] = element;
                   }}
-                  src={revealPartSrc(reveal)}
+                  src={
+                    frameSet === "landscape"
+                      ? revealPartSrc("landscape", reveal)
+                      : undefined
+                  }
                   alt=""
                   aria-hidden="true"
                   decoding="sync"
@@ -1587,22 +1928,65 @@ export default function CarSequence() {
             />
           )}
 
-          <CarLabelsLayer
+          {/* The chip a phone taps lights its part the way a desktop hover
+              does, through the same dim-and-lift layers. */}
+          {portrait && bandStill && (
+            <div
+              data-car-highlights={bandChapter.id}
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-30 select-none"
+            >
+              {(CAR_LABELS[bandChapter.id] ?? []).map((label) => {
+                const matte = label.part
+                  ? partMatteUrl("portrait", bandChapter.id, label.part)
+                  : null;
+                return matte ? (
+                  <PartHighlight
+                    key={label.id}
+                    labelId={label.id}
+                    still={bandStill}
+                    matte={matte}
+                    on={lit === label.id}
+                  />
+                ) : null;
+              })}
+            </div>
+          )}
+
+          {/* Labels are placed on the 16:9 stills, so only the landscape set
+              has them; the portrait set's caption band stands in for them. */}
+          {frameSet === "landscape" && (
+            <CarLabelsLayer
+              frameSet="landscape"
+              chapters={CAR_CHAPTERS}
+              labels={calibrationMode ? draftLabels : CAR_LABELS}
+              elements={labelElementsRef}
+              placement={
+                calibrationMode
+                  ? {
+                      chapterId: selectedChapterId,
+                      selectedLabelId,
+                      onSelect: setSelectedLabelId,
+                      onMove: moveLabel,
+                    }
+                  : null
+              }
+            />
+          )}
+        </div>
+
+        {frameSet !== "landscape" && (
+          <CarCaptionBand
             chapters={CAR_CHAPTERS}
-            labels={calibrationMode ? draftLabels : CAR_LABELS}
-            elements={labelElementsRef}
-            placement={
-              calibrationMode
-                ? {
-                    chapterId: selectedChapterId,
-                    selectedLabelId,
-                    onSelect: setSelectedLabelId,
-                    onMove: moveLabel,
-                  }
-                : null
+            labels={CAR_LABELS}
+            chapter={band.chapter}
+            live={band.live}
+            lit={lit}
+            onToggle={(labelId) =>
+              setLitLabel((current) => (current === labelId ? null : labelId))
             }
           />
-        </div>
+        )}
       </div>
 
       {/* How far through the sequence you are, and the rail that pans it. It is

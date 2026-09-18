@@ -1,7 +1,9 @@
+import { preload } from "react-dom";
 import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 import CarSequence from "@/components/CarSequence";
+import { PORTRAIT_SET_MEDIA, frameUrl } from "@/components/carSequenceModel";
 import Footer from "@/components/Footer";
 
 export const metadata = {
@@ -10,6 +12,18 @@ export const metadata = {
 };
 
 export default function CarPage() {
+  // The sequence can't show anything until its first frame is in, and it only
+  // asks for it once hydrated. So each set's frame 0 is preloaded, gated by the
+  // query that picks the set (PORTRAIT_SET_MEDIA): the browser starts on the one
+  // it will use alongside the scripts, and never fetches the other. These two
+  // are the only frame URLs in the page's HTML. preload() rather than a <link>
+  // element: React would emit an element twice, once as a hint.
+  preload(frameUrl("landscape", 0), {
+    as: "image",
+    media: `not all and ${PORTRAIT_SET_MEDIA}`,
+  });
+  preload(frameUrl("portrait", 0), { as: "image", media: PORTRAIT_SET_MEDIA });
+
   return (
     <>
       <Navbar />

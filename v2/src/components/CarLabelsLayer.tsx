@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -23,7 +22,7 @@ import {
   type LabelGeometry,
   type LabelPoint,
 } from "./carLabels";
-import { pauseLayerUrl, type CarChapter } from "./carSequenceModel";
+import { pauseLayerUrl, type CarChapter, type FrameSet } from "./carSequenceModel";
 
 /** The pieces the scroll timeline animates, by label id. */
 export interface LabelElements {
@@ -45,6 +44,8 @@ export interface LabelPlacement {
 }
 
 interface CarLabelsLayerProps {
+  /** The frame set on screen, which the highlight's still and masks come from. */
+  frameSet: FrameSet;
   chapters: CarChapter[];
   labels: CarLabelSet;
   elements: RefObject<LabelElements>;
@@ -103,7 +104,54 @@ interface Highlight {
   matte: string;
 }
 
+/**
+ * A part lit on a pause's still: the rest of the still dims through the part's
+ * matte, and the part itself is lifted by a copy of the still cut to the matte.
+ * Always mounted and faded by `on`, so lighting one is a fade, not a load.
+ * Desktop label hover and the phone caption band's chips both light parts with
+ * this, which is what keeps the two looking the same.
+ */
+export function PartHighlight({
+  labelId,
+  still,
+  matte,
+  on,
+}: {
+  labelId: string;
+  still: string;
+  matte: string;
+  on: boolean;
+}) {
+  return (
+    <>
+      <div
+        data-label-dim={labelId}
+        className="absolute inset-0"
+        style={{
+          ...outsideMask(matte),
+          background: DIM,
+          opacity: on ? 1 : 0,
+          transition: HOVER_FADE,
+        }}
+      />
+      <img
+        data-label-lift={labelId}
+        src={still}
+        alt=""
+        className="absolute inset-0 h-full w-full"
+        style={{
+          ...insideMask(matte),
+          filter: LIFT,
+          opacity: on ? 1 : 0,
+          transition: HOVER_FADE,
+        }}
+      />
+    </>
+  );
+}
+
 export default function CarLabelsLayer({
+  frameSet,
   chapters,
   labels,
   elements,
@@ -180,10 +228,12 @@ export default function CarLabelsLayer({
     ? {}
     : Object.fromEntries(
         shown.flatMap((chapter) => {
-          const still = pauseLayerUrl(chapter.pauseFrame);
+          const still = pauseLayerUrl(frameSet, chapter.pauseFrame);
           return (labels[chapter.id] ?? []).flatMap((label) => {
             const matte =
-              still && label.part ? partMatteUrl(chapter.id, label.part) : null;
+              still && label.part
+                ? partMatteUrl(frameSet, chapter.id, label.part)
+                : null;
             return still && matte
               ? [[label.id, { chapterId: chapter.id, still, matte }]]
               : [];
@@ -321,35 +371,15 @@ export default function CarLabelsLayer({
       className="pointer-events-none absolute inset-0 z-30 hidden select-none lg:block"
       style={{ containerType: "inline-size" }}
     >
-      {Object.entries(highlights).map(([labelId, { still, matte }]) => {
-        const on = labelId === active;
-        return (
-          <Fragment key={labelId}>
-            <div
-              data-label-dim={labelId}
-              className="absolute inset-0"
-              style={{
-                ...outsideMask(matte),
-                background: DIM,
-                opacity: on ? 1 : 0,
-                transition: HOVER_FADE,
-              }}
-            />
-            <img
-              data-label-lift={labelId}
-              src={still}
-              alt=""
-              className="absolute inset-0 h-full w-full"
-              style={{
-                ...insideMask(matte),
-                filter: LIFT,
-                opacity: on ? 1 : 0,
-                transition: HOVER_FADE,
-              }}
-            />
-          </Fragment>
-        );
-      })}
+      {Object.entries(highlights).map(([labelId, { still, matte }]) => (
+        <PartHighlight
+          key={labelId}
+          labelId={labelId}
+          still={still}
+          matte={matte}
+          on={labelId === active}
+        />
+      ))}
 
       <svg
         className="absolute inset-0 h-full w-full overflow-visible"

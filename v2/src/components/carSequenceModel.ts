@@ -1,12 +1,36 @@
 export const SEQUENCE_CONFIG = {
-  basePath: "/renders-sr26/full",
-  layersPath: "/renders-sr26/layers",
   frameCount: 120,
   filenameDigits: 4,
   extension: "webp",
-  nativeWidth: 1920,
-  nativeHeight: 1080,
 } as const;
+
+/**
+ * The same sequence is rendered twice: 16:9 for anything held wide, and 4:5 for
+ * a phone held upright, where a 16:9 frame would play in a strip a quarter of
+ * the screen tall. Both sets use the same file names under their own root -
+ * full/ for the orbit, layers/ for legs and reveals, mattes/ for the part masks
+ * - so every URL below is the same path with a different root.
+ *
+ * A page load uses exactly one set: it is chosen once, before the first frame is
+ * requested, and turning the phone afterwards letterboxes the set already
+ * loading rather than fetching the other one.
+ */
+export type FrameSet = "landscape" | "portrait";
+
+export const FRAME_SETS = {
+  landscape: { root: "/renders-sr26", width: 16, height: 9 },
+  portrait: { root: "/renders-sr26/portrait", width: 4, height: 5 },
+} as const satisfies Record<FrameSet, { root: string; width: number; height: number }>;
+
+/** The screens the portrait set is for: phones, and small tablets, held upright. */
+export const PORTRAIT_SET_MEDIA = "(orientation: portrait) and (max-width: 1023px)";
+
+/** Which set a screen gets, given a matchMedia-style test. */
+export const pickFrameSet = (matches: (query: string) => boolean): FrameSet =>
+  matches(PORTRAIT_SET_MEDIA) ? "portrait" : "landscape";
+
+const frameNumber = (index: number) =>
+  String(index + 1).padStart(SEQUENCE_CONFIG.filenameDigits, "0");
 
 export const CHAPTER_TIMING = {
   framesPerViewport: 30,
@@ -376,19 +400,89 @@ export const CAR_CHAPTERS: CarChapter[] = [
 // pauseFrame they belong to and must therefore be RENDERED at pauseFrame + 1 -
 // one orbit frame is ~3 degrees, which reads as the layer sitting visibly off to
 // one side of the car. See artifacts/render-layers.py.
-export const frameUrl = (index: number) =>
-  `${SEQUENCE_CONFIG.basePath}/${String(index + 1).padStart(
-    SEQUENCE_CONFIG.filenameDigits,
-    "0",
-  )}.${SEQUENCE_CONFIG.extension}`;
+export const frameUrl = (set: FrameSet, index: number) =>
+  `${FRAME_SETS[set].root}/full/${frameNumber(index)}.${SEQUENCE_CONFIG.extension}`;
 
-export const layerUrl = (name: string) =>
-  `${SEQUENCE_CONFIG.layersPath}/${name}.${SEQUENCE_CONFIG.extension}`;
+export const layerUrl = (set: FrameSet, name: string) =>
+  `${FRAME_SETS[set].root}/layers/${name}.${SEQUENCE_CONFIG.extension}`;
 
-export const sequenceLayerUrl = (prefix: string, index: number) =>
-  layerUrl(
-    `${prefix}-${String(index + 1).padStart(SEQUENCE_CONFIG.filenameDigits, "0")}`,
-  );
+export const sequenceLayerUrl = (set: FrameSet, prefix: string, index: number) =>
+  layerUrl(set, `${prefix}-${frameNumber(index)}`);
+
+/** A part mask, by the file name car-part-mattes.json lists it under. */
+export const matteUrl = (set: FrameSet, chapterId: string, file: string) =>
+  `${FRAME_SETS[set].root}/mattes/${chapterId}/${file}`;
+
+// What a beat's <img> holds before it plays. A landed beat opens on the LAST
+// frame of its push, so that is the frame its element carries from the start: a
+// hidden <img> is decoded lazily, so revealing one whose decoded content is still
+// the push's first frame paints that frame for a tick - and for the suspension
+// beat, the push's first frame is the wide orbit pose this whole leg exists to
+// skip. See https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode
+export const revealBaseSrc = (set: FrameSet, reveal: CarReveal) =>
+  reveal.push?.landed
+    ? sequenceLayerUrl(set, reveal.push.base, reveal.push.count - 1)
+    : layerUrl(set, reveal.base ?? "");
+
+export const revealPartSrc = (set: FrameSet, reveal: CarReveal) =>
+  reveal.push?.landed
+    ? sequenceLayerUrl(set, reveal.push.part, reveal.push.partCount - 1)
+    : layerUrl(set, reveal.part ?? "");
+
+/**
+ * The layer frames on screen at the very top of the sequence, beside orbit
+ * frame 0: a push on the first stop starts at once, so its base and part are
+ * showing from the first scroll - the same image as frame 0, so the handover is
+ * unseen only if they are already here.
+ */
+export const openingLayerUrls = (
+  set: FrameSet,
+  chapters: CarChapter[] = CAR_CHAPTERS,
+  reveals: CarReveal[] = CAR_REVEALS,
+) =>
+  reveals
+    .filter(
+      (reveal) =>
+        reveal.frame === chapters[0]?.pauseFrame && reveal.push && !reveal.push.landed,
+    )
+    .flatMap((reveal) => [revealBaseSrc(set, reveal), revealPartSrc(set, reveal)]);
+
+/**
+ * Every layer the sequence plays, in the order the landscape loader warms them:
+ * each reveal's stills and push frames, then each excursion leg and isolate.
+ * The order is part of the desktop loader's tuning, so it is kept as it was.
+ */
+export const warmLayerUrls = (
+  set: FrameSet,
+  reveals: CarReveal[] = CAR_REVEALS,
+  excursion: CarExcursion = CAR_EXCURSION,
+) => {
+  const urls: string[] = [];
+  const run = (prefix: string, count: number) => {
+    for (let index = 0; index < count; index += 1) {
+      urls.push(sequenceLayerUrl(set, prefix, index));
+    }
+  };
+  reveals.forEach((reveal) => {
+    if (reveal.base) urls.push(layerUrl(set, reveal.base));
+    if (reveal.part) urls.push(layerUrl(set, reveal.part));
+    if (reveal.isolate) urls.push(layerUrl(set, reveal.isolate));
+    if (reveal.push) {
+      run(reveal.push.base, reveal.push.count);
+      run(reveal.push.part, reveal.push.partCount);
+      const exit = reveal.push.exit;
+      if (exit) {
+        run(exit.base, exit.count);
+        run(exit.part, exit.partCount);
+      }
+    }
+  });
+  excursion.steps.forEach((step) => {
+    if (step.kind === "move") run(step.prefix, step.count);
+    else if (step.kind === "isolate") urls.push(layerUrl(set, step.layer));
+  });
+  return urls;
+};
 
 export const revealsForFrame = (frame: number) =>
   CAR_REVEALS.filter((reveal) => reveal.frame === frame);
@@ -510,6 +604,7 @@ export const orbitChapters = (
  * frame's only beat hangs its labels on the top of the move.
  */
 export const pauseLayerUrl = (
+  set: FrameSet,
   frame: number,
   reveals: CarReveal[] = CAR_REVEALS,
   excursion: CarExcursion = CAR_EXCURSION,
@@ -519,20 +614,20 @@ export const pauseLayerUrl = (
   );
   if (beat !== -1) {
     const step = excursion.steps[beat];
-    if (step.kind === "isolate") return layerUrl(step.layer);
+    if (step.kind === "isolate") return layerUrl(set, step.layer);
     const leg = excursion.steps
       .slice(0, beat)
       .findLast((candidate) => candidate.kind === "move");
     return leg?.kind === "move"
-      ? sequenceLayerUrl(leg.prefix, leg.count - 1)
+      ? sequenceLayerUrl(set, leg.prefix, leg.count - 1)
       : null;
   }
 
   const here = reveals.filter((reveal) => reveal.frame === frame);
   const isolate = here.find((reveal) => reveal.kind === "isolate");
-  if (isolate?.isolate) return layerUrl(isolate.isolate);
+  if (isolate?.isolate) return layerUrl(set, isolate.isolate);
   const push = here.find((reveal) => reveal.push)?.push;
-  if (push) return sequenceLayerUrl(push.base, push.count - 1);
+  if (push) return sequenceLayerUrl(set, push.base, push.count - 1);
   return null;
 };
 

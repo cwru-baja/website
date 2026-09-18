@@ -3,6 +3,8 @@ import {
   CAR_CHAPTERS,
   CAR_EXCURSION,
   CHAPTER_TIMING,
+  FRAME_SETS,
+  PORTRAIT_SET_MEDIA,
   SEQUENCE_CONFIG,
   CAR_REVEALS,
   excursionDuration,
@@ -19,6 +21,12 @@ import {
   labelsOutDuration,
   frameUrl,
   layerUrl,
+  matteUrl,
+  openingLayerUrls,
+  pickFrameSet,
+  revealBaseSrc,
+  revealPartSrc,
+  warmLayerUrls,
   orbitChapters,
   orbitFrameSet,
   pauseLayerUrl,
@@ -174,8 +182,8 @@ describe("car sequence model", () => {
       // Frame 1 of each sequence is the orbit pose, and it is what the layer sits
       // on before the beat runs. If the still and the sequence disagree the first
       // scroll tick swaps the image, which reads as a jump out of the canvas.
-      expect(layerUrl(reveal.base ?? "")).toBe(sequenceLayerUrl(push.base, 0));
-      expect(layerUrl(reveal.part ?? "")).toBe(sequenceLayerUrl(push.part, 0));
+      expect(layerUrl("landscape", reveal.base ?? "")).toBe(sequenceLayerUrl("landscape", push.base, 0));
+      expect(layerUrl("landscape", reveal.part ?? "")).toBe(sequenceLayerUrl("landscape", push.part, 0));
       // The part is only rendered while it is still on screen, so its set is the
       // shorter one - but it has to cover the whole fade.
       expect(push.partCount).toBeGreaterThan(0);
@@ -200,12 +208,12 @@ describe("car sequence model", () => {
     // push played in reverse, which is what returns the camera to frame 108:
     // layer files are named for the pauseFrame, but frameUrl maps a 0-based index
     // onto 1-based files, so the canvas paints toFrame + 1 when it takes over.
-    expect(frameUrl(CAR_EXCURSION.toFrame)).toBe("/renders-sr26/full/0109.webp");
+    expect(frameUrl("landscape", CAR_EXCURSION.toFrame)).toBe("/renders-sr26/full/0109.webp");
 
     const last = CAR_EXCURSION.steps.at(-1);
     expect(last?.kind).toBe("move");
     if (last?.kind !== "move") return;
-    expect(sequenceLayerUrl(last.prefix, last.count - 1)).toBe(
+    expect(sequenceLayerUrl("landscape", last.prefix, last.count - 1)).toBe(
       "/renders-sr26/layers/cockpit-susp-0040.webp",
     );
 
@@ -213,7 +221,7 @@ describe("car sequence model", () => {
     expect(corner?.frame).toBe(CAR_EXCURSION.toFrame);
     expect(corner?.push?.landed).toBe(true);
     // Which is also the still its labels would be placed on.
-    expect(pauseLayerUrl(CAR_EXCURSION.toFrame)).toBe(
+    expect(pauseLayerUrl("landscape", CAR_EXCURSION.toFrame)).toBe(
       "/renders-sr26/layers/108-susp-corner-0024.webp",
     );
   });
@@ -236,11 +244,11 @@ describe("car sequence model", () => {
   });
 
   it("builds layer urls under the layers directory", () => {
-    expect(layerUrl("031-frame")).toBe("/renders-sr26/layers/031-frame.webp");
-    expect(sequenceLayerUrl("cockpit-dive", 0)).toBe(
+    expect(layerUrl("landscape", "031-frame")).toBe("/renders-sr26/layers/031-frame.webp");
+    expect(sequenceLayerUrl("landscape", "cockpit-dive", 0)).toBe(
       "/renders-sr26/layers/cockpit-dive-0001.webp",
     );
-    expect(sequenceLayerUrl("cockpit-dive", 39)).toBe(
+    expect(sequenceLayerUrl("landscape", "cockpit-dive", 39)).toBe(
       "/renders-sr26/layers/cockpit-dive-0040.webp",
     );
   });
@@ -266,7 +274,7 @@ describe("car sequence model", () => {
     const shown = Object.fromEntries(
       CAR_CHAPTERS.map((chapter) => [
         chapter.pauseFrame,
-        pauseLayerUrl(chapter.pauseFrame),
+        pauseLayerUrl("landscape", chapter.pauseFrame),
       ]),
     );
     expect(shown).toEqual({
@@ -277,7 +285,7 @@ describe("car sequence model", () => {
       108: "/renders-sr26/layers/108-susp-corner-0024.webp",
     });
     // A plain orbit stop is the canvas itself.
-    expect(pauseLayerUrl(10)).toBeNull();
+    expect(pauseLayerUrl("landscape", 10)).toBeNull();
   });
 
   it("prefers a wide isolate over a push that shares its frame", () => {
@@ -287,7 +295,7 @@ describe("car sequence model", () => {
       { ...CAR_REVEALS[0], frame: 12 },
       { id: "wide", frame: 12, kind: "isolate" as const, blur: 14, isolate: "012-wide" },
     ];
-    expect(pauseLayerUrl(12, reveals, CAR_EXCURSION)).toBe(
+    expect(pauseLayerUrl("landscape", 12, reveals, CAR_EXCURSION)).toBe(
       "/renders-sr26/layers/012-wide.webp",
     );
   });
@@ -371,8 +379,8 @@ describe("car sequence model", () => {
   });
 
   it("builds frame URLs from the centralized sequence configuration", () => {
-    expect(frameUrl(0)).toBe("/renders-sr26/full/0001.webp");
-    expect(frameUrl(SEQUENCE_CONFIG.frameCount - 1)).toBe(
+    expect(frameUrl("landscape", 0)).toBe("/renders-sr26/full/0001.webp");
+    expect(frameUrl("landscape", SEQUENCE_CONFIG.frameCount - 1)).toBe(
       "/renders-sr26/full/0120.webp",
     );
   });
@@ -388,3 +396,77 @@ describe("car sequence model", () => {
     expect(nearestLoadedFrame(50, new Set())).toBeNull();
   });
 });
+
+describe("frame sets", () => {
+  const mirror = (url: string) =>
+    url.replace(/^\/renders-sr26\//, "/renders-sr26/portrait/");
+
+  it("gives phones and small tablets held upright the portrait set, and nothing else", () => {
+    expect(PORTRAIT_SET_MEDIA).toBe("(orientation: portrait) and (max-width: 1023px)");
+    expect(pickFrameSet((query) => query === PORTRAIT_SET_MEDIA)).toBe("portrait");
+    expect(pickFrameSet(() => false)).toBe("landscape");
+    expect(FRAME_SETS.portrait.width / FRAME_SETS.portrait.height).toBe(0.8);
+    expect(FRAME_SETS.landscape.width / FRAME_SETS.landscape.height).toBeCloseTo(1920 / 1080);
+  });
+
+  it("names every portrait file after its landscape twin, under its own root", () => {
+    expect(frameUrl("portrait", 0)).toBe("/renders-sr26/portrait/full/0001.webp");
+    expect(layerUrl("portrait", "031-frame")).toBe(
+      "/renders-sr26/portrait/layers/031-frame.webp",
+    );
+    expect(sequenceLayerUrl("portrait", "brake-arc/000-brake-arc", 29)).toBe(
+      "/renders-sr26/portrait/layers/brake-arc/000-brake-arc-0030.webp",
+    );
+    expect(matteUrl("portrait", "brakes", "rotor.webp?v=83a5a876")).toBe(
+      "/renders-sr26/portrait/mattes/brakes/rotor.webp?v=83a5a876",
+    );
+    CAR_CHAPTERS.forEach((chapter) => {
+      const wide = pauseLayerUrl("landscape", chapter.pauseFrame);
+      const tall = pauseLayerUrl("portrait", chapter.pauseFrame);
+      expect(tall).toBe(wide === null ? null : mirror(wide));
+    });
+    CAR_REVEALS.filter((reveal) => reveal.kind === "remove").forEach((reveal) => {
+      expect(revealBaseSrc("portrait", reveal)).toBe(mirror(revealBaseSrc("landscape", reveal)));
+      expect(revealPartSrc("portrait", reveal)).toBe(mirror(revealPartSrc("landscape", reveal)));
+    });
+  });
+
+  it("opens each removal's elements on the frame its beat opens on", () => {
+    const brakes = CAR_REVEALS.find((reveal) => reveal.id === "brakes")!;
+    const corner = CAR_REVEALS.find((reveal) => reveal.id === "suspension-side")!;
+    expect(revealBaseSrc("landscape", brakes)).toBe(
+      "/renders-sr26/layers/brake-arc/000-brake-arc-0001.webp",
+    );
+    // Landed: the push's last pose, never the wide orbit pose it starts from.
+    expect(revealBaseSrc("landscape", corner)).toBe(
+      "/renders-sr26/layers/108-susp-corner-0024.webp",
+    );
+    expect(revealPartSrc("landscape", corner)).toBe(
+      "/renders-sr26/layers/108-susp-corner-wheels-0014.webp",
+    );
+  });
+
+  it("names the layers on screen before the first scroll", () => {
+    // The brakes push starts at the top of the sequence, so its base and part
+    // are up from the first frame - beside orbit frame 0, which they match.
+    expect(openingLayerUrls("portrait")).toEqual([
+      "/renders-sr26/portrait/layers/brake-arc/000-brake-arc-0001.webp",
+      "/renders-sr26/portrait/layers/brake-arc/000-brake-cover-0001.webp",
+    ]);
+  });
+
+  it("lists every layer the sequence plays, in the desktop loader's order", () => {
+    const wide = warmLayerUrls("landscape");
+    expect(wide.slice(0, 4)).toEqual([
+      "/renders-sr26/layers/brake-arc/000-brake-arc-0001.webp",
+      "/renders-sr26/layers/brake-arc/000-brake-cover-0001.webp",
+      "/renders-sr26/layers/brake-arc/000-brake-arc-0001.webp",
+      "/renders-sr26/layers/brake-arc/000-brake-arc-0002.webp",
+    ]);
+    expect(wide.at(-1)).toBe("/renders-sr26/layers/cockpit-susp-0040.webp");
+    expect(wide).toHaveLength(282);
+    expect(new Set(wide).size).toBe(278);
+    expect(warmLayerUrls("portrait")).toEqual(wide.map(mirror));
+  });
+});
+
