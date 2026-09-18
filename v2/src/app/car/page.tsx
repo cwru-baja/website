@@ -21,7 +21,7 @@ export default function CarPage() {
             style={{ fontSize: "clamp(5rem, 10vw, 11rem)" }}
           >
             THE{" "}
-            <span className="text-red">CAR.</span>
+            <span className="text-livery-ink">CAR.</span>
           </h1>
           <div className="mt-8 h-px w-full bg-white/8" />
         </PageContainer>

@@ -34,23 +34,31 @@ const financeData: FinanceItem[] = [
   { category: "logistics", label: "Logistics", percentage: 0.3, fill: "var(--color-logistics)" },
 ];
 
+// Livery slices cycle lead, support and pop hues and alternate light and dark
+// mixes, so neighbours never share both. Magenta and blue look alike to
+// deuteranopes; the centre label names the hovered slice, not the colour.
+const lighter = (livery: string, percent: number) =>
+  `color-mix(in oklab, var(${livery}) ${percent}%, white)`;
+const deeper = (livery: string, percent: number) =>
+  `color-mix(in oklab, var(${livery}) ${percent}%, var(--livery-deep))`;
+
 const chartConfig = {
   percentage: { label: "Percent of total" },
-  competition: { label: "Competition", color: "#bc2121" },
-  cnc: { label: "CNC", color: "#e05252" },
-  drivetrain: { label: "Drivetrain", color: "#8f1717" },
-  panels: { label: "Panels", color: "#f07b7b" },
+  competition: { label: "Competition", color: "var(--livery)" },
+  cnc: { label: "CNC", color: "var(--livery-support)" },
+  drivetrain: { label: "Drivetrain", color: "var(--livery-pop)" },
+  panels: { label: "Panels", color: lighter("--livery", 55) },
   systems: { label: "Systems", color: "#d6d6d6" },
   uncategorized: { label: "Uncategorized", color: "#5f5f5f" },
-  suspension: { label: "Suspension", color: "#9d2a2a" },
-  brakes: { label: "Brakes", color: "#efaaaa" },
+  suspension: { label: "Suspension", color: lighter("--livery-support", 55) },
+  brakes: { label: "Brakes", color: lighter("--livery-pop", 55) },
   "team-bonding": { label: "Team Bonding", color: "#b4b4b4" },
-  frame: { label: "Frame", color: "#6e1b1b" },
-  engine: { label: "Engine", color: "#df7373" },
+  frame: { label: "Frame", color: deeper("--livery", 55) },
+  engine: { label: "Engine", color: deeper("--livery-support", 60) },
   "test-engineering": { label: "Test Engineering", color: "#858585" },
-  manufacturing: { label: "Manufacturing", color: "#c94c4c" },
+  manufacturing: { label: "Manufacturing", color: deeper("--livery-pop", 60) },
   "race-logistics": { label: "Race Logistics", color: "#a0a0a0" },
-  "mini-baja": { label: "Mini Baja", color: "#f1c5c5" },
+  "mini-baja": { label: "Mini Baja", color: lighter("--livery", 30) },
   logistics: { label: "Logistics", color: "#414141" },
 } satisfies ChartConfig;
 

@@ -21,12 +21,12 @@ export default function SupportPage() {
               className="font-coolvetica font-bold leading-[0.88] text-white"
               style={{ fontSize: "clamp(4.5rem, 10vw, 11rem)" }}
             >
-              SUPPORT <span className="text-red">US.</span>
+              SUPPORT <span className="text-livery-ink">US.</span>
             </h1>
 
             <div className="mt-8 h-px w-full bg-white/10" />
 
-            <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex flex-wrap gap-x-10 gap-y-3">
                 {[
                   { value: "2", label: "Ways to Help" },
@@ -59,7 +59,7 @@ export default function SupportPage() {
                   <span className="block font-coolvetica text-[clamp(3.2rem,5.5vw,6rem)] font-bold tracking-wide">
                     FUND THE
                   </span>
-                  <span className="block font-brier text-[clamp(3rem,5.2vw,5.6rem)] font-semibold tracking-wide text-red">
+                  <span className="block font-brier text-[clamp(3rem,5.2vw,5.6rem)] font-semibold tracking-wide text-livery-pop">
                     BUILD.
                   </span>
                 </h2>
@@ -71,7 +71,7 @@ export default function SupportPage() {
                 </p>
 
                 <div className="mt-12">
-                  <p className="border-l-2 border-red pl-4 text-sm leading-relaxed text-white/45">
+                  <p className="border-l-2 border-livery-ink pl-4 text-sm leading-relaxed text-white/45">
                     On the giving form, choose &ldquo;Other&rdquo; in the gift designation field and
                     enter &ldquo;Baja&rdquo;.
                   </p>
@@ -79,7 +79,7 @@ export default function SupportPage() {
                     href="https://www.givecampus.com/71er24"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-8 inline-flex min-h-12 items-center justify-center bg-red px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-white transition-colors hover:bg-red-dim focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                    className="mt-8 inline-flex min-h-12 items-center justify-center bg-livery px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-on-livery hover:bg-livery-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                   >
                     Donate Now
                   </a>
@@ -110,7 +110,7 @@ export default function SupportPage() {
                     <span className="block font-coolvetica text-[clamp(3.4rem,6vw,7rem)] font-bold tracking-wide">
                       GET THE
                     </span>
-                    <span className="block font-brier text-[clamp(3.2rem,5.7vw,6.6rem)] font-semibold tracking-wide text-red">
+                    <span className="block font-brier text-[clamp(3.2rem,5.7vw,6.6rem)] font-semibold tracking-wide text-livery-pop">
                       GEAR.
                     </span>
                   </h2>
@@ -124,7 +124,7 @@ export default function SupportPage() {
                   href="https://cwrubaja.printful.me/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-10 inline-flex min-h-12 w-fit items-center justify-center bg-red px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-white transition-colors hover:bg-red-dim focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                  className="mt-10 inline-flex min-h-12 w-fit items-center justify-center bg-livery px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-on-livery hover:bg-livery-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
                 >
                   Shop Now
                 </a>

@@ -3,8 +3,10 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Bebas_Neue, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import type { CSSProperties } from "react";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
+import { CURRENT_THEME, liveryVariables } from "@/lib/livery";
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -28,7 +30,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    // style carries the current car's livery colours (globals.css maps them to
+    // the livery-* utilities); server-rendered, so the first paint is themed.
+    <html
+      lang="en"
+      className="dark"
+      style={liveryVariables(CURRENT_THEME) as CSSProperties}
+    >
       <body
         className={`${bebasNeue.variable} ${geistMono.variable} font-sans antialiased bg-bg text-white`}
       >

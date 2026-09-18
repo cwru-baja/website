@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import Image from "next/image";
+import MLogo from "@/components/MLogo";
 
 const links = [
   { label: "Team", href: "/team" },
@@ -35,15 +35,8 @@ export default function Navbar() {
     >
       <div className="flex h-full max-w-[1600px] items-center justify-between px-5 sm:px-8 lg:px-16 xl:px-24 mx-auto">
         {/* Logo */}
-        <Link href="/" className="transition-opacity hover:opacity-80">
-          <Image
-            src="/logo/team/m-logo.svg"
-            alt="CWRU Motorsports"
-            width={100}
-            height={100}
-            className="h-6 w-auto object-contain"
-            priority
-          />
+        <Link href="/" className="hover:opacity-80">
+          <MLogo role="img" aria-label="CWRU Motorsports" className="h-6 w-auto text-livery" />
         </Link>
 
         {/* Nav links */}
@@ -53,7 +46,7 @@ export default function Navbar() {
               <Link
                 href={href}
                 aria-current={pathname === href ? "page" : undefined}
-                className={`text-sm tracking-[0.15em] uppercase transition-colors duration-200 font-clash ${
+                className={`text-sm tracking-[0.15em] uppercase font-clash ${
                   pathname === href
                     ? "text-white"
                     : "text-white/50 hover:text-white"

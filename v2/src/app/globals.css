@@ -53,8 +53,6 @@
   --animate-aurora: aurora 90s linear infinite;
   --color-bg: #0a0a0a;
   --color-surface: #111111;
-  --color-red: #bc2121;
-  --color-red-dim: #8a1818;
   --color-dim: #666666;
   --font-bebas: var(--font-bebas-neue);
   --font-coolvetica: 'Coolvetica', sans-serif;
@@ -62,6 +60,21 @@
   --font-clash: 'ClashDisplay-Variable', sans-serif;
   --font-sans: 'Satoshi-Variable', sans-serif;
   --font-satoshi: 'Satoshi-Variable', sans-serif;
+}
+
+/* Accent colours follow the current car's livery. app/layout.tsx writes the
+   --livery-* values onto <html> from lib/livery.ts, which derives them so text
+   roles stay readable on the dark background. Inline, so the utilities read
+   the variables where they are used and a section can re-theme by setting
+   --livery-* on its own wrapper. */
+@theme inline {
+  --color-livery: var(--livery);
+  --color-livery-ink: var(--livery-ink);
+  --color-on-livery: var(--on-livery);
+  --color-livery-hover: var(--livery-hover);
+  --color-livery-pop: var(--livery-pop);
+  --color-livery-support: var(--livery-support);
+  --color-livery-deep: var(--livery-deep);
 }
 
 @theme inline {
