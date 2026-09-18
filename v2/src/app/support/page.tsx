@@ -47,7 +47,7 @@ export default function SupportPage() {
           </PageContainer>
         </header>
 
-        <section aria-labelledby="donation-heading" className="pb-24 lg:pb-32">
+        <section aria-labelledby="donation-heading" className="pb-4 sm:pb-2 lg:pb-32">
           <PageContainer>
             <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(30rem,1.15fr)] lg:gap-16">
               <div className="py-12 sm:py-16 lg:py-24">
@@ -90,17 +90,10 @@ export default function SupportPage() {
         <section aria-labelledby="gear-heading" className="bg-bg py-10 sm:py-14 lg:py-20">
           <PageContainer>
             <article className="grid overflow-hidden lg:grid-cols-2">
-              <div className="relative aspect-square overflow-hidden lg:aspect-auto lg:min-h-[36rem]">
-                <Image
-                  src="/images/cwru-baja-tshirt.png"
-                  alt="Official navy CWRU Motorsports team T-shirt"
-                  fill
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="scale-[0.86] object-contain"
-                />
-              </div>
-
-              <div className="flex flex-col items-end py-8 pl-8 text-right sm:py-10 sm:pl-10 lg:py-14 lg:pl-14 xl:py-16 xl:pl-16">
+              {/* Phones read the pitch first and the shirt after it, all left
+                  aligned. From lg the shirt moves to the left column and the
+                  text lines up on the right. */}
+              <div className="flex flex-col items-start pb-8 sm:pb-10 lg:items-end lg:py-14 lg:pl-14 lg:text-right xl:py-16 xl:pl-16">
                 <div className="w-full">
                   <h2 id="gear-heading" className="leading-[0.84] text-white">
                     <span className="block font-coolvetica text-[clamp(3.4rem,6vw,7rem)] font-bold tracking-wide">
@@ -110,7 +103,7 @@ export default function SupportPage() {
                       GEAR.
                     </span>
                   </h2>
-                  <p className="mt-8 ml-auto max-w-md text-base leading-relaxed text-white/55">
+                  <p className="mt-8 max-w-md text-base leading-relaxed text-white/55 lg:ml-auto">
                     Support the team with official CWRU Motorsports apparel. Every purchase
                     directly helps fund equipment, travel expenses, and competition fees.
                   </p>
@@ -124,6 +117,18 @@ export default function SupportPage() {
                 >
                   Shop Now
                 </a>
+              </div>
+
+              {/* Below lg the shirt shares the paragraph's max-w-md column, so a
+                  tablet doesn't get a shirt the full width of the page. */}
+              <div className="relative aspect-square max-w-md overflow-hidden lg:order-first lg:aspect-auto lg:min-h-[36rem] lg:max-w-none">
+                <Image
+                  src="/images/cwru-baja-tshirt.png"
+                  alt="Official navy CWRU Motorsports team T-shirt"
+                  fill
+                  sizes="(min-width: 1024px) 50vw, (min-width: 512px) 28rem, 100vw"
+                  className="scale-[0.86] object-contain"
+                />
               </div>
             </article>
           </PageContainer>

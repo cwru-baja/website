@@ -6,6 +6,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -70,11 +71,20 @@ const chartConfig = {
   logistics: { label: "Logistics", color: "#414141" },
 } satisfies ChartConfig;
 
-// The legend sits outside the chart's scope, where the --color-* variables
-// aren't defined, so its swatches read the colours from the config directly.
-const swatchColor = (category: string) => (chartConfig as ChartConfig)[category]?.color;
-
 const DIMMED_OPACITY = 0.28;
+
+// Phones and tablets get no spending chart: the section is hidden below
+// Tailwind's lg. The donut doesn't even mount there, because hidden, recharts
+// would still measure its 0 x 0 box and warn about it, production included.
+// The server never draws the pie anyway, so desktop loses nothing.
+const DESKTOP_QUERY = "(min-width: 64rem)";
+const subscribeDesktop = (onChange: () => void) => {
+  const query = window.matchMedia(DESKTOP_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const readDesktop = () => window.matchMedia(DESKTOP_QUERY).matches;
+const readServerDesktop = () => false;
 
 // Each slice's opacity comes from CSS variables that the chart's wrapper sets
 // for the active category. That way the pie never re-renders when the active
@@ -127,17 +137,17 @@ const FinancePie = memo(function FinancePie({ onSliceEnter, onSliceClick }: Fina
 });
 
 export default function FinanceDonutChart() {
-  // A mouse previews the slice under it. A tap on a slice, or a tap, click or
-  // key press on a legend row, selects a category until the same item is
-  // tapped again, anything else is tapped, or Escape is pressed. The hover
-  // wins while it lasts, so leaving the chart falls back to the selection.
+  // A mouse previews the slice under it. A tap on a slice selects its category
+  // until the same slice is tapped again, anything else is tapped, or Escape
+  // is pressed. The hover wins while it lasts, so leaving the chart falls back
+  // to the selection.
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const isDesktop = useSyncExternalStore(subscribeDesktop, readDesktop, readServerDesktop);
   const activeCategory = hoveredCategory ?? selectedCategory;
   const activeItem = financeData.find((item) => item.category === activeCategory);
 
   const chartRef = useRef<HTMLDivElement>(null);
-  const legendRef = useRef<HTMLUListElement>(null);
   // A tap also sends the slice compatibility mouse events (mouseenter, then
   // click), so the slice handlers check which kind of pointer is behind them.
   const pointerType = useRef("mouse");
@@ -171,7 +181,7 @@ export default function FinanceDonutChart() {
       const target = event.target;
       if (!(target instanceof Element)) return;
       const onSlice = chartRef.current?.contains(target) && target.closest(".recharts-pie-sector");
-      if (onSlice || legendRef.current?.contains(target)) return;
+      if (onSlice) return;
       setSelectedCategory(null);
     };
     const clearOnEscape = (event: KeyboardEvent) => {
@@ -190,18 +200,20 @@ export default function FinanceDonutChart() {
     : undefined;
 
   return (
-    <div className="flex min-w-0 flex-col items-center justify-center py-12 [-webkit-tap-highlight-color:transparent] sm:py-16 lg:flex-row lg:py-24">
+    <div className="hidden min-w-0 justify-center py-24 [-webkit-tap-highlight-color:transparent] lg:flex">
       <div
         ref={chartRef}
         role="img"
         aria-label="Donut chart showing the percentage distribution of team spending by category"
-        className="relative w-full max-w-[30rem]"
+        className="relative aspect-square w-full max-w-[30rem]"
         style={sliceOpacities}
         onMouseLeave={handleChartLeave}
         onPointerOver={trackPointer}
         onPointerDown={trackPointer}
       >
-        <FinancePie onSliceEnter={handleSliceEnter} onSliceClick={handleSliceClick} />
+        {isDesktop && (
+          <FinancePie onSliceEnter={handleSliceEnter} onSliceClick={handleSliceClick} />
+        )}
 
         <div
           aria-live="polite"
@@ -215,61 +227,6 @@ export default function FinanceDonutChart() {
           </span>
         </div>
       </div>
-
-      {/* Phones and tablets get a legend, because the slices under 1% are
-          too thin to tap. Ranked, reading down each column. Selecting a row
-          changes only colour and opacity, so nothing moves. */}
-      <ul
-        ref={legendRef}
-        aria-label="Spending by category"
-        className="mt-6 grid grid-flow-col grid-rows-8 gap-x-4 sm:grid-rows-4 sm:gap-x-8 lg:hidden"
-      >
-        {financeData.map((item) => {
-          const isActive = item.category === activeCategory;
-          const isDimmed = activeItem !== undefined && !isActive;
-          return (
-            <li key={item.category}>
-              <button
-                type="button"
-                aria-pressed={item.category === selectedCategory}
-                onClick={() => toggleCategory(item.category)}
-                className="group flex min-h-11 w-full items-center gap-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              >
-                <span
-                  aria-hidden="true"
-                  className="size-2 shrink-0"
-                  style={{
-                    backgroundColor: swatchColor(item.category),
-                    opacity: isDimmed ? DIMMED_OPACITY : 1,
-                  }}
-                />
-                {/* Label first so the button reads "Competition 23.4%"; shown
-                    percentage on top, like the centre of the chart. */}
-                <span className="flex flex-col-reverse">
-                  <span
-                    className={`text-[0.6rem] uppercase tracking-[0.15em] ${
-                      isActive
-                        ? "text-white/70"
-                        : isDimmed
-                          ? "text-white/35 group-hover:text-white/55"
-                          : "text-white/50 group-hover:text-white/70"
-                    }`}
-                  >
-                    {item.label}
-                  </span>
-                  <span
-                    className={`font-clash text-sm font-medium tabular-nums ${
-                      isActive ? "text-white" : isDimmed ? "text-white/45" : "text-white/70"
-                    }`}
-                  >
-                    {item.percentage.toFixed(1)}%
-                  </span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 }
