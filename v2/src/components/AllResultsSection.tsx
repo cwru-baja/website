@@ -9,6 +9,7 @@ import {
   type CompetitionResult,
   type SeasonResult,
 } from "@/lib/results";
+import { useScrollFade } from "./useScrollFade";
 
 function FinishDisplay({ finish, fontSize }: { finish: string; fontSize: string }) {
   const match = finish.match(/^(\d+)(st|nd|rd|th)$/i);
@@ -52,6 +53,7 @@ const venue = (competition: CompetitionResult) =>
 function Ledger({ result }: { result: SeasonResult }) {
   const [picked, setPicked] = useState(0);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabList = useScrollFade<HTMLDivElement>();
   const id = (part: string, i: number) => `results-${result.year}-${part}-${i}`;
 
   function onTabKey(event: KeyboardEvent) {
@@ -73,9 +75,10 @@ function Ledger({ result }: { result: SeasonResult }) {
       {/* The rule is an inset shadow so the active underline can cover it
           without a negative margin, which the scroll container would clip. */}
       <div
+        ref={tabList}
         role="tablist"
         aria-label={`${result.year} competitions`}
-        className="flex items-baseline gap-x-6 sm:gap-x-8 overflow-x-auto whitespace-nowrap shadow-[inset_0_-1px_0_rgb(255_255_255/0.08)]"
+        className="scroll-fade-x flex items-baseline gap-x-6 sm:gap-x-8 overflow-x-auto whitespace-nowrap shadow-[inset_0_-1px_0_rgb(255_255_255/0.08)]"
         onKeyDown={onTabKey}
       >
         {result.competitions.map((competition, i) => {
@@ -168,6 +171,9 @@ function LedgerRow({
   finish: string;
   podium: boolean;
 }) {
+  const scoreStyle = `font-clash font-medium whitespace-nowrap leading-none text-[0.8rem] sm:text-[0.9375rem] tracking-[0.02em] ${
+    podium ? "text-livery-pop/90" : "text-white/55"
+  }`;
   return (
     <div
       className={`grid grid-cols-[1fr_auto] items-center gap-3 sm:gap-4 border-b border-white/6 py-3 sm:py-[13px] ${
@@ -179,6 +185,9 @@ function LedgerRow({
         style={{ fontSize: EVENT_NAME }}
       >
         {name}
+        {/* On a phone the score drops under the name: beside it, the score and
+            place columns left 88px for names like MANEUVERABILITY (129px). */}
+        <span className={`mt-1.5 block sm:hidden ${scoreStyle}`}>{score}</span>
       </span>
       {/* Held to the event name's line height so a podium's larger numeral
           overflows into the padding instead of making its row taller. */}
@@ -189,11 +198,7 @@ function LedgerRow({
         {/* Score and place share a baseline, so the score sits level with the
             bottom of the place digits. */}
         <div className="flex items-baseline gap-3 sm:gap-4">
-          <span
-            className={`w-[5.5rem] sm:w-[7rem] font-clash font-medium text-right whitespace-nowrap leading-none text-[0.8rem] sm:text-[0.9375rem] tracking-[0.02em] ${
-              podium ? "text-livery-pop/90" : "text-white/55"
-            }`}
-          >
+          <span className={`w-[5.5rem] sm:w-[7rem] text-right max-sm:hidden ${scoreStyle}`}>
             {score}
           </span>
           <div className="flex w-14 sm:w-[5.5rem] justify-end">

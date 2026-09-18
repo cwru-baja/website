@@ -9,19 +9,21 @@ const socialLinks = [
 export default function Footer() {
   return (
     <footer className="overflow-hidden border-t border-white/5 bg-bg pt-16 sm:pt-24">
-      <div className="flex justify-between gap-8 px-8 pb-8 md:hidden">
+      {/* Stacked until xl: between md and xl the columns flanking the logo ran
+          off the screen edges. Rows are 44px so every link is a full tap target. */}
+      <div className="flex justify-between gap-8 px-8 pb-8 xl:hidden">
         <div>
           <p className="mb-4 font-clash text-[0.65rem] uppercase tracking-[0.18em] text-white/30">
             Follow
           </p>
-          <ul className="space-y-2">
+          <ul>
             {socialLinks.map(({ label, href, hoverColor }) => (
               <li key={label} className="text-sm">
                 <a
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`text-white/70 ${hoverColor}`}
+                  className={`inline-flex min-h-11 items-center text-white/70 ${hoverColor}`}
                 >
                   {label}
                 </a>
@@ -34,15 +36,15 @@ export default function Footer() {
           <p className="mb-4 font-clash text-[0.65rem] uppercase tracking-[0.18em] text-white/30">
             CWRU Motorsports
           </p>
-          <p className="text-sm text-white/70">© 2026</p>
-          <p className="mt-2 text-sm text-white/50">All rights reserved</p>
-          <p className="mt-2 text-xs text-white/30">
+          <p className="flex min-h-11 items-center justify-end text-sm text-white/70">© 2026</p>
+          <p className="flex min-h-11 items-center justify-end text-sm text-white/50">All rights reserved</p>
+          <p className="flex min-h-11 items-center justify-end gap-1 text-xs text-white/30">
             built by{" "}
             <a
               href="https://aretelew.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-white/70"
+              className="-mx-1 inline-flex min-h-11 items-center px-1 hover:text-white/70"
             >
               Anthony
             </a>{" "}
@@ -66,7 +68,7 @@ export default function Footer() {
 
         {/* Follow — left of logo */}
         <div
-          className="absolute top-[18%] hidden md:block"
+          className="absolute top-[18%] hidden xl:block"
           style={{ right: "calc(50% + min(45vw, 450px) + 2rem)" }}
         >
           <ul className="flex flex-col items-end space-y-2">
@@ -87,7 +89,7 @@ export default function Footer() {
 
         {/* Legal — right of logo */}
         <div
-          className="absolute top-[18%] hidden md:block"
+          className="absolute top-[18%] hidden xl:block"
           style={{ left: "calc(50% + min(45vw, 450px) + 2rem)" }}
         >
           <ul className="flex flex-col items-start space-y-2">

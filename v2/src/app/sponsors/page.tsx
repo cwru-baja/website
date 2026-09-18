@@ -189,7 +189,9 @@ export default function SponsorsPage() {
                         href={sponsor.url || undefined}
                         target={sponsor.url ? "_blank" : undefined}
                         rel={sponsor.url ? "noopener noreferrer" : undefined}
-                        className="group"
+                        // Logos run 29-43px tall; the padding makes every link
+                        // at least a 44px target without moving anything.
+                        className="group -my-2 py-2"
                       >
                         <Image
                           src={logoSrc(sponsor.file, sponsor.png)}

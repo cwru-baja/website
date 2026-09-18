@@ -3,12 +3,15 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { useScrollFade } from "@/components/useScrollFade"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  const container = useScrollFade<HTMLDivElement>()
   return (
     <div
+      ref={container}
       data-slot="table-container"
-      className="relative w-full overflow-x-auto"
+      className="scroll-fade-x relative w-full overflow-x-auto"
     >
       <table
         data-slot="table"

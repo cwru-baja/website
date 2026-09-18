@@ -111,23 +111,27 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     let contentId: string | null = null;
 
     const placeCard = (anchorX: number, anchorY: number) => {
+      // Narrower than the card plus margins, the card shrinks to fit (its CSS
+      // width is min(480px, 100vw - 16px)) and loses height with its 16:9 photo.
+      const cardW = Math.min(CARD_W, window.innerWidth - 16);
+      const cardH = CARD_H - ((CARD_W - cardW) * 9) / 16;
       // Centered horizontally, clamped within the viewport with an 8px margin.
       const cardX = Math.max(
         8,
-        Math.min(anchorX - CARD_W / 2, window.innerWidth - CARD_W - 8),
+        Math.min(anchorX - cardW / 2, window.innerWidth - cardW - 8),
       );
 
       // Change sides only when the current one would overflow the viewport.
       // A fresh card starts below; hysteresis keeps cursor jitter near an edge
       // from flipping it back and forth.
       if (shellPhase === "hidden") above = false;
-      if (!above && anchorY + CARD_GAP + CARD_H > window.innerHeight - 8) {
+      if (!above && anchorY + CARD_GAP + cardH > window.innerHeight - 8) {
         above = true;
-      } else if (above && anchorY - CARD_GAP - CARD_H < 8) {
+      } else if (above && anchorY - CARD_GAP - cardH < 8) {
         above = false;
       }
       const cardY = above
-        ? anchorY - CARD_H - CARD_GAP
+        ? anchorY - cardH - CARD_GAP
         : anchorY + CARD_GAP;
 
       // A visible card always glides. A fully hidden one is placed before it

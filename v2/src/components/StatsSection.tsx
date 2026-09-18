@@ -11,6 +11,7 @@ const stats = [
 ];
 
 function StatItem({
+  className,
   value,
   suffix,
   label,
@@ -18,6 +19,7 @@ function StatItem({
   delay,
   active,
 }: {
+  className: string;
   value: number;
   suffix: string;
   label: string;
@@ -46,7 +48,7 @@ function StatItem({
 
   return (
     <div
-      className="relative flex min-w-0 flex-col px-4 py-12 transition-opacity duration-700 sm:px-10 xl:px-14"
+      className={`relative flex min-w-0 flex-col px-4 py-12 transition-opacity duration-700 sm:px-10 xl:px-14 ${className}`}
       style={{
         opacity: active ? 1 : 0,
         transform: active ? "translateY(0)" : "translateY(18px)",
@@ -99,12 +101,18 @@ export default function StatsSection() {
     <section ref={ref} className="bg-bg px-8 lg:px-16">
       <div className="mx-auto flex w-full max-w-[1600px] justify-center">
         {/* Stats grid */}
-        <div className="grid w-full grid-cols-2 divide-x divide-white/5 lg:grid-cols-4 xl:w-fit xl:grid-cols-[repeat(4,max-content)]">
+        {/* Each cell draws its own divider: the left column in two rows, every
+            cell but the last in one. divide-x drew a stray line at the grid's
+            right edge once the four wrapped into two rows. */}
+        <div className="grid w-full grid-cols-2 lg:grid-cols-4 xl:w-fit xl:grid-cols-[repeat(4,max-content)]">
           {stats.map((stat, i) => (
             <StatItem
               key={stat.label}
               {...stat}
               delay={i * 120}
+              className={`border-white/5 ${i % 2 === 0 ? "border-r" : ""} ${
+                i < stats.length - 1 ? "lg:border-r" : "lg:border-r-0"
+              }`}
               active={active}
             />
           ))}

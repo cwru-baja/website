@@ -35,7 +35,7 @@ export default function Navbar() {
     >
       <div className="flex h-full max-w-[1600px] items-center justify-between px-5 sm:px-8 lg:px-16 xl:px-24 mx-auto">
         {/* Logo */}
-        <Link href="/" className="hover:opacity-80">
+        <Link href="/" className="inline-flex min-h-11 items-center hover:opacity-80">
           <MLogo role="img" aria-label="CWRU Motorsports" className="h-6 w-auto text-livery" />
         </Link>
 
@@ -46,7 +46,10 @@ export default function Navbar() {
               <Link
                 href={href}
                 aria-current={pathname === href ? "page" : undefined}
-                className={`text-sm tracking-[0.15em] uppercase font-clash ${
+                // Padding on an inline link grows its tap target to 44px without
+                // moving anything: vertical padding doesn't touch the line box,
+                // and the negative margin cancels the horizontal.
+                className={`-mx-2 px-2 py-3.5 text-sm tracking-[0.15em] uppercase font-clash ${
                   pathname === href
                     ? "text-white"
                     : "text-white/50 hover:text-white"

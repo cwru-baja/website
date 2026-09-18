@@ -189,6 +189,29 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* A sideways scroller fades out at an end that has more content past it, since
+   scrollbars are hidden (below). useScrollFade sets the data attributes. */
+.scroll-fade-x {
+  --scroll-fade-start: 0px;
+  --scroll-fade-end: 0px;
+}
+.scroll-fade-x[data-fade-start] {
+  --scroll-fade-start: 2rem;
+}
+.scroll-fade-x[data-fade-end] {
+  --scroll-fade-end: 2rem;
+}
+.scroll-fade-x[data-fade-start],
+.scroll-fade-x[data-fade-end] {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    black var(--scroll-fade-start),
+    black calc(100% - var(--scroll-fade-end)),
+    transparent 100%
+  );
+}
+
 /* Stats section — indicator line animation */
 @keyframes fill-line {
   from { transform: scaleX(0); }

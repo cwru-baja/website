@@ -18,7 +18,10 @@
  *   overflow  Any element that reaches past the screen edge. html and body don't
  *             count as clipping, since their overflow-x: clip is only a safety
  *             net. The outermost element that sticks out is reported. Fixed
- *             elements count only while they're visible.
+ *             elements count only while they're visible. Collapsed sections
+ *             (aria-expanded="false" outside the nav) are opened one at a time
+ *             and scanned too: the results ledger only exists once a season is
+ *             open.
  *   targets   Anything tappable smaller than 44x44 px. Links inside a sentence
  *             are exempt, as in WCAG 2.5.8.
  *   errors    Uncaught exceptions, console.error, failed requests and HTTP
@@ -175,7 +178,8 @@ function printResult(result) {
     console.log(`         layout viewport grew to ${env.innerWidth}px`);
   }
   for (const item of result.overflow) {
-    console.log(`         overflow  ${item.element}  ${item.left}..${item.right}px${item.count > 1 ? `  x${item.count}` : ""}`);
+    const where = item.states.length ? `  after ${item.states[0]}${item.states.length > 1 ? ` (+${item.states.length - 1} more)` : ""}` : "";
+    console.log(`         overflow  ${item.element}  ${item.left}..${item.right}px${item.count > 1 ? `  x${item.count}` : ""}${where}`);
   }
   if (result.failed.includes("targets")) {
     for (const item of result.targets) {
@@ -235,14 +239,22 @@ async function measure(width, minTarget) {
       (text ? ` "${text}"` : "")
     );
   };
-  const group = (items) => {
+  // Collapses elements that describe alike, keeping the worst of them and the
+  // states they turned up in.
+  const group = (items, badness) => {
     const byKey = new Map();
     for (const item of items) {
       const seen = byKey.get(item.element);
-      if (seen) seen.count += 1;
-      else byKey.set(item.element, { ...item, count: 1 });
+      const states = [...new Set([...(seen?.states ?? []), ...(item.state ? [item.state] : [])])];
+      if (!seen) byKey.set(item.element, { ...item, states, count: 1 });
+      else if (badness(item) > badness(seen)) byKey.set(item.element, { ...item, states, count: seen.count + 1 });
+      else Object.assign(seen, { states, count: seen.count + 1 });
     }
-    return [...byKey.values()];
+    return [...byKey.values()].map((item) => {
+      const grouped = { ...item };
+      delete grouped.state;
+      return grouped;
+    });
   };
   const visible = (el) => el.checkVisibility({ opacityProperty: true, visibilityProperty: true });
 
@@ -252,6 +264,7 @@ async function measure(width, minTarget) {
     const style = getComputedStyle(el);
     return style.overflowX !== "visible" || /paint|strict|content/.test(style.contain);
   };
+  const scanOverflow = (state) => {
   const offenders = new Set();
   for (const el of document.body.querySelectorAll("*")) {
     const rect = el.getBoundingClientRect();
@@ -268,14 +281,30 @@ async function measure(width, minTarget) {
     if (fixed && !visible(el)) continue;
     offenders.add(el);
   }
-  const overflow = group(
-    [...offenders]
-      .filter((el) => !offenders.has(el.parentElement))
-      .map((el) => {
-        const rect = el.getBoundingClientRect();
-        return { element: describe(el), left: Math.round(rect.left), right: Math.round(rect.right) };
-      }),
+  return [...offenders]
+    .filter((el) => !offenders.has(el.parentElement))
+    .map((el) => {
+      const rect = el.getBoundingClientRect();
+      return { element: describe(el), left: Math.round(rect.left), right: Math.round(rect.right), state };
+    });
+  };
+  const found = scanOverflow();
+  const toggles = [...document.querySelectorAll('button[aria-expanded="false"]')].filter(
+    (toggle) => !toggle.closest("nav") && visible(toggle),
   );
+  for (const toggle of toggles) {
+    const label = (toggle.innerText || toggle.getAttribute("aria-label") || "").trim().replace(/\s+/g, " ");
+    toggle.click();
+    await sleep(350);
+    found.push(...scanOverflow(`opened "${label.slice(0, 24)}"`));
+    if (toggle.getAttribute("aria-expanded") === "true") {
+      toggle.click();
+      await sleep(150);
+    }
+  }
+  scrollTo(0, 0);
+  await sleep(300);
+  const overflow = group(found, (item) => Math.max(-item.left, item.right - width));
 
   // Touch targets.
   const tappable = document.querySelectorAll(
@@ -308,7 +337,7 @@ async function measure(width, minTarget) {
       reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
     },
     overflow,
-    targets: group(small),
+    targets: group(small, (item) => -Math.min(item.width, item.height)),
     loadCls,
     cls: shifts,
   };
