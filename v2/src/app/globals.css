@@ -11,16 +11,6 @@
   to   { transform: translateX(-50%); }
 }
 
-@keyframes aurora {
-  from { background-position: 50% 50%, 50% 50%; }
-  to   { background-position: 350% 50%, 350% 50%; }
-}
-
-@keyframes aurora2 {
-  from { background-position: 50% 50%, 50% 50%; }
-  to   { background-position: 350% 50%, 350% 50%; }
-}
-
 .logo-intro-mask {
   background-color: #0a0a0a;
   /* Inlined, not a url() to the M logo: Chromium paints an element whose
@@ -63,7 +53,6 @@
 
 @theme {
   --animate-marquee: marquee 90s linear infinite;
-  --animate-aurora: aurora 90s linear infinite;
   --color-bg: #0a0a0a;
   --color-surface: #111111;
   --color-dim: #666666;

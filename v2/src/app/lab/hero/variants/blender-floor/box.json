@@ -1,0 +1,11 @@
+{
+  "note": "Floor image box in units of the car PNG's drawn box (car = 0,0 to 1,1).",
+  "left": -0.3,
+  "top": 0.662,
+  "width": 1.4,
+  "height": 0.638,
+  "px": [
+    2940,
+    957
+  ]
+}
