@@ -42,6 +42,7 @@ cy.use_denoising=True; cy.denoiser='OPENIMAGEDENOISE'; cy.denoising_prefilter='A
 r.use_persistent_data=True; r.use_motion_blur=False; r.film_transparent=True
 r.resolution_x, r.resolution_y, r.resolution_percentage = 1920,1080,100
 r.image_settings.file_format='WEBP'; r.image_settings.color_mode='RGBA'; r.image_settings.quality=80
+master_output()
 scn.display_settings.display_device='sRGB'
 scn.view_settings.view_transform='AgX'
 if PORTRAIT:

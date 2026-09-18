@@ -336,6 +336,7 @@ else:
     cy.samples = 256; r.resolution_percentage = 100
     r.image_settings.file_format = 'WEBP'; r.image_settings.color_mode = 'RGBA'
     r.image_settings.quality = 80
+    master_output()
 if PORTRAIT:
     portrait_output(QUALITY)
 

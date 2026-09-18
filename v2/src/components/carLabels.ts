@@ -1,6 +1,6 @@
 import partMattes from "../data/car-part-mattes.json";
 import savedLabels from "./carLabels.json";
-import { matteUrl, type FrameSet } from "./carSequenceModel";
+import { matteUrl, type FrameSourceLike } from "./carSequenceModel";
 
 /** A point in percent of the still a pause shows, so it holds at any display size. */
 export interface LabelPoint {
@@ -60,7 +60,7 @@ export const CAR_PART_MATTES = Object.fromEntries(
  * the manifest's file (and its content hash) serves either one.
  */
 export const partMatteUrl = (
-  set: FrameSet,
+  set: FrameSourceLike,
   chapterId: string,
   part: string,
   mattes: PartMattes = CAR_PART_MATTES,

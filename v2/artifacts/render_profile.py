@@ -48,6 +48,8 @@ framing on a different sensor by changing focal length - not what this does.)
   KOPT     portrait option in the plan: "kvar", or a constant like "k070"
   PLAN     plan file (default artifacts/portrait-plan.json)
   PREVIEW_SPP  samples for QUALITY "preview" in portrait (default 32)
+  MASTER   "png": a final writes lossless 8-bit RGBA PNGs instead of WebP, in
+           either profile (master_output / portrait_output)
 """
 
 import bpy, os, json
@@ -145,12 +147,34 @@ def portrait_output(quality):
     r.image_settings.file_format = 'WEBP'
     r.image_settings.color_mode = 'RGBA'
     r.image_settings.quality = 80
+    # MASTER="png" writes lossless 8-bit RGBA PNGs instead, for an encode step
+    # outside Blender (a tuned encoder, another format, or video).
+    if globals().get("MASTER") == "png":
+        r.image_settings.file_format = 'PNG'
+        r.image_settings.color_mode = 'RGBA'
+        r.image_settings.color_depth = '8'
+        r.image_settings.compression = 15
     if quality == "preview":
         r.resolution_percentage = 50
         cy.samples = PREVIEW_SPP
     else:
         r.resolution_percentage = 100
         cy.samples = 256
+
+
+def master_output():
+    """MASTER="png" on a landscape final: lossless 8-bit RGBA PNGs in place of the
+    WebP the scripts write, for artifacts/export-frames.mjs to encode (AVIF, and
+    the WebP fallback). Without MASTER it does nothing, so a plain run writes
+    exactly what it always did. The portrait path does the same in
+    portrait_output."""
+    if globals().get("MASTER") != "png":
+        return
+    im = bpy.context.scene.render.image_settings
+    im.file_format = 'PNG'
+    im.color_mode = 'RGBA'
+    im.color_depth = '8'
+    im.compression = 15
 
 
 def landscape_restore():

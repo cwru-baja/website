@@ -43,6 +43,7 @@ import {
   nearestReady,
 } from "./carFrameStream";
 import {
+  AVIF_PROBE,
   CAR_CHAPTERS,
   CAR_EXCURSION,
   CAR_REVEALS,
@@ -63,6 +64,7 @@ import {
   pauseLayerUrl,
   nearestLoadedFrame,
   openingLayerUrls,
+  pickFrameFormat,
   pickFrameSet,
   revealBaseSrc,
   revealPartSrc,
@@ -72,6 +74,8 @@ import {
   warmLayerUrls,
   type CarChapter,
   type FrameSet,
+  type FrameSource,
+  type FrameSourceLike,
   type LabelWindow,
 } from "./carSequenceModel";
 
@@ -107,9 +111,46 @@ const SHOWN_TEXT_CLIP = "inset(-80% -15% -80% -15%)";
 let pageFrameSet: FrameSet | null = null;
 const choosePageFrameSet = () =>
   (pageFrameSet ??= pickFrameSet((query) => window.matchMedia(query).matches));
-const neverChanges = () => () => {};
-const useFrameSet = () =>
-  useSyncExternalStore(neverChanges, choosePageFrameSet, () => null);
+
+// ...and the format that set is fetched in (see FrameFormat): AVIF where the set
+// has it, the engine isn't Apple's and the browser decodes a probe encoded like
+// the frames. The probe costs a few milliseconds after hydration and is skipped
+// wherever the answer would be WebP anyway. A probe that never settles counts as
+// no, so it can't strand the sequence on its loading state.
+const AVIF_PROBE_TIMEOUT_MS = 500;
+let pageFrameSource: FrameSource | null = null;
+let choosingFrameSource: Promise<void> | null = null;
+const frameSourceListeners = new Set<() => void>();
+const decodesAvif = () =>
+  new Promise<boolean>((resolve) => {
+    const image = new Image();
+    const timer = window.setTimeout(() => resolve(false), AVIF_PROBE_TIMEOUT_MS);
+    const settle = (decoded: boolean) => {
+      window.clearTimeout(timer);
+      resolve(decoded);
+    };
+    image.onload = () => settle(image.naturalWidth > 0);
+    image.onerror = () => settle(false);
+    image.src = AVIF_PROBE;
+  });
+const chooseFrameSource = async () => {
+  const set = choosePageFrameSet();
+  const apple = navigator.vendor.startsWith("Apple");
+  // Would this browser get AVIF if it can decode it? Only then is it worth asking.
+  const avif =
+    pickFrameFormat(set, { avif: true, apple }) === "avif" && (await decodesAvif());
+  pageFrameSource = { set, format: pickFrameFormat(set, { avif, apple }) };
+  frameSourceListeners.forEach((listener) => listener());
+};
+const subscribeFrameSource = (onChange: () => void) => {
+  frameSourceListeners.add(onChange);
+  choosingFrameSource ??= chooseFrameSource();
+  return () => {
+    frameSourceListeners.delete(onChange);
+  };
+};
+const useFrameSource = () =>
+  useSyncExternalStore(subscribeFrameSource, () => pageFrameSource, () => null);
 
 /**
  * Where the caption band switches to a chapter, ahead of its still: the name
@@ -126,7 +167,9 @@ const newLabelId = (chapterId: string) =>
   `${chapterId}-${Math.random().toString(36).slice(2, 8)}`;
 
 export default function CarSequence() {
-  const frameSet = useFrameSet();
+  const frameSource = useFrameSource();
+  const frameSet = frameSource?.set ?? null;
+  const landscapeSource = frameSource?.set === "landscape" ? frameSource : null;
   const portrait = frameSet === "portrait";
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -328,7 +371,7 @@ export default function CarSequence() {
   }, [drawFrame, frameSet]);
 
   useEffect(() => {
-    if (frameSet !== "landscape") return;
+    if (!landscapeSource) return;
     let cancelled = false;
     let batchTimer: ReturnType<typeof setTimeout> | undefined;
     const pending = new Map<number, Promise<boolean>>();
@@ -387,7 +430,7 @@ export default function CarSequence() {
           );
         };
         image.onerror = () => finish(false);
-        image.src = frameUrl("landscape", index);
+        image.src = frameUrl(landscapeSource, index);
       });
 
       pending.set(index, promise);
@@ -413,7 +456,7 @@ export default function CarSequence() {
       setSequenceReady(true);
 
       // Warm the reveal layers so they never pop in mid-scroll.
-      warmLayerUrls("landscape").forEach((url) => {
+      warmLayerUrls(landscapeSource).forEach((url) => {
         const image = new Image();
         image.decoding = "async";
         image.src = url;
@@ -467,7 +510,7 @@ export default function CarSequence() {
         image.onerror = null;
       });
     };
-  }, [drawFrame, frameSet]);
+  }, [drawFrame, landscapeSource]);
 
   const calibrationChapter =
     CAR_CHAPTERS.find((chapter) => chapter.id === selectedChapterId) ??
@@ -506,7 +549,7 @@ export default function CarSequence() {
           // loaded the portrait set.
           const mode: ResponsiveMode =
             conditions.desktop && frameSet === "landscape" ? "desktop" : "mobile";
-          const set: FrameSet = frameSet ?? "landscape";
+          const source: FrameSourceLike = frameSource ?? "landscape";
           // The portrait set streams: as the timeline is laid down it records
           // which file is on screen when, and the stream fetches what is near
           // the scroll position. Every layer shown goes through `showRun`, which
@@ -514,7 +557,7 @@ export default function CarSequence() {
           const stream = frameSet === "portrait" ? streamRef.current : null;
           const schedule = stream ? new StreamSchedule() : null;
           const runUrl = (prefix: string) => (index: number) =>
-            sequenceLayerUrl(set, prefix, index);
+            sequenceLayerUrl(source, prefix, index);
           const showRun = (
             image: HTMLImageElement,
             key: string,
@@ -634,7 +677,7 @@ export default function CarSequence() {
             // The pause's masks, for the caption band's chips to light parts with.
             if (schedule) {
               Object.keys(CAR_PART_MATTES[chapter.id] ?? {}).forEach((part) => {
-                const matte = partMatteUrl(set, chapter.id, part);
+                const matte = partMatteUrl(source, chapter.id, part);
                 if (matte) schedule.add(matte, from, to);
               });
             }
@@ -792,8 +835,8 @@ export default function CarSequence() {
                 const isolate = excursionIsolateRefs.current[step.layer];
                 const surface = cover;
                 const back = at + duration - CHAPTER_TIMING.hide;
-                schedule?.add(layerUrl(set, step.layer), at, at + duration);
-                stream?.prime(isolate, layerUrl(set, step.layer));
+                schedule?.add(layerUrl(source, step.layer), at, at + duration);
+                stream?.prime(isolate, layerUrl(source, step.layer));
                 if (isolate) master.set(isolate, { autoAlpha: 1 }, at);
                 if (surface) {
                   master.to(
@@ -850,7 +893,7 @@ export default function CarSequence() {
               if (
                 egg &&
                 mode === "desktop" &&
-                pauseLayerUrl(set, step.frame) === COCKPIT_STILL
+                pauseLayerUrl(source, step.frame) === layerUrl(source, COCKPIT_STILL)
               ) {
                 cockpitHold = { from: at, to: at + duration };
                 // Mount it (and start its ~1 MB of press crops) a viewport and a half
@@ -874,10 +917,10 @@ export default function CarSequence() {
           };
 
           // The canvas opens the page on frame 0, before anything has played.
-          schedule?.add(frameUrl(set, 0), 0, 0, 0, 0);
+          schedule?.add(frameUrl(source, 0), 0, 0, 0, 0);
           const scheduleRotation = (from: number, to: number) =>
             schedule?.run(
-              (index) => frameUrl(set, index),
+              (index) => frameUrl(source, index),
               from,
               to,
               master.duration(),
@@ -958,8 +1001,8 @@ export default function CarSequence() {
                 );
               };
               const applyFrame = () => applyFrameAt(Math.round(cursor.index));
-              stream?.prime(base, revealBaseSrc(set, reveal));
-              stream?.prime(part, revealPartSrc(set, reveal));
+              stream?.prime(base, revealBaseSrc(source, reveal));
+              stream?.prime(part, revealPartSrc(source, reveal));
 
               const travel = CHAPTER_TIMING.push;
               const fade = travel * CHAPTER_TIMING.pushPartFade;
@@ -1117,7 +1160,7 @@ export default function CarSequence() {
               // left the camera on, which the exit leg has already arrived at.
               if (exit) master.set(playhead, { frame: exit.toFrame }, landed);
               const resumeFrame = exit ? exit.toFrame : chapter.pauseFrame;
-              schedule?.add(frameUrl(set, resumeFrame), landed, landed, 0, resumeFrame);
+              schedule?.add(frameUrl(source, resumeFrame), landed, landed, 0, resumeFrame);
               if (canvasRef.current) {
                 master.set(
                   canvasRef.current,
@@ -1148,14 +1191,14 @@ export default function CarSequence() {
                 CHAPTER_TIMING.reveal +
                 CHAPTER_TIMING.hide;
               schedule.add(
-                frameUrl(set, chapter.pauseFrame),
+                frameUrl(source, chapter.pauseFrame),
                 revealStart,
                 shownUntil,
                 0,
                 chapter.pauseFrame,
               );
               isolates.forEach((reveal) => {
-                const url = layerUrl(set, reveal.isolate ?? "");
+                const url = layerUrl(source, reveal.isolate ?? "");
                 schedule.add(url, revealStart, shownUntil);
                 stream?.prime(revealIsolateRefs.current[reveal.id], url);
               });
@@ -1642,7 +1685,7 @@ export default function CarSequence() {
     },
     {
       scope: sectionRef,
-      dependencies: [sequenceReady, calibrationMode, calibrationChecked, frameSet],
+      dependencies: [sequenceReady, calibrationMode, calibrationChecked, frameSource],
       revertOnUpdate: true,
     },
   );
@@ -1751,7 +1794,7 @@ export default function CarSequence() {
   // What is on screen while this pause's labels are up, when it is not the
   // orbit canvas - they have to be placed on that, not on the frame it is keyed to.
   const calibrationPose = calibrationMode
-    ? pauseLayerUrl("landscape", calibrationChapter.pauseFrame)
+    ? pauseLayerUrl(frameSource ?? "landscape", calibrationChapter.pauseFrame)
     : null;
 
   // A part lit from the caption band. It only lasts while the pause's still is
@@ -1803,8 +1846,8 @@ export default function CarSequence() {
                 // No frame URL until the set is known; the portrait set's
                 // stream gives it one when it has fetched the file.
                 src={
-                  frameSet === "landscape"
-                    ? layerUrl("landscape", reveal.isolate ?? "")
+                  landscapeSource
+                    ? layerUrl(landscapeSource, reveal.isolate ?? "")
                     : undefined
                 }
                 alt=""
@@ -1824,8 +1867,8 @@ export default function CarSequence() {
                   excursionIsolateRefs.current[step.layer] = element;
                 }}
                 src={
-                  frameSet === "landscape"
-                    ? layerUrl("landscape", step.layer)
+                  landscapeSource
+                    ? layerUrl(landscapeSource, step.layer)
                     : undefined
                 }
                 alt=""
@@ -1852,8 +1895,8 @@ export default function CarSequence() {
                   legRefs.current[step.prefix] = element;
                 }}
                 src={
-                  frameSet === "landscape"
-                    ? sequenceLayerUrl("landscape", step.prefix, 0)
+                  landscapeSource
+                    ? sequenceLayerUrl(landscapeSource, step.prefix, 0)
                     : undefined
                 }
                 alt=""
@@ -1885,8 +1928,8 @@ export default function CarSequence() {
                     revealBaseRefs.current[reveal.id] = element;
                   }}
                   src={
-                    frameSet === "landscape"
-                      ? revealBaseSrc("landscape", reveal)
+                    landscapeSource
+                      ? revealBaseSrc(landscapeSource, reveal)
                       : undefined
                   }
                   alt=""
@@ -1903,8 +1946,8 @@ export default function CarSequence() {
                     revealPartRefs.current[reveal.id] = element;
                   }}
                   src={
-                    frameSet === "landscape"
-                      ? revealPartSrc("landscape", reveal)
+                    landscapeSource
+                      ? revealPartSrc(landscapeSource, reveal)
                       : undefined
                   }
                   alt=""
@@ -1957,7 +2000,7 @@ export default function CarSequence() {
               has them; the portrait set's caption band stands in for them. */}
           {frameSet === "landscape" && (
             <CarLabelsLayer
-              frameSet="landscape"
+              frameSet={landscapeSource ?? "landscape"}
               chapters={CAR_CHAPTERS}
               labels={calibrationMode ? draftLabels : CAR_LABELS}
               elements={labelElementsRef}

@@ -22,7 +22,7 @@ import {
   type LabelGeometry,
   type LabelPoint,
 } from "./carLabels";
-import { pauseLayerUrl, type CarChapter, type FrameSet } from "./carSequenceModel";
+import { pauseLayerUrl, type CarChapter, type FrameSourceLike } from "./carSequenceModel";
 
 /** The pieces the scroll timeline animates, by label id. */
 export interface LabelElements {
@@ -44,8 +44,8 @@ export interface LabelPlacement {
 }
 
 interface CarLabelsLayerProps {
-  /** The frame set on screen, which the highlight's still and masks come from. */
-  frameSet: FrameSet;
+  /** The frames on screen, which the highlight's still and masks come from. */
+  frameSet: FrameSourceLike;
   chapters: CarChapter[];
   labels: CarLabelSet;
   elements: RefObject<LabelElements>;

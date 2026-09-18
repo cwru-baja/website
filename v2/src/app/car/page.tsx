@@ -18,8 +18,14 @@ export default function CarPage() {
   // it will use alongside the scripts, and never fetches the other. These two
   // are the only frame URLs in the page's HTML. preload() rather than a <link>
   // element: React would emit an element twice, once as a hint.
-  preload(frameUrl("landscape", 0), {
+  //
+  // The landscape set plays as AVIF wherever the engine isn't Apple's (see
+  // FrameFormat), so that is the one preloaded; `type` has a browser without
+  // AVIF skip it. Safari fetches it and then plays the WebP - one ~75 KB frame,
+  // the price of not sniffing the browser on the server.
+  preload(frameUrl({ set: "landscape", format: "avif" }, 0), {
     as: "image",
+    type: "image/avif",
     media: `not all and ${PORTRAIT_SET_MEDIA}`,
   });
   preload(frameUrl("portrait", 0), { as: "image", media: PORTRAIT_SET_MEDIA });

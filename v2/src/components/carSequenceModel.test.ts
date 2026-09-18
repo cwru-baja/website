@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   CAR_CHAPTERS,
@@ -23,6 +25,7 @@ import {
   layerUrl,
   matteUrl,
   openingLayerUrls,
+  pickFrameFormat,
   pickFrameSet,
   revealBaseSrc,
   revealPartSrc,
@@ -36,6 +39,7 @@ import {
   rotationDuration,
   validateCarExcursion,
   validateCarSequence,
+  type FrameSource,
 } from "./carSequenceModel";
 
 describe("car sequence model", () => {
@@ -470,3 +474,50 @@ describe("frame sets", () => {
   });
 });
 
+describe("frame formats", () => {
+  const avif: FrameSource = { set: "landscape", format: "avif" };
+  const asAvif = (url: string) => url.replace(/\.webp$/, ".avif");
+
+  it("plays the landscape set as AVIF off Apple's engine, where it decodes", () => {
+    expect(pickFrameFormat("landscape", { avif: true, apple: false })).toBe("avif");
+    expect(pickFrameFormat("landscape", { avif: true, apple: true })).toBe("webp");
+    expect(pickFrameFormat("landscape", { avif: false, apple: false })).toBe("webp");
+    // The portrait set has no AVIF files, whatever the browser.
+    expect(pickFrameFormat("portrait", { avif: true, apple: false })).toBe("webp");
+  });
+
+  it("keeps a set named on its own on WebP, which every set has", () => {
+    expect(frameUrl("landscape", 0)).toBe(frameUrl({ set: "landscape", format: "webp" }, 0));
+    expect(warmLayerUrls("landscape").every((url) => url.endsWith(".webp"))).toBe(true);
+  });
+
+  it("changes only the extension for AVIF", () => {
+    expect(frameUrl(avif, 119)).toBe("/renders-sr26/full/0120.avif");
+    expect(warmLayerUrls(avif)).toEqual(warmLayerUrls("landscape").map(asAvif));
+    expect(openingLayerUrls(avif)).toEqual(openingLayerUrls("landscape").map(asAvif));
+    CAR_CHAPTERS.forEach((chapter) => {
+      const still = pauseLayerUrl("landscape", chapter.pauseFrame);
+      expect(pauseLayerUrl(avif, chapter.pauseFrame)).toBe(still && asAvif(still));
+    });
+    CAR_REVEALS.filter((reveal) => reveal.kind === "remove").forEach((reveal) => {
+      expect(revealBaseSrc(avif, reveal)).toBe(asAvif(revealBaseSrc("landscape", reveal)));
+      expect(revealPartSrc(avif, reveal)).toBe(asAvif(revealPartSrc("landscape", reveal)));
+    });
+  });
+
+  it("leaves the part masks alone: they are lossless WebP whatever the frames are", () => {
+    expect(matteUrl(avif, "brakes", "rotor.webp?v=83a5a876")).toBe(
+      matteUrl("landscape", "brakes", "rotor.webp?v=83a5a876"),
+    );
+  });
+
+  it("has an AVIF beside every WebP the landscape set plays", () => {
+    const orbit = Array.from({ length: SEQUENCE_CONFIG.frameCount }, (_, index) =>
+      frameUrl(avif, index),
+    );
+    const missing = [...orbit, ...warmLayerUrls(avif)].filter(
+      (url) => !existsSync(path.join(process.cwd(), "public", url)),
+    );
+    expect(missing).toEqual([]);
+  });
+});

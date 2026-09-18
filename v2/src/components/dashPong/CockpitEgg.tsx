@@ -5,8 +5,8 @@
 // back.
 //
 // Mount inside the cockpit still's 16:9 box, in a layer that is only shown while
-// the still is exactly layers/cockpit-dive-0040.webp - every asset here was
-// rendered or measured from that frame's camera.
+// the still is exactly layers/cockpit-dive-0040 (.webp or .avif) - every asset
+// here was rendered or measured from that frame's camera.
 //
 // While a game runs the page is held where it is: `freeze` asks the sequence to
 // stop the scroll and hands back a release. The sequence can also let go on its
@@ -17,8 +17,9 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import DashPong from "./DashPong";
 import WheelButtons from "./WheelButtons";
 
-/** The still every cockpit asset was made against. */
-export const COCKPIT_STILL = "/renders-sr26/layers/cockpit-dive-0040.webp";
+/** The still every cockpit asset was made against, as a layer name: its URL
+ * depends on the format the page loaded (layerUrl). */
+export const COCKPIT_STILL = "cockpit-dive-0040";
 
 export type Freeze = (onRelease: () => void) => () => void;
 
