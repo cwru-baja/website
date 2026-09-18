@@ -4,6 +4,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
+import { logoBox, logoSrc } from "@/lib/logoSizing";
 import PageContainer from "@/components/PageContainer";
 
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
@@ -231,7 +232,7 @@ export default function SponsorsMarquee() {
             <div className="font-coolvetica font-bold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none">
               PARTNERS
             </div>
-            <div className="font-brier font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-red leading-none -mt-3">
+            <div className="font-brier font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-livery-pop leading-none -mt-3">
               &amp;SPONSORS
             </div>
           </div>
@@ -249,7 +250,9 @@ export default function SponsorsMarquee() {
         >
           {/* Removed animate-marquee from className */}
           <div className="flex w-max" ref={marqueeRef}>
-            {repeatedSponsors.map(({ sponsor, copy }) => (
+            {repeatedSponsors.map(({ sponsor, copy }) => {
+              const box = logoBox(sponsor.file, "marquee");
+              return (
               <a
                 key={`${copy}-${sponsor.file}`}
                 href={sponsor.url || undefined}
@@ -258,19 +261,16 @@ export default function SponsorsMarquee() {
                 className="flex items-center justify-center px-12 shrink-0 opacity-100 transition-opacity duration-300"
               >
                 <Image
-                  src={
-                    sponsor.png
-                      ? `/logo/sponsor/${sponsor.file}.png`
-                      : `/logo/sponsor/svg/${sponsor.file}.svg`
-                  }
+                  src={logoSrc(sponsor.file, sponsor.png)}
                   alt={sponsor.name}
-                  width={200}
-                  height={48}
-                  className="h-12 w-auto"
-                  style={{ filter: "brightness(0) invert(1)" }}
+                  width={box.width}
+                  height={box.height}
+                  className="w-auto"
+                  style={{ height: box.height, filter: "brightness(0) invert(1)" }}
                 />
               </a>
-            ))}
+              );
+            })}
           </div>
         </div>
       </PageContainer>

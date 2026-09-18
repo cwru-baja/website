@@ -1,0 +1,408 @@
+{
+  "AMS-LOGO-2013final": {
+    "aspect": 1.2941,
+    "coverage": 1,
+    "opaqueBackground": true
+  },
+  "altair_logo": {
+    "aspect": 4.878,
+    "coverage": 0.3076
+  },
+  "altium_logo": {
+    "aspect": 4.4423,
+    "coverage": 0.551
+  },
+  "atlasbronze": {
+    "aspect": 2.6438,
+    "coverage": 0.2987
+  },
+  "bmt_aerospace_logo": {
+    "aspect": 1.5739,
+    "coverage": 0.4608
+  },
+  "bmt_logo": {
+    "aspect": 1.177,
+    "coverage": 0.9104
+  },
+  "cleveland-cliffs-logo": {
+    "aspect": 8.4044,
+    "coverage": 0.3146
+  },
+  "commercial-steel-logo": {
+    "aspect": 4.2477,
+    "coverage": 0.2345
+  },
+  "dragonplate-vertical-light": {
+    "aspect": 1.317,
+    "coverage": 1,
+    "opaqueBackground": true
+  },
+  "ebiweld_logo": {
+    "aspect": 1.625,
+    "coverage": 0.4706
+  },
+  "etdtransparent": {
+    "aspect": 3.2428,
+    "coverage": 0.3466
+  },
+  "fathom-realty-logo": {
+    "aspect": 1.1844,
+    "coverage": 0.1835
+  },
+  "fox-logo": {
+    "aspect": 1.5132,
+    "coverage": 0.4357
+  },
+  "fox_logo": {
+    "aspect": 1.5123,
+    "coverage": 0.4385
+  },
+  "gates-logo": {
+    "aspect": 1.7733,
+    "coverage": 0.3183
+  },
+  "holley": {
+    "aspect": 2.0192,
+    "coverage": 0.4282
+  },
+  "jergens_logo": {
+    "aspect": 3.9811,
+    "coverage": 0.3552
+  },
+  "kissoft_logo": {
+    "aspect": 4.9191,
+    "coverage": 0.5368
+  },
+  "micro-measurements-logo": {
+    "aspect": 2.6667,
+    "coverage": 0.3837
+  },
+  "misa-metal": {
+    "aspect": 2.6437,
+    "coverage": 0.381
+  },
+  "neway-stamping": {
+    "aspect": 4.2431,
+    "coverage": 0.333
+  },
+  "nsk-logo": {
+    "aspect": 3.3125,
+    "coverage": 0.724
+  },
+  "online-carbide": {
+    "aspect": 5.8824,
+    "coverage": 0.6897
+  },
+  "orange-vise": {
+    "aspect": 4.5455,
+    "coverage": 0.3685,
+    "rasterized": true
+  },
+  "oshcut-logo": {
+    "aspect": 4.801,
+    "coverage": 0.3233
+  },
+  "ppg-logo": {
+    "aspect": 1.291,
+    "coverage": 0.6507
+  },
+  "protapestransparent": {
+    "aspect": 1.7658,
+    "coverage": 0.4175
+  },
+  "rock west composites": {
+    "aspect": 6.6139,
+    "coverage": 0.211
+  },
+  "rock-west-composites": {
+    "aspect": 6.6139,
+    "coverage": 0.211
+  },
+  "skb-cases": {
+    "aspect": 2.9099,
+    "coverage": 0.4307
+  },
+  "skf_logo": {
+    "aspect": 4.2307,
+    "coverage": 0.5657
+  },
+  "solidworks_logo": {
+    "aspect": 4.8577,
+    "coverage": 0.1735
+  },
+  "stampede-die-logo": {
+    "aspect": 3.5596,
+    "coverage": 0.4505
+  },
+  "summit-racing-logo": {
+    "aspect": 2.1871,
+    "coverage": 0.4785
+  },
+  "tmac-machine-logo": {
+    "aspect": 4.9974,
+    "coverage": 0.4552
+  },
+  "tms-logo": {
+    "aspect": 1.6386,
+    "coverage": 0.6611
+  },
+  "tylok_logo": {
+    "aspect": 2.3889,
+    "coverage": 0.3208
+  },
+  "3dconnexion": {
+    "aspect": 5.9089,
+    "coverage": 0.2322
+  },
+  "alro": {
+    "aspect": 0.9992,
+    "coverage": 0.5392
+  },
+  "altair": {
+    "aspect": 4.8815,
+    "coverage": 0.291
+  },
+  "altium": {
+    "aspect": 4.4515,
+    "coverage": 0.5549
+  },
+  "american-friction-technologies": {
+    "aspect": 3.8868,
+    "coverage": 0.2364
+  },
+  "ansys": {
+    "aspect": 3.2212,
+    "coverage": 0.3362
+  },
+  "asi": {
+    "aspect": 1.1956,
+    "coverage": 0.4211,
+    "rasterized": true
+  },
+  "automation-direct": {
+    "aspect": 10.3896,
+    "coverage": 0.251,
+    "rasterized": true
+  },
+  "bicycle-frame-depot": {
+    "aspect": 0.998,
+    "coverage": 0.3843
+  },
+  "blaser-swisslube": {
+    "aspect": 3.9099,
+    "coverage": 0.3519
+  },
+  "bmt-aerospace": {
+    "aspect": 1.5927,
+    "coverage": 0.3885
+  },
+  "bolt-depot": {
+    "aspect": 5.6991,
+    "coverage": 0.3987
+  },
+  "bwxt": {
+    "aspect": 1.8528,
+    "coverage": 0.3176
+  },
+  "carbide-depot": {
+    "aspect": 3.5143,
+    "coverage": 0.4506
+  },
+  "case-alumni-association": {
+    "aspect": 1.0001,
+    "coverage": 0.4491
+  },
+  "clark": {
+    "aspect": 1.3913,
+    "coverage": 0.5848
+  },
+  "curbell-plastics": {
+    "aspect": 3.7187,
+    "coverage": 0.3711
+  },
+  "dewesoft": {
+    "aspect": 1.3836,
+    "coverage": 0.24
+  },
+  "dragonplate": {
+    "aspect": 1.3332,
+    "coverage": 0.1969
+  },
+  "enterline-foundation": {
+    "aspect": 0.8031,
+    "coverage": 0.7126
+  },
+  "extreme-canopy": {
+    "aspect": 4.5879,
+    "coverage": 0.3873
+  },
+  "extreme-powder-coating": {
+    "aspect": 3.3985,
+    "coverage": 0.3932
+  },
+  "fastenal": {
+    "aspect": 4.9019,
+    "coverage": 0.5217
+  },
+  "fk-rod-ends": {
+    "aspect": 2.0333,
+    "coverage": 0.536
+  },
+  "fox": {
+    "aspect": 1.5127,
+    "coverage": 0.4321
+  },
+  "gene-haas-foundation": {
+    "aspect": 0.992,
+    "coverage": 0.41
+  },
+  "gmn-bearing": {
+    "aspect": 2.0684,
+    "coverage": 0.4751
+  },
+  "gmp-friction": {
+    "aspect": 4.7761,
+    "coverage": 0.5479
+  },
+  "hexagon": {
+    "aspect": 3.5755,
+    "coverage": 0.1783
+  },
+  "hypermill": {
+    "aspect": 4.7618,
+    "coverage": 0.5063
+  },
+  "jergens": {
+    "aspect": 4.4916,
+    "coverage": 0.265
+  },
+  "joslyn-manufacturing": {
+    "aspect": 3.2924,
+    "coverage": 0.1169
+  },
+  "kenesto": {
+    "aspect": 2.91,
+    "coverage": 0.1416
+  },
+  "kissoft": {
+    "aspect": 3.0769,
+    "coverage": 0.3794,
+    "rasterized": true
+  },
+  "lincoln-electric": {
+    "aspect": 3.0221,
+    "coverage": 0.602
+  },
+  "magna": {
+    "aspect": 4.7967,
+    "coverage": 0.4976
+  },
+  "mastercam": {
+    "aspect": 5.5205,
+    "coverage": 0.5584
+  },
+  "meridian-laboratory": {
+    "aspect": 4.7885,
+    "coverage": 0.4064
+  },
+  "michigan-scientific": {
+    "aspect": 4.2463,
+    "coverage": 0.1807
+  },
+  "motec": {
+    "aspect": 3.1526,
+    "coverage": 0.5917
+  },
+  "my-perfect-color": {
+    "aspect": 5.2432,
+    "coverage": 0.1851
+  },
+  "nord-lock-group": {
+    "aspect": 4.003,
+    "coverage": 0.4705
+  },
+  "ntop": {
+    "aspect": 3.5144,
+    "coverage": 0.293
+  },
+  "parker": {
+    "aspect": 4.8435,
+    "coverage": 0.5378
+  },
+  "ptg": {
+    "aspect": 3.0669,
+    "coverage": 0.5376
+  },
+  "raising-canes": {
+    "aspect": 2.0843,
+    "coverage": 0.4803
+  },
+  "schunk": {
+    "aspect": 3.0738,
+    "coverage": 0.2931
+  },
+  "sendcutsend": {
+    "aspect": 5.4949,
+    "coverage": 0.4288
+  },
+  "sgs": {
+    "aspect": 1.5308,
+    "coverage": 0.6485
+  },
+  "siemens": {
+    "aspect": 6.3166,
+    "coverage": 0.547
+  },
+  "simutech-group": {
+    "aspect": 2.5381,
+    "coverage": 0.2731
+  },
+  "skamar": {
+    "aspect": 3.9943,
+    "coverage": 0.2084
+  },
+  "skf": {
+    "aspect": 2.0954,
+    "coverage": 0.7675
+  },
+  "southington": {
+    "aspect": 2.7706,
+    "coverage": 0.3266
+  },
+  "spee-d-metals": {
+    "aspect": 6.47,
+    "coverage": 0.3887
+  },
+  "stifel": {
+    "aspect": 3.2877,
+    "coverage": 0.2487
+  },
+  "talan-products": {
+    "aspect": 3.5811,
+    "coverage": 0.3781
+  },
+  "thinkbox": {
+    "aspect": 4.903,
+    "coverage": 0.2935
+  },
+  "titanium-joe": {
+    "aspect": 7.0212,
+    "coverage": 0.2756
+  },
+  "trippwells": {
+    "aspect": 0.9998,
+    "coverage": 0.3037
+  },
+  "tylok": {
+    "aspect": 2.2822,
+    "coverage": 0.3235
+  },
+  "wicks-aircraft": {
+    "aspect": 4.7166,
+    "coverage": 0.5454
+  },
+  "zintilon": {
+    "aspect": 3.9465,
+    "coverage": 0.3875
+  }
+}
