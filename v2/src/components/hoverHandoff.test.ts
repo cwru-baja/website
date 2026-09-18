@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createHoverHandoffController } from "./hoverHandoff";
 
-const HANDOFF_GRACE_MS = 250;
+const HANDOFF_GRACE_MS = 120;
 
 describe("createHoverHandoffController", () => {
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe("createHoverHandoffController", () => {
     expect(controller.current()).toBe("B");
   });
 
-  it("restarts the grace period while empty-space movement continues", () => {
+  it("does not extend the grace period while empty-space movement continues", () => {
     const onDismiss = vi.fn();
     const controller = createHoverHandoffController<string>({
       delayMs: HANDOFF_GRACE_MS,
@@ -43,13 +43,12 @@ describe("createHoverHandoffController", () => {
 
     controller.activate("A");
     controller.schedule();
-    vi.advanceTimersByTime(200);
+    vi.advanceTimersByTime(HANDOFF_GRACE_MS - 20);
     controller.schedule();
-    vi.advanceTimersByTime(50);
 
     expect(onDismiss).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(200);
+    vi.advanceTimersByTime(20);
 
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(controller.current()).toBeNull();

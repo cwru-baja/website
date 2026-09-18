@@ -15,8 +15,6 @@ const VENUES: (Omit<CompetitionMarker, "svgX" | "svgY"> & { lat: number; lng: nu
   { id: "oshkosh",      name: "Baja SAE Oshkosh",        location: "Oshkosh, WI",         lat: 44.0247, lng: -88.5426  },
   { id: "tennessee",    name: "Baja SAE Tennessee Tech", location: "Cookeville, TN",      lat: 36.1628, lng: -85.5016  },
   { id: "rochester",    name: "Baja SAE Rochester",      location: "Rochester, NY",       lat: 43.1300, lng: -77.6200  },
-  { id: "kansas",       name: "Baja SAE Kansas",         location: "Pittsburg, KS",       lat: 37.4108, lng: -94.7052  },
-  { id: "auburn",       name: "Baja SAE Auburn",         location: "Auburn, AL",          lat: 32.6099, lng: -85.4808  },
   { id: "illinois",     name: "Baja SAE Illinois",       location: "Peoria, IL",          lat: 40.6936, lng: -89.5890  },
 ];
 
@@ -29,14 +27,15 @@ export default function HiredByTheBest() {
   });
 
   for (const v of VENUES) {
-    map.addPin({ lat: v.lat, lng: v.lng, svgOptions: { color: "#bc2121", radius: 0.22 } });
+    // Pins only mark venue positions; USADotMap colours the nearest dots.
+    map.addPin({ lat: v.lat, lng: v.lng, svgOptions: { radius: 0.22 } });
   }
 
   const allPoints = map.getPoints();
   const regularPoints = allPoints.filter((p) => !p.svgOptions);
   const pinPoints    = allPoints.filter((p) => !!p.svgOptions);
 
-  const redIndices = new Set<number>();
+  const venueIndices = new Set<number>();
   const competitions: CompetitionMarker[] = pinPoints.map((pin, i) => {
     regularPoints
       .map((p, idx) => {
@@ -46,7 +45,7 @@ export default function HiredByTheBest() {
       })
       .sort((a, b) => a.dist - b.dist)
       .slice(0, 3)
-      .forEach(({ idx }) => redIndices.add(idx));
+      .forEach(({ idx }) => venueIndices.add(idx));
 
     return {
       id:       VENUES[i].id,
@@ -62,7 +61,7 @@ export default function HiredByTheBest() {
       [
         Math.round(p.x * 10) / 10,
         Math.round(p.y * 10) / 10,
-        redIndices.has(i) ? 1 : 0,
+        venueIndices.has(i) ? 1 : 0,
       ] as [number, number, 0 | 1]
   );
 
@@ -74,7 +73,7 @@ export default function HiredByTheBest() {
           <div className="font-coolvetica font-bold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none">
             BEHIND
           </div>
-          <div className="font-brier font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-red leading-none -mt-3">
+          <div className="font-brier font-semibold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-livery-pop leading-none -mt-3">
             THE BUILD
           </div>
         </div>

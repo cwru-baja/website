@@ -53,8 +53,9 @@ export function createHoverHandoffController<T>({
     },
 
     schedule() {
-      if (disposed || active === null) return;
-      cancel();
+      // Leave a pending dismissal alone: restarting it on every empty-space
+      // mousemove kept the card open for as long as the cursor was moving.
+      if (disposed || active === null || timeout !== null) return;
       timeout = setTimeout(() => {
         timeout = null;
         dismiss();

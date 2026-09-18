@@ -1,14 +1,18 @@
 "use client";
 
 import { useCallback, useRef, useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { CompetitionCard, type CompetitionMarker } from "./CompetitionCard";
+import {
+  CompetitionCard,
+  preloadCompetitionImages,
+  type CompetitionMarker,
+} from "./CompetitionCard";
 import {
   completeContentReveal,
   createContentTransition,
   markContentReady,
-  requestContentTransition,
   type ContentTransitionState,
   type ContentTransitionToken,
 } from "./contentTransition";
@@ -21,7 +25,7 @@ const MAGNETIC_RADIUS = 7; // SVG viewBox units
 const CARD_W = 480;
 const CARD_H = 330; // approx: header ~55px + 16:9 image ~270px + padding
 const CARD_GAP = 18; // gap between cursor and card edge
-const HANDOFF_GRACE_MS = 250;
+const HANDOFF_GRACE_MS = 120;
 
 interface Props {
   dots: [number, number, 0 | 1][];
@@ -100,26 +104,57 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     let rafId: number;
     let shellGeneration = 0;
     let shellPhase: "hidden" | "showing" | "visible" | "hiding" = "hidden";
+    // Whether the card sits above the cursor rather than below it.
+    let above = false;
+    // The competition the card's content currently holds, until a finished
+    // fade-out clears it.
+    let contentId: string | null = null;
 
-    const showCard = (comp: CompetitionMarker, wasActive: boolean) => {
-      const session = ++sessionRef.current;
-      setCardTransition((current) => {
-        if (!wasActive || current === null) {
-          return createContentTransition(comp, session);
-        }
+    const placeCard = (anchorX: number, anchorY: number) => {
+      // Centered horizontally, clamped within the viewport with an 8px margin.
+      const cardX = Math.max(
+        8,
+        Math.min(anchorX - CARD_W / 2, window.innerWidth - CARD_W - 8),
+      );
 
-        return requestContentTransition(
-          current,
-          comp,
-          (left, right) => left.id === right.id,
-        );
-      });
-
-      // A normal active-to-active handoff changes content only. The shell's
-      // opacity and scale remain completely untouched.
-      if (wasActive && (shellPhase === "showing" || shellPhase === "visible")) {
-        return;
+      // Change sides only when the current one would overflow the viewport.
+      // A fresh card starts below; hysteresis keeps cursor jitter near an edge
+      // from flipping it back and forth.
+      if (shellPhase === "hidden") above = false;
+      if (!above && anchorY + CARD_GAP + CARD_H > window.innerHeight - 8) {
+        above = true;
+      } else if (above && anchorY - CARD_GAP - CARD_H < 8) {
+        above = false;
       }
+      const cardY = above
+        ? anchorY - CARD_H - CARD_GAP
+        : anchorY + CARD_GAP;
+
+      // A visible card always glides. A fully hidden one is placed before it
+      // fades in, so it never appears somewhere else and slides over.
+      if (shellPhase === "hidden") {
+        xTo(cardX, cardX);
+        yTo(cardY, cardY);
+      } else {
+        xTo(cardX);
+        yTo(cardY);
+      }
+    };
+
+    const showCard = (comp: CompetitionMarker) => {
+      // Only the content swaps on a competition change — the shell keeps its
+      // opacity, scale and glide. flushSync commits the new name and image
+      // before the shell tweens, so no frame shows stale or empty content.
+      // First images are preloaded on map enter so the swap isn't blank.
+      // Returning to the same competition mid fade-out keeps its content, so
+      // a brief slip off the marker doesn't restart the photo carousel.
+      if (comp.id !== contentId) {
+        contentId = comp.id;
+        const session = ++sessionRef.current;
+        flushSync(() => setCardTransition(createContentTransition(comp, session)));
+      }
+
+      if (shellPhase === "showing" || shellPhase === "visible") return;
 
       const generation = ++shellGeneration;
       shellPhase = "showing";
@@ -145,12 +180,13 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       gsap.to(card, {
         opacity: 0,
         scale: 0.88,
-        duration: 0.18,
+        duration: 0.12,
         ease: "power2.in",
         overwrite: "auto",
         onComplete: () => {
           if (handoff.current() === null && generation === shellGeneration) {
             shellPhase = "hidden";
+            contentId = null;
             setCardTransition(null);
           }
         },
@@ -175,7 +211,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       const { x: mx, y: my } = pt.matrixTransform(ctm.inverse());
 
       // Resolve hover state synchronously so a target entered near the end of
-      // the grace window cancels dismissal before the 250 ms timer can fire.
+      // the grace window cancels dismissal before the grace timer can fire.
       let nearestComp: CompetitionMarker | null = null;
       let nearestDist = Infinity;
       for (const comp of competitions) {
@@ -190,8 +226,22 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
 
       const hoveredComp = nearestComp && nearestDist < MAGNETIC_RADIUS ? nearestComp : null;
       if (hoveredComp) {
+        const cpt = svg.createSVGPoint();
+        cpt.x = hoveredComp.svgX;
+        cpt.y = hoveredComp.svgY;
+        const compScreen = cpt.matrixTransform(ctm);
+
+        const t = 1 - nearestDist / MAGNETIC_RADIUS;
+        placeCard(
+          e.clientX + (compScreen.x - e.clientX) * t * 0.5,
+          e.clientY + (compScreen.y - e.clientY) * t * 0.5,
+        );
         handoff.activate(hoveredComp);
       } else {
+        // Keep following the cursor across empty map while the card is still
+        // on screen, so reaching the next competition never means a long
+        // catch-up slide.
+        if (shellPhase !== "hidden") placeCard(e.clientX, e.clientY);
         handoff.schedule();
       }
 
@@ -208,35 +258,10 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
               : BASE_R.toFixed(3)
           );
         }
-
-        if (hoveredComp) {
-          const cpt = svg.createSVGPoint();
-          cpt.x = hoveredComp.svgX;
-          cpt.y = hoveredComp.svgY;
-          const compScreen = cpt.matrixTransform(ctm);
-
-          const t = 1 - nearestDist / MAGNETIC_RADIUS;
-          const pulledX = e.clientX + (compScreen.x - e.clientX) * t * 0.5;
-          const pulledY = e.clientY + (compScreen.y - e.clientY) * t * 0.5;
-
-          // Default: centered horizontally, below cursor
-          let cardX = pulledX - CARD_W / 2;
-          let cardY = pulledY + CARD_GAP;
-
-          // Clamp horizontal — keep within viewport with 8px margin
-          const vw = window.innerWidth;
-          cardX = Math.max(8, Math.min(cardX, vw - CARD_W - 8));
-
-          // Flip above cursor if card would overflow bottom of viewport
-          if (cardY + CARD_H > window.innerHeight - 8) {
-            cardY = pulledY - CARD_H - CARD_GAP;
-          }
-
-          xTo(cardX);
-          yTo(cardY);
-        }
       });
     };
+
+    const onMouseEnter = () => preloadCompetitionImages(competitions);
 
     const onMouseLeave = () => {
       cancelAnimationFrame(rafId);
@@ -244,6 +269,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       handoff.dismissNow();
     };
 
+    svg.addEventListener("mouseenter", onMouseEnter, { once: true });
     svg.addEventListener("mousemove", onMouseMove);
     svg.addEventListener("mouseleave", onMouseLeave);
 
@@ -253,6 +279,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       xTo.tween.kill();
       yTo.tween.kill();
       gsap.killTweensOf(card);
+      svg.removeEventListener("mouseenter", onMouseEnter);
       svg.removeEventListener("mousemove", onMouseMove);
       svg.removeEventListener("mouseleave", onMouseLeave);
     };
@@ -266,14 +293,14 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-auto cursor-crosshair"
       >
-        {dots.map(([cx, cy, isRed], i) => (
+        {dots.map(([cx, cy, isVenue], i) => (
           <circle
             key={i}
-            className="dot"
+            className={isVenue ? "dot fill-livery-pop" : "dot"}
             cx={cx}
             cy={cy}
             r={BASE_R}
-            fill={isRed ? "#bc2121" : "rgba(255,255,255,0.5)"}
+            fill={isVenue ? undefined : "rgba(255,255,255,0.5)"}
           />
         ))}
       </svg>
