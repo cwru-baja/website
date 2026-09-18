@@ -5,8 +5,15 @@
  *
  * --convert: turns the button-press crops from artifacts/render-dash-screen.py
  * (108x108 PNGs, one per button per travel step, with the dash screen on and off)
- * into lossless WebP: public/renders-sr26/press/ for screen-on, press/off/ for
+ * into WebP: public/renders-sr26/press/ for screen-on, press/off/ for
  * screen-off. Without it, leaves the WebPs alone.
+ *
+ * Lossy at quality 90, not lossless: every desktop visitor who scrolls to the
+ * cockpit fetches all 80 crops (WheelButtons preloads them so a press never
+ * waits), and lossless cost 876 KB where q90 costs ~180 KB. q90 lands 39-40 dB
+ * from the render, which is where the still under them already sits (its AVIF
+ * and WebP are 38-45 dB from their master), and a crop only shows for the length
+ * of a press. AVIF would save ~30 KB more but need a second copy for Safari.
  *
  * Either way it rebuilds src/components/dashPong/sprites.json from the WebPs on disk:
  *   - a content hash per file, like the part mattes, because replacing a file in
@@ -19,7 +26,7 @@
  * would paste a lit square onto the screen-off plate.
  */
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import sharp from "sharp";
 
 const CONVERT = process.argv.includes("--convert");
@@ -54,7 +61,7 @@ if (CONVERT) {
     for (const b of BUTTONS) {
       for (const mm of TRAVEL) {
         const tag = tagOf(b.i, mm);
-        writeFileSync(`${OUT}/${set.dir}${tag}.webp`, await sharp(`${set.src}/${tag}.png`).webp({ lossless: true, effort: 6 }).toBuffer());
+        writeFileSync(`${OUT}/${set.dir}${tag}.webp`, await sharp(`${set.src}/${tag}.png`).webp({ quality: 90, effort: 6 }).toBuffer());
       }
     }
   }
@@ -72,9 +79,15 @@ if (CONVERT) {
  * as outliers. The discs are within ~1px of circular, so any rotation is noise;
  * the IoU against the blue pixels is the real check and stops the export if the
  * axis-aligned ellipse ever stops describing the dome.
+ *
+ * Measured off the lossless render when it is on disk, and the WebP only when it
+ * isn't: the lossy crops smear blue into the dome's edge pixels, which grows
+ * every radius by 0.2-0.4px - the codec, not the dome.
  */
 async function hitShape(b) {
-  const { data, info } = await sharp(`${OUT}/${tagOf(b.i, 0)}.webp`).raw().toBuffer({ resolveWithObject: true });
+  const render = `${SETS[0].src}/${tagOf(b.i, 0)}.png`;
+  const rest = existsSync(render) ? render : `${OUT}/${tagOf(b.i, 0)}.webp`;
+  const { data, info } = await sharp(rest).raw().toBuffer({ resolveWithObject: true });
   const ox = b.cx - b.x0, oy = b.cy - b.y0;
   const blue = new Uint8Array(info.width * info.height);
   let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0;
