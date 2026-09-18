@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Bebas_Neue, Geist_Mono } from "next/font/google";
 import Script from "next/script";
@@ -32,10 +34,16 @@ export default function RootLayout({
       >
         <ScrollToTop />
         {children}
-        <Script
-          src="https://mcp.figma.com/mcp/html-to-design/capture.js"
-          strategy="lazyOnload"
-        />
+        <Analytics />
+        <SpeedInsights />
+        {/* Figma html-to-design capture, for pushing pages into Figma. Dev only,
+            so production visitors never load a third-party script. */}
+        {process.env.NODE_ENV !== "production" && (
+          <Script
+            src="https://mcp.figma.com/mcp/html-to-design/capture.js"
+            strategy="lazyOnload"
+          />
+        )}
       </body>
     </html>
   );
