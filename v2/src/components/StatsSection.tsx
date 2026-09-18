@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MEMBER_COUNT, roundedDown } from "@/lib/team";
 
 const stats = [
-  { value: 40,  suffix: "+", label: "Team Members",        sublabel: "Engineers & Builders" },
+  { value: roundedDown(MEMBER_COUNT), suffix: "+", label: "Team Members",        sublabel: "Engineers & Builders" },
   { value: 20,  suffix: "+", label: "Years Competing",     sublabel: "Baja SAE" },
   { value: 3,   suffix: "",  label: "Competitions / Year", sublabel: "Across North America" },
   { value: 100, suffix: "%", label: "Student Built",       sublabel: "Design to Fabrication" },
@@ -59,11 +60,11 @@ function StatItem({
       >
         <span aria-hidden="true" className="invisible hidden whitespace-nowrap xl:block">
           {value}
-          <span className="font-light text-red">{suffix}</span>
+          <span className="font-light text-livery-pop">{suffix}</span>
         </span>
         <span className="whitespace-nowrap xl:absolute xl:inset-0">
           {count}
-          <span className="font-light text-red">{suffix}</span>
+          <span className="font-light text-livery-pop">{suffix}</span>
         </span>
       </div>
 

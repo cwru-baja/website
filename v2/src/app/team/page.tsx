@@ -3,6 +3,8 @@ import PageContainer from "@/components/PageContainer";
 import LeadershipSection from "@/components/LeadershipSection";
 import GeneralBodyTable from "@/components/GeneralBodyTable";
 import Footer from "@/components/Footer";
+import { SEASON } from "@/lib/events";
+import { MEMBER_COUNT, SUBTEAMS, roundedDown } from "@/lib/team";
 
 export const metadata = {
   title: "Team — CWRU Motorsports",
@@ -24,7 +26,7 @@ export default function TeamPage() {
             style={{ fontSize: "clamp(5rem, 10vw, 11rem)" }}
           >
             THE{" "}
-            <span className="text-red">TEAM.</span>
+            <span className="text-livery-ink">TEAM.</span>
           </h1>
 
           {/* Divider */}
@@ -33,9 +35,9 @@ export default function TeamPage() {
           {/* Stats row */}
           <div className="mt-6 flex flex-wrap gap-x-10 gap-y-2">
             {[
-              { value: "40", label: "Members" },
-              { value: "10", label: "Subteams" },
-              { value: "2025", label: "Season" },
+              { value: `${roundedDown(MEMBER_COUNT)}+`, label: "Members" },
+              { value: `${roundedDown(SUBTEAMS.length)}+`, label: "Subteams" },
+              { value: SEASON, label: "Season" },
             ].map(({ value, label }) => (
               <div key={label} className="flex items-baseline gap-2">
                 <span className="font-clash font-medium text-2xl tracking-wide text-white">

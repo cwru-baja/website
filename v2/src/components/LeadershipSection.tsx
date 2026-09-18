@@ -1,52 +1,127 @@
-import Image from "next/image";
+"use client";
 
-type Member = {
-  name: string;
-  role: string;
-  img: string;
-  graduationYear: string;
-  linkedin?: string;
+import Image from "next/image";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import HeadshotCalibration, {
+  NUDGE_FINE_STEP,
+  NUDGE_STEP,
+} from "./HeadshotCalibration";
+import {
+  DEFAULT_FRAMING,
+  ZOOM_RANGE,
+  clampFraming,
+  dragToPan,
+  framedSizes,
+  framingTransform,
+  resolveFraming,
+  type HeadshotFraming,
+} from "./headshotFraming";
+import { LEADERSHIP_TIERS as tiers, type Leader as Member } from "@/lib/team";
+
+// Members wearing the team logo have nothing to reframe.
+const photoMembers = tiers
+  .flatMap((tier) => tier.members)
+  .filter((member) => !member.usesLogo);
+
+const shippedFraming = new Map(
+  photoMembers.map((member) => [member.name, resolveFraming(member.framing)]),
+);
+
+function framingFor(name: string): HeadshotFraming {
+  return shippedFraming.get(name) ?? DEFAULT_FRAMING;
+}
+
+type Calibration = {
+  selected: boolean;
+  onSelect: () => void;
+  onPan: (x: number, y: number) => void;
 };
 
-const executiveBoard: Member[] = [
-  { name: "Brendan Flanagan",     role: "Team Captain",                              img: "LMF04560", graduationYear: "2026", linkedin: "https://www.linkedin.com/in/brendan-flanagan-3220492a3/" },
-  { name: "Ammar Ali Asghar",     role: "Technical Director",                        img: "LMF04478", graduationYear: "2026", linkedin: "https://www.linkedin.com/in/ammar-ali-asghar-8129b524b/" },
-  { name: "Shelley Wei",          role: "Finance Lead",                              img: "LMF04542", graduationYear: "2027", linkedin: "https://www.linkedin.com/in/shelleyywei/" },
-  { name: "Lucy Ma",              role: "Membership Lead",                           img: "LMF04627", graduationYear: "2027", linkedin: "https://www.linkedin.com/in/lucyma-/" },
-  { name: "John Scherer",         role: "Logistics Lead",                            img: "A6406330",  graduationYear: "2027", linkedin: "https://www.linkedin.com/in/john-scherer-299264300/" },
-];
+type CalibrationProps = {
+  framingOverride?: HeadshotFraming;
+  calibration?: Calibration;
+};
 
-const operationsBoard: Member[] = [
-  { name: "Arnav Manu",           role: "Front Drivetrain Lead",                     img: "LMF04640", graduationYear: "2026", linkedin: "https://www.linkedin.com/in/arnav-manu-667444253/" },
-  { name: "Maureen Manning",      role: "Manufacturing Lead",                        img: "A6406832",  graduationYear: "2028", linkedin: "https://www.linkedin.com/in/maureen--manning/" },
-  { name: "Giovanni Ricupero",    role: "Brakes & Throttle Lead",                    img: "A6406819",  graduationYear: "2026", linkedin: "https://www.linkedin.com/in/ricupgio/" },
-  { name: "Joshua Stout",         role: "Suspension Lead",                           img: "LMF04466", graduationYear: "2027", linkedin: "https://www.linkedin.com/in/joshua-martin-stout/" },
-  { name: "Elad Dov Kleinerman",  role: "CNC Manufacturing Lead",                    img: "A6406861",  graduationYear: "2027", linkedin: "https://www.linkedin.com/in/elad-dov-kleinerman-mordkowitz-19b423199/" },
-  { name: "Bram Loren",           role: "Panels & Composites Lead",                  img: "A6406817",  graduationYear: "2028", linkedin: "https://www.linkedin.com/in/bramloren/" },
-  { name: "Auston Govender",      role: "Race Logistics Lead",                       img: "LMF04525", graduationYear: "2026", linkedin: "https://www.linkedin.com/in/auston-govender/" },
-  { name: "Kenji Miyake",         role: "Frame & Radio Lead",                        img: "LMF04655", graduationYear: "2026", linkedin: "https://www.linkedin.com/in/gabrielkenjimiyake/" },
-  { name: "Evan Grover",          role: "Electronics & Systems Lead",                img: "A6406798",  graduationYear: "2026", linkedin: "https://www.linkedin.com/in/ehgrover/" },
-  { name: "Matthew Alcantara",    role: "Rear Drivetrain Lead",                      img: "A6406322",  graduationYear: "2027", linkedin: "https://www.linkedin.com/in/matthew-allen-alcantara/" },
-  { name: "Logan Senning",        role: "Test Engineering Lead",                     img: "A6406335",  graduationYear: "2027", linkedin: "https://www.linkedin.com/in/logan-senning/" },
-];
+type MemberCardProps = Member & CalibrationProps;
 
-const specialtyLeads: Member[] = [
-  { name: "Daniel Clare",         role: "Static Events Coordinator",                 img: "LMF04609", graduationYear: "2026", linkedin: "https://www.linkedin.com/in/daniel-clare-5b49aa227/" },
-  { name: "Anthony Retelewski",   role: "Website Lead",                              img: "A6406847",  graduationYear: "2028", linkedin: "https://aretelew.com" },
-  { name: "Zane Sandelin",        role: "Cost Report Coordinator",                   img: "A6406791",  graduationYear: "2028", linkedin: "https://www.linkedin.com/in/zane-sandelin-010b1b274/" },
-  { name: "Suhani Dangre",        role: "Business Presentation & Social Media Lead", img: "A6406349",  graduationYear: "2028", linkedin: "https://www.linkedin.com/in/suhani-dangre/" },
-  { name: "Jessica Shue",         role: "Documentation Lead",                        img: "LMF04721", graduationYear: "2027", linkedin: "https://www.linkedin.com/in/jessica-s-7b7935268/" },
-];
+function MemberCard({
+  name,
+  role,
+  image,
+  usesLogo,
+  graduationYear,
+  linkedin,
+  framing,
+  framingOverride,
+  calibration,
+}: MemberCardProps) {
+  const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
+  const active = framingOverride ?? framing;
+  const resolved = resolveFraming(active);
+  const framed = !usesLogo && active !== undefined;
 
-function MemberCard({ name, role, img, graduationYear, linkedin }: Member) {
+  const startPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!calibration) return;
+    calibration.onSelect();
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    dragOriginRef.current = { x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  };
+
+  const pan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const origin = dragOriginRef.current;
+    if (!calibration || !origin) return;
+    calibration.onPan(
+      dragToPan(event.clientX - origin.x),
+      dragToPan(event.clientY - origin.y),
+    );
+    dragOriginRef.current = { x: event.clientX, y: event.clientY };
+  };
+
+  const endPan = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    dragOriginRef.current = null;
+  };
+
   const photo = (
-    <div className="relative mx-auto h-44 w-44 overflow-hidden rounded-full ring-2 ring-white/10 group-hover:ring-4 group-hover:ring-red">
+    <div
+      className={`relative mx-auto h-44 w-44 overflow-hidden rounded-full ring-2 ring-white/10 group-hover:ring-4 group-hover:ring-livery-ink ${
+        calibration
+          ? `touch-none ${calibration.selected ? "cursor-grab !ring-4 !ring-livery-ink" : "cursor-pointer"}`
+          : ""
+      }`}
+      onPointerDown={calibration ? startPan : undefined}
+      onPointerMove={calibration ? pan : undefined}
+      onPointerUp={calibration ? endPan : undefined}
+      onPointerCancel={calibration ? endPan : undefined}
+    >
       <Image
-        src={`/images/headshots/${img}.jpg`}
-        alt={name}
+        src={image}
+        alt={usesLogo ? "CWRU Motorsports logo" : name}
         fill
-        className="object-cover object-top"
-        sizes="176px"
+        className={
+          usesLogo
+            ? "object-contain p-12"
+            : framed
+              ? "object-cover object-center"
+              : "object-cover object-top"
+        }
+        sizes={
+          typeof image === "string"
+            ? "176px"
+            : framedSizes(resolved, image.width / image.height)
+        }
+        style={framed ? { transform: framingTransform(resolved) } : undefined}
       />
     </div>
   );
@@ -54,7 +129,14 @@ function MemberCard({ name, role, img, graduationYear, linkedin }: Member) {
   return (
     <div className="group flex flex-col items-center text-center">
       {linkedin ? (
-        <a href={linkedin} target="_blank" rel="noopener noreferrer" className="block">
+        <a
+          href={linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+          // Selecting a headshot must not navigate away mid-calibration.
+          onClick={calibration ? (event) => event.preventDefault() : undefined}
+        >
           {photo}
         </a>
       ) : (
@@ -62,14 +144,24 @@ function MemberCard({ name, role, img, graduationYear, linkedin }: Member) {
       )}
       <p className="mt-4 text-sm font-semibold text-white leading-snug">{name}</p>
       <p className="mt-0.5 text-[0.7rem] tracking-wide text-white/40 leading-snug">{role}</p>
-      <p className="mt-1 text-[0.65rem] tracking-[0.12em] uppercase text-white/25">
-        Class of {graduationYear}
-      </p>
+      {graduationYear && (
+        <p className="mt-1 text-[0.65rem] tracking-[0.12em] uppercase text-white/25">
+          Class of {graduationYear}
+        </p>
+      )}
     </div>
   );
 }
 
-function Tier({ title, members }: { title: string; members: Member[] }) {
+function Tier({
+  title,
+  members,
+  renderProps,
+}: {
+  title: string;
+  members: Member[];
+  renderProps: (member: Member) => CalibrationProps;
+}) {
   return (
     <div>
       <h2 className="font-coolvetica font-bold text-2xl tracking-widest text-white/50 mb-8">
@@ -77,7 +169,7 @@ function Tier({ title, members }: { title: string; members: Member[] }) {
       </h2>
       <div className="grid grid-cols-3 gap-x-8 gap-y-12 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
         {members.map((m) => (
-          <MemberCard key={m.name} {...m} />
+          <MemberCard key={m.name} {...m} {...renderProps(m)} />
         ))}
       </div>
     </div>
@@ -85,15 +177,138 @@ function Tier({ title, members }: { title: string; members: Member[] }) {
 }
 
 export default function LeadershipSection() {
+  const [calibrationMode, setCalibrationMode] = useState(false);
+  const [draft, setDraft] = useState<Record<string, HeadshotFraming>>({});
+  const [selectedName, setSelectedName] = useState(photoMembers[0]?.name ?? "");
+
+  // Untouched members fall back to the framing they ship with, so the panel
+  // always edits the live value without needing to seed state up front.
+  const effective = useMemo(
+    () =>
+      Object.fromEntries(
+        photoMembers.map((m) => [m.name, draft[m.name] ?? framingFor(m.name)]),
+      ),
+    [draft],
+  );
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const params = new URLSearchParams(window.location.search);
+    const timer = window.setTimeout(() => {
+      setCalibrationMode(params.get("calibrateHeadshots") === "1");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  const updateSelected = useCallback(
+    (next: HeadshotFraming) => {
+      setDraft((current) => ({
+        ...current,
+        [selectedName]: clampFraming(next),
+      }));
+    },
+    [selectedName],
+  );
+
+  const panSelected = useCallback(
+    (x: number, y: number) => {
+      setDraft((current) => {
+        const base = current[selectedName] ?? framingFor(selectedName);
+        return {
+          ...current,
+          [selectedName]: clampFraming({
+            ...base,
+            x: base.x + x,
+            y: base.y + y,
+          }),
+        };
+      });
+    },
+    [selectedName],
+  );
+
+  useEffect(() => {
+    if (!calibrationMode || !selectedName) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      // Leave the panel's own select and slider alone.
+      if (target && /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName)) return;
+
+      const step = event.shiftKey ? NUDGE_FINE_STEP : NUDGE_STEP;
+      const pan: Record<string, [number, number]> = {
+        ArrowLeft: [-step, 0],
+        ArrowRight: [step, 0],
+        ArrowUp: [0, -step],
+        ArrowDown: [0, step],
+      };
+
+      if (pan[event.key]) {
+        event.preventDefault();
+        panSelected(...pan[event.key]);
+        return;
+      }
+
+      if (event.key === "+" || event.key === "=" || event.key === "-") {
+        event.preventDefault();
+        setDraft((current) => {
+          const base = current[selectedName] ?? framingFor(selectedName);
+          const delta = event.key === "-" ? -0.05 : 0.05;
+          return {
+            ...current,
+            [selectedName]: clampFraming({
+              ...base,
+              zoom: Math.min(ZOOM_RANGE.max, Math.max(ZOOM_RANGE.min, base.zoom + delta)),
+            }),
+          };
+        });
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [calibrationMode, panSelected, selectedName]);
+
+  const renderProps = (member: Member): CalibrationProps => {
+    if (!calibrationMode || member.usesLogo) return {};
+    return {
+      framingOverride: effective[member.name],
+      calibration: {
+        selected: selectedName === member.name,
+        onSelect: () => setSelectedName(member.name),
+        onPan: (x, y) => {
+          if (selectedName === member.name) panSelected(x, y);
+        },
+      },
+    };
+  };
+
   return (
     <section className="bg-bg py-20">
       <div className="max-w-[1600px] mx-auto px-8 lg:px-16 xl:px-24 flex flex-col gap-16">
-        <Tier title="Executive Board" members={executiveBoard} />
-        <div className="h-px w-full bg-white/6" />
-        <Tier title="Operations Board" members={operationsBoard} />
-        <div className="h-px w-full bg-white/6" />
-        <Tier title="Specialty Leads" members={specialtyLeads} />
+        {tiers.map((tier, index) => (
+          <div key={tier.title} className="flex flex-col gap-16">
+            {index > 0 && <div className="h-px w-full bg-white/6" />}
+            <Tier
+              title={tier.title}
+              members={tier.members}
+              renderProps={renderProps}
+            />
+          </div>
+        ))}
       </div>
+
+      {calibrationMode && selectedName && (
+        <HeadshotCalibration
+          names={photoMembers.map((m) => m.name)}
+          selectedName={selectedName}
+          framing={effective[selectedName] ?? DEFAULT_FRAMING}
+          draft={effective}
+          onSelectName={setSelectedName}
+          onFramingChange={updateSelected}
+          onReset={() => updateSelected(framingFor(selectedName))}
+        />
+      )}
     </section>
   );
 }
