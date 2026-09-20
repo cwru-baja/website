@@ -207,6 +207,7 @@ export default function SponsorsPage() {
                       >
                         <Image
                           src={logoSrc(sponsor.file, sponsor.png)}
+                          unoptimized={logoSrc(sponsor.file, sponsor.png).endsWith(".svg")}
                           alt={sponsor.name}
                           width={box.width}
                           height={box.height}

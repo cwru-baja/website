@@ -1,0 +1,35 @@
+# Cloudflare static-asset headers. Copied to out/ by `next build`.
+# Without a rule an asset is served `max-age=0, must-revalidate`, which is right
+# for the HTML and wrong for everything below.
+
+# Content-hashed by the bundler: a changed file is a new URL.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The /car frames. Not hashed, and a re-render overwrites them in place, so they
+# are cached for a day, not for ever: long enough that scrolling never
+# revalidates a frame, short enough that a new render reaches everyone by
+# tomorrow. Only make this immutable once the path carries a version.
+/renders-sr26/*
+  Cache-Control: public, max-age=86400
+
+/images/*
+  Cache-Control: public, max-age=86400
+
+/logo/*
+  Cache-Control: public, max-age=86400
+
+/fonts/*
+  Cache-Control: public, max-age=2592000
+
+# app/icon.tsx is written out with no file extension, so it needs its type.
+/icon
+  Content-Type: image/svg+xml
+  Cache-Control: public, max-age=86400
+
+# Staging and branch previews stay out of search results.
+https://next.cwrumotorsports.com/*
+  X-Robots-Tag: noindex
+
+https://:worker.:account.workers.dev/*
+  X-Robots-Tag: noindex

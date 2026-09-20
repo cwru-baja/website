@@ -14,6 +14,10 @@ const LABELS_FILE = path.join(process.cwd(), "src/components/carLabels.json");
  * placing them never means editing code. It writes to the source tree, so it
  * only exists under `next dev`: a deployed site has no source tree to write to,
  * and nobody should be able to rewrite its labels.
+ *
+ * The `.dev.ts` suffix is what keeps it out of a build - next.config.ts only
+ * lists that page extension for the dev server. The static export could not
+ * hold a POST handler in any case.
  */
 export async function POST(request: Request) {
   if (process.env.NODE_ENV !== "development") {

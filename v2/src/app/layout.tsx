@@ -1,5 +1,3 @@
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import Script from "next/script";
@@ -75,8 +73,6 @@ export default function RootLayout({
       >
         <ScrollToTop />
         {children}
-        <Analytics />
-        <SpeedInsights />
         {/* Figma html-to-design capture, for pushing pages into Figma. Dev only,
             so production visitors never load a third-party script. */}
         {process.env.NODE_ENV !== "production" && (
