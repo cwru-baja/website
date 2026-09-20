@@ -1,11 +1,11 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
-import { MEMBER_COUNT, roundedDown } from "@/lib/team";
+import { HEADLINE_MEMBERS } from "@/lib/team";
 
 // `phrase` follows the number in the paragraph below lg.
 const stats = [
-  { value: roundedDown(MEMBER_COUNT), suffix: "+", label: "Team Members",        sublabel: "Engineers & Builders",  phrase: "engineers and builders." },
+  { value: HEADLINE_MEMBERS, suffix: "+", label: "Team Members",        sublabel: "Engineers & Builders",  phrase: "engineers and builders." },
   { value: 20,  suffix: "+", label: "Years Competing",     sublabel: "Baja SAE",              phrase: "years at Baja SAE." },
   { value: 3,   suffix: "",  label: "Competitions / Year", sublabel: "Across North America",  phrase: "races each season." },
   { value: 100, suffix: "%", label: "Student Built",       sublabel: "Design to Fabrication", phrase: "student built." },

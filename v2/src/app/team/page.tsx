@@ -5,7 +5,7 @@ import LeadershipSection from "@/components/LeadershipSection";
 import GeneralBodyTable from "@/components/GeneralBodyTable";
 import Footer from "@/components/Footer";
 import { SEASON } from "@/lib/events";
-import { MEMBER_COUNT, SUBTEAMS, roundedDown } from "@/lib/team";
+import { HEADLINE_MEMBERS, SUBTEAMS, roundedDown } from "@/lib/team";
 
 export const metadata = {
   title: "Team — CWRU Motorsports",
@@ -31,7 +31,7 @@ export default function TeamPage() {
           <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex flex-wrap gap-x-10 gap-y-2">
               {[
-                { value: `${roundedDown(MEMBER_COUNT)}+`, label: "Members" },
+                { value: `${HEADLINE_MEMBERS}+`, label: "Members" },
                 { value: `${roundedDown(SUBTEAMS.length)}+`, label: "Subteams" },
                 { value: SEASON, label: "Season" },
               ].map(({ value, label }) => (
@@ -47,8 +47,8 @@ export default function TeamPage() {
             </div>
 
             <p className="max-w-xl text-base leading-relaxed text-white/60 lg:text-right lg:text-lg">
-              Students run every subteam, from frame and suspension to electronics and
-              business, and build the car themselves.
+              Students run every subteam — brakes, frame, systems, finance — and
+              build the car themselves.
             </p>
           </div>
 

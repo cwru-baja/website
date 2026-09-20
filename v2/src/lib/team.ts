@@ -153,3 +153,9 @@ export const MEMBER_COUNT = new Set([
 export function roundedDown(count: number): number {
   return Math.floor(count / 10) * 10;
 }
+
+// The lists above only hold members who have sent in their details, which lags
+// a term's onboarding by a good dozen people, so the headline count is the
+// figure the team gives out. The roster's own floor is the lower bound, so this
+// keeps up on its own once enough of a class is listed.
+export const HEADLINE_MEMBERS = Math.max(60, roundedDown(MEMBER_COUNT));
