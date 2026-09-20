@@ -19,11 +19,11 @@
 // tracks are tighter than the xl ones to keep that description to two lines.
 //
 // Below lg a row is number / name / detail / icon on one line, with the
-// description under the name. The widest pair is YOUTUBE + @CWRUMotorsports,
+// description under the name. The widest pair is LINKEDIN + CWRU Motorsports,
 // and a 320px phone leaves the two of them 186px once the number, the icon and
 // the gaps are paid for. So down there the number track and gaps tighten, the
 // icon is 12px, and both type sizes scale with the viewport (name 18px, detail
-// 11px: 177px). The name is back to full size by 460px, the detail by 415px.
+// 11px: 167px). The name is back to full size by 460px, the detail by 415px.
 const HOVER_INK = "group-hover:text-on-livery";
 
 export const row =

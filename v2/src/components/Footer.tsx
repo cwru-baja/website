@@ -3,7 +3,7 @@ import Image from "next/image";
 const socialLinks = [
   { label: "Instagram", href: "https://www.instagram.com/cwrubaja/", mr: "-mr-18", hoverColor: "hover:text-[#E1306C]", icon: <InstagramIcon /> },
   { label: "LinkedIn", href: "https://www.linkedin.com/company/cwru-motorsports/", mr: "-mr-14", hoverColor: "hover:text-[#0A66C2]", icon: <LinkedInIcon /> },
-  { label: "YouTube", href: "https://www.youtube.com/@CWRUMotorsports", mr: "-mr-10", hoverColor: "hover:text-[#FF0000]", icon: <YouTubeIcon /> },
+  { label: "YouTube", href: "https://www.youtube.com/@cwrubaja", mr: "-mr-10", hoverColor: "hover:text-[#FF0000]", icon: <YouTubeIcon /> },
   { label: "Facebook", href: "https://www.facebook.com/cwrubaja/", mr: "-mr-6", hoverColor: "hover:text-[#1877F2]", icon: <FacebookIcon /> },
 ];
 

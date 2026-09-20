@@ -15,7 +15,7 @@ const EMAIL = "baja-exec@case.edu";
 const socials = [
   { name: "Instagram", detail: "@cwrubaja", href: "https://www.instagram.com/cwrubaja/", blurb: "Behind-the-scenes content and team updates." },
   { name: "LinkedIn", detail: "CWRU Motorsports", href: "https://www.linkedin.com/company/cwru-motorsports/", blurb: "Professional updates and networking." },
-  { name: "YouTube", detail: "@CWRUMotorsports", href: "https://www.youtube.com/@CWRUMotorsports", blurb: "Technical videos and event coverage." },
+  { name: "YouTube", detail: "@cwrubaja", href: "https://www.youtube.com/@cwrubaja", blurb: "Technical videos and event coverage." },
   { name: "Facebook", detail: "@cwrubaja", href: "https://www.facebook.com/cwrubaja/", blurb: "Event announcements and team news." },
 ];
 
