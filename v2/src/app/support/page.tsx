@@ -68,11 +68,11 @@ export default function SupportPage() {
 
                 <div className="mt-12">
                   <p className="border-l-2 border-livery-ink pl-4 text-sm leading-relaxed text-white/45">
-                    On the giving form, choose &ldquo;Other&rdquo; in the gift designation field and
-                    enter &ldquo;Baja&rdquo;.
+                    The link opens our Case Alumni Association campaign page. Scroll down to the
+                    &ldquo;Give Now&rdquo; form to make your gift.
                   </p>
                   <a
-                    href="https://www.givecampus.com/71er24"
+                    href="https://casealumni.org/campaigns/baja-team/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-8 inline-flex min-h-12 items-center justify-center bg-livery px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-on-livery hover:bg-livery-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
