@@ -292,7 +292,7 @@ export const CAR_REVEALS: CarReveal[] = [
     //
     // The layers are the first frame of each sequence - identical images, named
     // for it. See artifacts/render-brake-arc.py; the straight-push layers this
-    // replaces are still in layers/ and can be put back by flipping these names.
+    // replaced are gone from layers/ - artifacts/render-brake-push.py re-renders them.
     id: "brakes",
     frame: 0,
     kind: "remove",
@@ -421,8 +421,8 @@ export const CAR_EXCURSION: CarExcursion = {
     // reached by flying 6 m out to frame 108 and immediately pushing back in,
     // which walked the viewer away from the car and then back to it; this leg
     // lands on the pose that push ends at, so the beat opens already there and
-    // only its way back out is still played. The old `cockpit-exit` leg is
-    // orphaned but kept in layers/. See artifacts/render-cockpit-susp.py.
+    // only its way back out is still played. The old `cockpit-exit` leg it
+    // replaced is no longer in layers/. See artifacts/render-cockpit-susp.py.
     { kind: "move", prefix: "cockpit-susp", count: 40 },
   ],
 };

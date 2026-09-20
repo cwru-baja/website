@@ -1,28 +1,7 @@
 {
-  "AMS-LOGO-2013final": {
-    "aspect": 1.2941,
-    "coverage": 1,
-    "opaqueBackground": true
-  },
-  "altair_logo": {
-    "aspect": 4.878,
-    "coverage": 0.3076
-  },
-  "altium_logo": {
-    "aspect": 4.4423,
-    "coverage": 0.551
-  },
   "atlasbronze": {
     "aspect": 2.6438,
     "coverage": 0.2987
-  },
-  "bmt_aerospace_logo": {
-    "aspect": 1.5739,
-    "coverage": 0.4608
-  },
-  "bmt_logo": {
-    "aspect": 1.177,
-    "coverage": 0.9104
   },
   "cleveland-cliffs-logo": {
     "aspect": 8.4044,
@@ -31,11 +10,6 @@
   "commercial-steel-logo": {
     "aspect": 4.2477,
     "coverage": 0.2345
-  },
-  "dragonplate-vertical-light": {
-    "aspect": 1.317,
-    "coverage": 1,
-    "opaqueBackground": true
   },
   "ebiweld_logo": {
     "aspect": 1.625,
@@ -49,14 +23,6 @@
     "aspect": 1.1844,
     "coverage": 0.1835
   },
-  "fox-logo": {
-    "aspect": 1.5132,
-    "coverage": 0.4357
-  },
-  "fox_logo": {
-    "aspect": 1.5123,
-    "coverage": 0.4385
-  },
   "gates-logo": {
     "aspect": 1.7733,
     "coverage": 0.3183
@@ -64,14 +30,6 @@
   "holley": {
     "aspect": 2.0192,
     "coverage": 0.4282
-  },
-  "jergens_logo": {
-    "aspect": 3.9811,
-    "coverage": 0.3552
-  },
-  "kissoft_logo": {
-    "aspect": 4.9191,
-    "coverage": 0.5368
   },
   "micro-measurements-logo": {
     "aspect": 2.6667,
@@ -110,10 +68,6 @@
     "aspect": 1.7658,
     "coverage": 0.4175
   },
-  "rock west composites": {
-    "aspect": 6.6139,
-    "coverage": 0.211
-  },
   "rock-west-composites": {
     "aspect": 6.6139,
     "coverage": 0.211
@@ -121,10 +75,6 @@
   "skb-cases": {
     "aspect": 2.9099,
     "coverage": 0.4307
-  },
-  "skf_logo": {
-    "aspect": 4.2307,
-    "coverage": 0.5657
   },
   "solidworks_logo": {
     "aspect": 4.8577,
@@ -145,10 +95,6 @@
   "tms-logo": {
     "aspect": 1.6386,
     "coverage": 0.6611
-  },
-  "tylok_logo": {
-    "aspect": 2.3889,
-    "coverage": 0.3208
   },
   "3dconnexion": {
     "aspect": 5.9089,
