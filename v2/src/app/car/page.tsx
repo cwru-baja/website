@@ -39,6 +39,12 @@ export default function CarPage() {
         <PageContainer>
           <PageTitle lead="THE" accent="CAR." />
           <div className="mt-8 h-px w-full bg-white/8" />
+
+          {/* No stats row here, so the blurb takes the right edge on its own. */}
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-white/60 lg:ml-auto lg:text-right lg:text-lg">
+            Every part of this single-seat off-road vehicle is designed, built, and tested
+            by our own students.
+          </p>
         </PageContainer>
       </section>
 

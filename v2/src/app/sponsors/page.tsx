@@ -142,21 +142,29 @@ export default function SponsorsPage() {
 
           <div className="mt-8 h-px w-full bg-white/8" />
 
-          <div className="mt-6 flex flex-wrap gap-x-10 gap-y-2">
-            {[
-              { value: totalSponsors, label: "Sponsors & Partners" },
-              { value: tiers.length, label: "Tiers" },
-              { value: SEASON, label: "Season" },
-            ].map(({ value, label }) => (
-              <div key={label} className="flex items-baseline gap-2">
-                <span className="font-clash font-medium text-2xl tracking-wide text-white">
-                  {value}
-                </span>
-                <span className="text-[0.7rem] font-medium tracking-[0.18em] uppercase text-white/35">
-                  {label}
-                </span>
-              </div>
-            ))}
+          {/* Stats row, with the blurb pulled to the far edge on desktop */}
+          <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-wrap gap-x-10 gap-y-2">
+              {[
+                { value: totalSponsors, label: "Sponsors & Partners" },
+                { value: tiers.length, label: "Tiers" },
+                { value: SEASON, label: "Season" },
+              ].map(({ value, label }) => (
+                <div key={label} className="flex items-baseline gap-2">
+                  <span className="font-clash font-medium text-2xl tracking-wide text-white">
+                    {value}
+                  </span>
+                  <span className="text-[0.7rem] font-medium tracking-[0.18em] uppercase text-white/35">
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p className="max-w-xl text-base leading-relaxed text-white/60 lg:text-right lg:text-lg">
+              Every season runs on materials, software, and manufacturing support from the
+              companies backing this team.
+            </p>
           </div>
         </PageContainer>
       </section>
