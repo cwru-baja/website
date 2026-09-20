@@ -27,6 +27,8 @@ export interface SeasonResult {
   // Place by cumulative overall points across every competition that season,
   // which is how SAE's Mike Schmidt Iron Team award ranks teams.
   seasonRank: number;
+  // Top-three finishes that season, counting a competition's Overall alongside
+  // the individual events.
   podiums: number;
   competitions: CompetitionResult[];
 }
@@ -167,9 +169,7 @@ export function seasonResults(data: BajaData, school: string): SeasonResult[] {
     results.push({
       year,
       seasonRank: ahead + 1,
-      podiums: competitions
-        .flatMap((c) => c.awards)
-        .filter((a) => a.event !== "Overall" && isPodium(a)).length,
+      podiums: competitions.flatMap((c) => c.awards).filter(isPodium).length,
       competitions,
     });
   }

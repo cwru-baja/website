@@ -53,7 +53,7 @@ describe("seasonResults", () => {
     expect(season.competitions.map((c) => c.name)).toEqual(["Baja SAE Kansas", "Baja SAE Illinois"]);
   });
 
-  it("normalizes event names, keeps unplaced events without a place, and counts podiums outside overall", () => {
+  it("normalizes event names, keeps unplaced events without a place, and counts the overall finish as a podium", () => {
     const us = row(1, 900, { Accel: 3, Manv: "", Suspension: 12, "Design Event": 2 });
     // A team that didn't place still has its (zero) score for the event.
     Object.assign(us.Overall, { "Maneuverability (75)": 0 });
@@ -73,7 +73,8 @@ describe("seasonResults", () => {
       ],
     });
     expect(season.competitions[0].awards[2]).not.toHaveProperty("place");
-    expect(season.podiums).toBe(2);
+    // 1st overall, 3rd in acceleration, 2nd in design.
+    expect(season.podiums).toBe(3);
   });
 
   it("scores each event from its column in the Overall row, under any of SAE's column names", () => {
