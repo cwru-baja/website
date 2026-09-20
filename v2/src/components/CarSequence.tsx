@@ -164,6 +164,8 @@ const CAPTION_LEAD = 0.3;
 interface BandState {
   chapter: number;
   live: boolean;
+  /** Past the last chapter's still, when the band has nothing left to caption. */
+  ended: boolean;
 }
 
 const newLabelId = (chapterId: string) =>
@@ -203,7 +205,11 @@ export default function CarSequence() {
   // how many distinct frames were asked for on screen, and how many of them
   // were drawn from a neighbour because they were not here yet.
   const streamStatsRef = useRef({ shown: 0, misses: 0 });
-  const [band, setBand] = useState<BandState>({ chapter: 0, live: false });
+  const [band, setBand] = useState<BandState>({
+    chapter: 0,
+    live: false,
+    ended: false,
+  });
   const [litLabel, setLitLabel] = useState<string | null>(null);
   // A desktop label being hovered lights its part the same way.
   const [hoverLit, setHoverLit] = useState(false);
@@ -1295,9 +1301,10 @@ export default function CarSequence() {
 
           // The caption band follows the playhead: a chapter's name comes up as
           // the camera arrives at its still, and its chips can light parts only
-          // while that still is on screen.
+          // while that still is on screen. Once the last still is gone the band
+          // empties, rather than captioning the turn away as that chapter.
           poseWindows.sort((left, right) => left.from - right.from);
-          let bandNow: BandState = { chapter: 0, live: false };
+          let bandNow: BandState = { chapter: 0, live: false, ended: false };
           const syncBand = () => {
             const time = master.time();
             let current = poseWindows[0];
@@ -1305,8 +1312,18 @@ export default function CarSequence() {
               if (pose.from - CAPTION_LEAD <= time) current = pose;
             });
             if (!current) return;
-            const next = { chapter: current.chapter, live: labelsUp(current, time) };
-            if (next.chapter === bandNow.chapter && next.live === bandNow.live) return;
+            const next = {
+              chapter: current.chapter,
+              live: labelsUp(current, time),
+              ended: time >= poseWindows[poseWindows.length - 1].to,
+            };
+            if (
+              next.chapter === bandNow.chapter &&
+              next.live === bandNow.live &&
+              next.ended === bandNow.ended
+            ) {
+              return;
+            }
             bandNow = next;
             setBand(next);
           };
@@ -2037,6 +2054,7 @@ export default function CarSequence() {
             labels={CAR_LABELS}
             chapter={band.chapter}
             live={band.live}
+            ended={band.ended}
             lit={lit}
             onToggle={(labelId) =>
               setLitLabel((current) => (current === labelId ? null : labelId))
