@@ -4,10 +4,12 @@
   // writes the site to ./out (output: "export" in next.config.ts).
   "name": "baja-website",
   "compatibility_date": "2026-09-20",
-  // Both workers.dev URLs stay on: the production one for checking a deploy
-  // off the real domain, the preview ones for checking a branch. A deploy
-  // resets whatever the dashboard says to these values.
-  "workers_dev": true,
+  // The production workers.dev URL is off: master builds point next/image at
+  // /cdn-cgi/image/, which only exists on cwrumotorsports.com, so every picture
+  // would be broken there. Branch previews keep their URLs - they serve the
+  // source files (see next.config.ts). A deploy resets the dashboard toggles to
+  // these values.
+  "workers_dev": false,
   "preview_urls": true,
   "assets": {
     "directory": "./out",
