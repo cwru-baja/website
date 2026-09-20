@@ -1,9 +1,10 @@
 name: Deploy v1 to GitHub Pages
 
+# v1 is retired: cwrumotorsports.com is served by the v2 Worker on Cloudflare
+# (see v2/wrangler.jsonc). This no longer runs on push; it is kept as a manual
+# run so v1 can be republished to gh-pages if the launch is ever rolled back.
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
 
 permissions:
   contents: write
