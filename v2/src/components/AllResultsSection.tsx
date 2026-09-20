@@ -35,9 +35,10 @@ function FinishDisplay({ finish, fontSize }: { finish: string; fontSize: string 
   );
 }
 
-// Below sm the columns shrink to what they hold at 320px (year 62px, rank 63px,
-// the "Podiums" label 56px), with a few px to spare for other fonts' metrics.
-const COLS_YEAR = "grid-cols-[2.5rem_1fr_4.75rem_3.75rem] sm:grid-cols-[5rem_1fr_8rem_7rem]";
+// Below sm the columns shrink to what they hold at 320px (chevron 40px plus an
+// 8px gap before the year, year 62px, rank 63px, the "Podiums" label 56px),
+// with a few px to spare for other fonts' metrics.
+const COLS_YEAR = "grid-cols-[3rem_1fr_4.75rem_3.75rem] sm:grid-cols-[5rem_1fr_8rem_7rem]";
 const FINISH_YEAR = "clamp(1.8rem,3vw,3rem)";
 const FINISH_EVENT = "clamp(1.25rem,2vw,1.75rem)";
 const FINISH_PODIUM = "clamp(1.5rem,2.4vw,2.125rem)";

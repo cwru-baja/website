@@ -125,7 +125,7 @@ export default function GeneralBodyTable() {
             <TableHeader>
               <TableRow className="border-white/6 hover:bg-transparent">
                 <TableHead
-                  className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium cursor-pointer select-none hover:text-white/60 w-48"
+                  className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium cursor-pointer select-none hover:text-white/60 w-48 pr-10"
                   aria-sort={ariaSort("name")}
                 >
                   <button type="button" onClick={() => handleSort("name")} className="-my-[15px] cursor-pointer py-[15px] uppercase">
@@ -156,7 +156,7 @@ export default function GeneralBodyTable() {
                     i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"
                   }`}
                 >
-                  <TableCell className="text-sm font-medium text-white py-3.5">
+                  <TableCell className="text-sm font-medium text-white py-3.5 pr-10">
                     {m.name}
                   </TableCell>
                   <TableCell className="py-3.5">{chips(m.subteams)}</TableCell>
