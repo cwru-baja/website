@@ -110,7 +110,7 @@ export default function SupportPage() {
                 </div>
 
                 <a
-                  href="https://cwrubaja.printful.me/"
+                  href="https://cwrum-merchstore.printful.me/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-10 inline-flex min-h-12 w-fit items-center justify-center bg-livery px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-on-livery hover:bg-livery-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
