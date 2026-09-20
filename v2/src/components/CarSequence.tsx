@@ -47,7 +47,6 @@ import {
 import {
   AVIF_PROBE,
   CAR_CHAPTERS,
-  CAR_EXCURSION,
   CAR_REVEALS,
   CHAPTER_TIMING,
   LABEL_HOLD,
@@ -63,7 +62,6 @@ import {
   labelsUp,
   layerUrl,
   orbitChapters,
-  orbitFrameSet,
   pauseLayerUrl,
   nearestLoadedFrame,
   openingLayerUrls,
@@ -74,7 +72,7 @@ import {
   revealsForFrame,
   rotationDuration,
   sequenceLayerUrl,
-  warmLayerUrls,
+  landscapeLoadOrder,
   type CarChapter,
   type FrameSet,
   type FrameSource,
@@ -83,6 +81,13 @@ import {
 } from "./carSequenceModel";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+/**
+ * How many frames the desktop loader has in flight. Few enough that they arrive
+ * in the order asked for, enough that a long round trip does not leave the link
+ * idle between them.
+ */
+const LOAD_CONCURRENCY = 12;
 
 /** How long a frame waits on decode() before settling for "downloaded". */
 const DECODE_TIMEOUT_MS = 1200;
@@ -389,7 +394,6 @@ export default function CarSequence() {
   useEffect(() => {
     if (!landscapeSource) return;
     let cancelled = false;
-    let batchTimer: ReturnType<typeof setTimeout> | undefined;
     const pending = new Map<number, Promise<boolean>>();
     const images = imagesRef.current;
     const warmed = warmedLayersRef.current;
@@ -472,51 +476,39 @@ export default function CarSequence() {
       drawFrame(0);
       setSequenceReady(true);
 
-      // Warm the reveal layers so they never pop in mid-scroll.
-      warmLayerUrls(landscapeSource).forEach((url) => {
-        const image = new Image();
-        image.decoding = "async";
-        image.src = url;
-        warmed.push(image);
-      });
-
-      // The excursion crosses most of the orbit with the canvas switched off, so
-      // the frames it crosses are never painted - and are no longer rendered
-      // either: full/ holds only what this set names. The calibration tool used
-      // to fetch the whole 120 so it could land on any frame by hand, which it
-      // does not need: it draws a pause's own still over the canvas
-      // (calibrationPose), opaque and full-bleed, and the only two pauses inside
-      // the gap - drivetrain and electronics - are excursion stills.
-      const painted = orbitFrameSet(CAR_EXCURSION, SEQUENCE_CONFIG.frameCount);
-      const priority = new Set<number>([0]);
-      orbitChapters(CAR_CHAPTERS, CAR_EXCURSION).forEach((chapter) => {
-        for (let offset = -2; offset <= 2; offset += 1) {
-          const index = chapter.pauseFrame + offset;
-          if (painted.has(index)) priority.add(index);
-        }
-      });
-      await Promise.allSettled([...priority].map(loadFrame));
-      if (cancelled) return;
-
-      const remaining = [...painted].filter((index) => !priority.has(index));
+      // Everything else, in the order the scroll reaches it and a few at a
+      // time. Asking for all of it at once shares the link 300 ways, so nothing
+      // finishes early and the opening beat's frames land no sooner than the
+      // last leg's - which is the wrong way round for anyone who starts
+      // scrolling before the download is done.
+      const queue = landscapeLoadOrder(landscapeSource).slice(1);
+      const warm = (url: string) =>
+        new Promise<void>((resolve) => {
+          const image = new Image();
+          image.decoding = "async";
+          image.onload = image.onerror = () => {
+            image.onload = image.onerror = null;
+            resolve();
+          };
+          image.src = url;
+          warmed.push(image);
+        });
       let cursor = 0;
-
-      const loadNextBatch = async () => {
-        if (cancelled || cursor >= remaining.length) return;
-        const batch = remaining.slice(cursor, cursor + 10);
-        cursor += batch.length;
-        await Promise.allSettled(batch.map(loadFrame));
-        if (!cancelled) batchTimer = setTimeout(loadNextBatch, 24);
+      const worker = async () => {
+        while (!cancelled && cursor < queue.length) {
+          const asset = queue[cursor];
+          cursor += 1;
+          if (asset.canvasFrame === undefined) await warm(asset.url);
+          else await loadFrame(asset.canvasFrame);
+        }
       };
-
-      batchTimer = setTimeout(loadNextBatch, 24);
+      await Promise.all(Array.from({ length: LOAD_CONCURRENCY }, worker));
     };
 
     void startLoading();
 
     return () => {
       cancelled = true;
-      if (batchTimer) clearTimeout(batchTimer);
       warmed.length = 0;
       images.forEach((image) => {
         if (!image) return;

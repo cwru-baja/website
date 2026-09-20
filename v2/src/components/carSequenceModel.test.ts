@@ -32,6 +32,7 @@ import {
   revealBaseSrc,
   revealPartSrc,
   warmLayerUrls,
+  landscapeLoadOrder,
   orbitChapters,
   orbitFrameSet,
   pauseLayerUrl,
@@ -481,6 +482,84 @@ describe("frame sets", () => {
     expect(tall.filter((url) => url.includes("/cockpit-roll-"))).toEqual([]);
     expect(tall.filter((url) => url.includes("/059-crane-up-"))).toHaveLength(40);
     expect(tall).toHaveLength(282 - 30 - 20 + 40);
+  });
+
+  // All 259 layers used to be requested at once, so they shared the link and
+  // none finished early: on a first visit the opening beat's frames landed no
+  // sooner than the last leg's. The loader now walks this list a few at a time.
+  describe("the desktop loader's order", () => {
+    const order = landscapeLoadOrder("landscape");
+    const urls = order.map((asset) => asset.url);
+    const at = (file: string) => urls.indexOf(`/renders-sr26/${file}.webp`);
+
+    it("loads exactly what the desktop set plays, once each", () => {
+      const orbit = [...orbitFrameSet(CAR_EXCURSION)].map((index) =>
+        frameUrl("landscape", index),
+      );
+      expect(new Set(urls).size).toBe(urls.length);
+      expect([...urls].sort()).toEqual(
+        [...new Set([...orbit, ...warmLayerUrls("landscape")])].sort(),
+      );
+      expect(
+        order.filter((asset) => asset.canvasFrame !== undefined).map((asset) => asset.url),
+      ).toEqual(expect.arrayContaining(orbit));
+    });
+
+    it("opens with frame 0 and every still a jump can land on", () => {
+      expect(order[0]).toEqual({ url: "/renders-sr26/full/0001.webp", canvasFrame: 0 });
+      const head = urls.slice(0, 24);
+      [
+        "layers/brake-arc/000-brake-arc-0001",
+        "layers/brake-arc/000-brake-cover-0001",
+        "layers/brake-arc/000-brake-arc-0030",
+        "full/0032",
+        "layers/031-frame",
+        "layers/059-drivetrain-top",
+        "layers/cockpit-dive-0040",
+        "layers/108-susp-corner-0024",
+        "full/0109",
+      ].forEach((file) => expect(head).toContain(`/renders-sr26/${file}.webp`));
+    });
+
+    it("then follows the scroll", () => {
+      const walk = [
+        "layers/brake-arc/000-brake-arc-0002",
+        "layers/brake-arc/000-brake-arc-0029",
+        "layers/brake-arc/brake-exit-0002",
+        "layers/brake-arc/brake-exit-0030",
+        "layers/059-crane-up-0002",
+        "layers/cockpit-roll-0002",
+        "layers/cockpit-dive-0002",
+        "layers/cockpit-susp-0002",
+        "layers/cockpit-susp-0039",
+        "layers/108-susp-corner-0023",
+        "layers/108-susp-corner-0002",
+        "full/0112",
+        "full/0120",
+      ].map(at);
+      expect(walk.every((index) => index > 0)).toBe(true);
+      expect(walk).toEqual([...walk].sort((a, b) => a - b));
+    });
+
+    it("keeps a base and its part together", () => {
+      // The part is gone by frame 18 of the push, and frame 18 of each is one picture.
+      expect(Math.abs(at("layers/brake-arc/000-brake-arc-0012") - at("layers/brake-arc/000-brake-cover-0012"))).toBe(1);
+      expect(Math.abs(at("layers/brake-arc/brake-exit-0020") - at("layers/brake-arc/brake-exit-cover-0020"))).toBe(1);
+      expect(Math.abs(at("layers/108-susp-corner-0010") - at("layers/108-susp-corner-wheels-0010"))).toBe(1);
+    });
+
+    it("leaves the orbit the brake exit flies past until last", () => {
+      // The exit leg lands on frame 31, so 1-30 are only ever seen scrubbing back.
+      const skipped = Array.from({ length: 30 }, (_, index) => frameUrl("landscape", index + 1));
+      expect(urls.slice(-skipped.length).sort()).toEqual(skipped.sort());
+    });
+
+    it("follows the format", () => {
+      const avif = { set: "landscape", format: "avif" } as const;
+      expect(landscapeLoadOrder(avif).map((asset) => asset.url)).toEqual(
+        urls.map((url) => url.replace(/\.webp$/, ".avif")),
+      );
+    });
   });
 
   it("has every file the portrait set plays", () => {

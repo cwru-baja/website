@@ -573,6 +573,105 @@ export const warmLayerUrls = (
   return urls;
 };
 
+/** One file the desktop loader fetches; `canvasFrame` when it is an orbit frame. */
+export interface LoadAsset {
+  url: string;
+  canvasFrame?: number;
+}
+
+/**
+ * Everything the landscape set plays, in the order the desktop loader fetches
+ * it - a few at a time, so what is first in the list is first to arrive.
+ *
+ * Frame 0 gates the section. Then every still a fast scroll or a jump can land
+ * on, which is a couple of dozen files. Then the scroll itself, top to bottom:
+ * a beat's base and part side by side because they are one picture, a landed
+ * push backwards because it only plays its way out, and the excursion where the
+ * orbit lifts off. The orbit frames a beat's exit leg flies past come last -
+ * the canvas is covered for all of them.
+ */
+export const landscapeLoadOrder = (
+  source: FrameSourceLike,
+  chapters: CarChapter[] = CAR_CHAPTERS,
+  reveals: CarReveal[] = CAR_REVEALS,
+  excursion: CarExcursion = excursionFor(source),
+  frameCount = SEQUENCE_CONFIG.frameCount,
+): LoadAsset[] => {
+  const order = new Map<string, LoadAsset>();
+  const layer = (url: string) => {
+    if (!order.has(url)) order.set(url, { url });
+  };
+  const painted = orbitFrameSet(excursion, frameCount);
+  const flownPast = new Set<number>();
+  reveals.forEach((reveal) => {
+    const toFrame = reveal.push?.exit?.toFrame;
+    if (toFrame === undefined) return;
+    for (let index = reveal.frame + 1; index < toFrame; index += 1) flownPast.add(index);
+  });
+  const orbit = (index: number) => {
+    const url = frameUrl(source, index);
+    if (painted.has(index) && !order.has(url)) order.set(url, { url, canvasFrame: index });
+  };
+  // Base and part advance together; the part's run is the shorter one.
+  const pair = (
+    run: { base: string; part: string; count: number; partCount: number },
+    backwards = false,
+  ) => {
+    for (let step = 0; step < run.count; step += 1) {
+      const index = backwards ? run.count - 1 - step : step;
+      layer(sequenceLayerUrl(source, run.base, index));
+      if (index < run.partCount) layer(sequenceLayerUrl(source, run.part, index));
+    }
+  };
+
+  orbit(0);
+  openingLayerUrls(source, chapters, reveals).forEach(layer);
+  chapters.forEach((chapter) => {
+    const still = pauseLayerUrl(source, chapter.pauseFrame, reveals, excursion);
+    if (still) layer(still);
+    reveals
+      .filter((reveal) => reveal.frame === chapter.pauseFrame)
+      .forEach((reveal) => {
+        if (reveal.base) layer(revealBaseSrc(source, reveal));
+        if (reveal.part) layer(revealPartSrc(source, reveal));
+        if (reveal.isolate) layer(layerUrl(source, reveal.isolate));
+      });
+  });
+  orbitChapters(chapters, excursion).forEach((chapter) => {
+    for (let offset = -2; offset <= 2; offset += 1) {
+      const index = chapter.pauseFrame + offset;
+      if (!flownPast.has(index)) orbit(index);
+    }
+  });
+
+  for (let index = 0; index < frameCount; index += 1) {
+    if (!painted.has(index) || flownPast.has(index)) continue;
+    const here = reveals.filter((reveal) => reveal.frame === index);
+    here.forEach((reveal) => {
+      if (reveal.push?.landed) pair(reveal.push, true);
+    });
+    orbit(index);
+    here.forEach((reveal) => {
+      if (reveal.base) layer(layerUrl(source, reveal.base));
+      if (reveal.part) layer(layerUrl(source, reveal.part));
+      if (reveal.isolate) layer(layerUrl(source, reveal.isolate));
+      if (!reveal.push || reveal.push.landed) return;
+      pair(reveal.push);
+      if (reveal.push.exit) pair(reveal.push.exit);
+    });
+    if (index !== excursion.fromFrame) continue;
+    excursion.steps.forEach((step) => {
+      if (step.kind === "isolate") layer(layerUrl(source, step.layer));
+      if (step.kind !== "move") return;
+      for (let frame = 0; frame < step.count; frame += 1) {
+        layer(sequenceLayerUrl(source, step.prefix, frame));
+      }
+    });
+  }
+  flownPast.forEach(orbit);
+  return [...order.values()];
+};
+
 export const revealsForFrame = (frame: number) =>
   CAR_REVEALS.filter((reveal) => reveal.frame === frame);
 
