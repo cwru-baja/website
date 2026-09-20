@@ -146,7 +146,7 @@ function CompetitionLedger({ competition }: { competition: CompetitionResult }) 
         }
         score={scoreLabel(overall ?? {})}
         finish={placeLabel(overall)}
-        podium={false}
+        podium={overall !== undefined && isPodium(overall)}
       />
       {events.map((award) => (
         <LedgerRow

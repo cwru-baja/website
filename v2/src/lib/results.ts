@@ -49,6 +49,8 @@ const EVENT_NAMES: Record<string, string> = {
   "Endurance Race": "Endurance",
   Presentation: "Sales Presentation",
   Pulling: "Sled Pull",
+  // New York 2026 shortened them once more ("Cost" and "S&T" already resolve).
+  Business: "Business Presentation",
 };
 
 // Overall, then the dynamic events, then the static events. Only one
