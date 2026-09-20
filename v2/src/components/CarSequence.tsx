@@ -464,18 +464,13 @@ export default function CarSequence() {
       });
 
       // The excursion crosses most of the orbit with the canvas switched off, so
-      // the frames it crosses are never painted and are not worth fetching. The
-      // calibration tool is the exception: it scrubs the orbit by hand and has to
-      // be able to land on any frame, so it pays for the whole set.
-      const painted =
-        new URLSearchParams(window.location.search).get("calibrateCar") === "1"
-          ? new Set(
-              Array.from(
-                { length: SEQUENCE_CONFIG.frameCount },
-                (_, index) => index,
-              ),
-            )
-          : orbitFrameSet(CAR_EXCURSION, SEQUENCE_CONFIG.frameCount);
+      // the frames it crosses are never painted - and are no longer rendered
+      // either: full/ holds only what this set names. The calibration tool used
+      // to fetch the whole 120 so it could land on any frame by hand, which it
+      // does not need: it draws a pause's own still over the canvas
+      // (calibrationPose), opaque and full-bleed, and the only two pauses inside
+      // the gap - drivetrain and electronics - are excursion stills.
+      const painted = orbitFrameSet(CAR_EXCURSION, SEQUENCE_CONFIG.frameCount);
       const priority = new Set<number>([0]);
       orbitChapters(CAR_CHAPTERS, CAR_EXCURSION).forEach((chapter) => {
         for (let offset = -2; offset <= 2; offset += 1) {

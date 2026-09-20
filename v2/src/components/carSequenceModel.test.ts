@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -492,6 +492,26 @@ describe("frame sets", () => {
     );
     expect(missing).toEqual([]);
   });
+
+  // Neither set renders the stretch of orbit the excursion crosses with the
+  // canvas off, so full/ holds exactly what the orbit stops on - both ways
+  // round, or a frame is either missing when the canvas asks for it or paid for
+  // in the deploy and never fetched.
+  it.each(["landscape", "portrait"] as const)("renders only the orbit %s plays", (set) => {
+    const excursion = set === "portrait" ? PORTRAIT_EXCURSION : CAR_EXCURSION;
+    const formats = FRAME_SETS[set].formats;
+    const played = new Set(
+      [...orbitFrameSet(excursion)].flatMap((index) =>
+        formats.map((format) => frameUrl({ set, format }, index)),
+      ),
+    );
+    const root = `/renders-sr26${set === "portrait" ? "/portrait" : ""}/full`;
+    const onDisk = readdirSync(path.join(process.cwd(), "public", root)).map(
+      (file) => `${root}/${file}`,
+    );
+    expect([...played].filter((url) => !onDisk.includes(url))).toEqual([]);
+    expect(onDisk.filter((url) => !played.has(url))).toEqual([]);
+  });
 });
 
 describe("the phone's cockpit run", () => {
@@ -584,7 +604,9 @@ describe("frame formats", () => {
   });
 
   it("has an AVIF beside every WebP the landscape set plays", () => {
-    const orbit = Array.from({ length: SEQUENCE_CONFIG.frameCount }, (_, index) =>
+    // The orbit stops, not all frameCount of them: the stretch the excursion
+    // crosses is not rendered in either format.
+    const orbit = [...orbitFrameSet(CAR_EXCURSION)].map((index) =>
       frameUrl(avif, index),
     );
     const missing = [...orbit, ...warmLayerUrls(avif)].filter(
