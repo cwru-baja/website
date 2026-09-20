@@ -181,6 +181,11 @@ export default function CarSequence() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imagesRef = useRef<(HTMLImageElement | undefined)[]>([]);
   const loadedFramesRef = useRef(new Set<number>());
+  // The warmed layer frames. Blink's memory cache only keeps an image something
+  // still references, and public/ files are served max-age=0 - so a warmed Image
+  // that is let go is collected, and the src swap that shows its frame becomes a
+  // revalidation round trip per frame, mid-scroll.
+  const warmedLayersRef = useRef<HTMLImageElement[]>([]);
   const requestedFrameRef = useRef(0);
   const drawnFrameRef = useRef(-1);
 
@@ -387,6 +392,7 @@ export default function CarSequence() {
     let batchTimer: ReturnType<typeof setTimeout> | undefined;
     const pending = new Map<number, Promise<boolean>>();
     const images = imagesRef.current;
+    const warmed = warmedLayersRef.current;
 
     const loadFrame = (index: number) => {
       const existing = pending.get(index);
@@ -471,6 +477,7 @@ export default function CarSequence() {
         const image = new Image();
         image.decoding = "async";
         image.src = url;
+        warmed.push(image);
       });
 
       // The excursion crosses most of the orbit with the canvas switched off, so
@@ -510,6 +517,7 @@ export default function CarSequence() {
     return () => {
       cancelled = true;
       if (batchTimer) clearTimeout(batchTimer);
+      warmed.length = 0;
       images.forEach((image) => {
         if (!image) return;
         image.onload = null;
