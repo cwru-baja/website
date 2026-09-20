@@ -4,6 +4,11 @@
   // writes the site to ./out (output: "export" in next.config.ts).
   "name": "baja-website",
   "compatibility_date": "2026-09-20",
+  // Both workers.dev URLs stay on: the production one for checking a deploy
+  // off the real domain, the preview ones for checking a branch. A deploy
+  // resets whatever the dashboard says to these values.
+  "workers_dev": true,
+  "preview_urls": true,
   "assets": {
     "directory": "./out",
     // /car is served from car.html; unknown paths get Next's 404.html.
