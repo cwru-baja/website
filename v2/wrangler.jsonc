@@ -2,7 +2,7 @@
   // Cloudflare Workers, static assets only: there is no `main`, so no Worker
   // code runs and every request is a free static-asset request. `next build`
   // writes the site to ./out (output: "export" in next.config.ts).
-  "name": "cwru-motorsports",
+  "name": "baja-website",
   "compatibility_date": "2026-09-20",
   "assets": {
     "directory": "./out",
