@@ -6,6 +6,12 @@ import Image from "next/image";
 import { SEASON } from "@/lib/events";
 import { logoBox, logoSrc, phoneLogoHeight, type TierKey } from "@/lib/logoSizing";
 
+export const metadata = {
+  title: "Sponsors — CWRU Motorsports",
+  description: "The companies and departments whose support puts the CWRU Baja SAE car on the track.",
+  alternates: { canonical: "/sponsors" },
+};
+
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
 
 const tiers: {

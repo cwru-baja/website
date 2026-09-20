@@ -22,6 +22,14 @@
 /fonts/*
   Cache-Control: public, max-age=2592000
 
+# Root-level brand assets. Rebuilt by hand (npm run brand-assets), not by the
+# bundler, so they are not content-hashed and cannot be immutable.
+/og.jpg
+  Cache-Control: public, max-age=86400
+
+/favicon.ico
+  Cache-Control: public, max-age=86400
+
 # app/icon.tsx is written out with no file extension, so it needs its type.
 /icon
   Content-Type: image/svg+xml

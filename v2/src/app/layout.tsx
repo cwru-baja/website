@@ -4,16 +4,41 @@ import Script from "next/script";
 import type { CSSProperties } from "react";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
-import { CURRENT_THEME, liveryVariables } from "@/lib/livery";
+import { CARS, CURRENT_CAR, CURRENT_THEME, liveryVariables } from "@/lib/livery";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
+// openGraph deliberately carries no title or description: a child page that
+// does not declare its own openGraph inherits this whole object, and Next
+// fills og:title and og:description from that page's own title/description
+// only while they are absent here. Setting them would stamp the home page's
+// words on every card.
 export const metadata: Metadata = {
+  // Makes the relative image URL below absolute. Every unfurler needs a whole
+  // URL; none of them have a page to resolve a path against.
+  metadataBase: new URL(SITE_URL),
   title: "CWRU Motorsports — Baja SAE",
   description: "Case Western Reserve University's Baja SAE racing team. We design, build, and race off-road vehicles.",
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    locale: "en_US",
+    images: [
+      {
+        url: "/og.jpg",
+        width: 1200,
+        height: 630,
+        alt: `${CARS[CURRENT_CAR].name}, the team's Baja SAE car`,
+      },
+    ],
+  },
+  // Platforms that read the Twitter tags in preference to Open Graph would
+  // otherwise show the card cropped to a small square.
+  twitter: { card: "summary_large_image" },
 };
 
 // Mobile browsers tint their toolbars with themeColor, so it matches the page

@@ -10,6 +10,7 @@ import { HEADLINE_MEMBERS, SUBTEAMS, roundedDown } from "@/lib/team";
 export const metadata = {
   title: "Team — CWRU Motorsports",
   description: "Meet the students who design, build, and race the CWRU Baja SAE vehicle.",
+  alternates: { canonical: "/team" },
 };
 
 export default function TeamPage() {

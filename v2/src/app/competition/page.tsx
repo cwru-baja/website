@@ -9,6 +9,12 @@ import AllResultsSection from "@/components/AllResultsSection";
 import HiredByTheBest from "@/components/HiredByTheBest";
 import { seasonResults, type BajaData } from "@/lib/results";
 
+export const metadata = {
+  title: "Competition — CWRU Motorsports",
+  description: "How CWRU Motorsports has placed at Baja SAE competitions, season by season.",
+  alternates: { canonical: "/competition" },
+};
+
 // Read on the server so only our results, not the whole 8 MB file, reach the page.
 function loadResults() {
   const file = path.join(process.cwd(), "public/baja-data.json");

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "mobile-check": "node scripts/mobile-check.mjs"
+    "mobile-check": "node scripts/mobile-check.mjs",
+    "brand-assets": "node --experimental-strip-types scripts/build-brand-assets.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

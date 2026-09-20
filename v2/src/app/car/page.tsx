@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 export const metadata = {
   title: "Car — CWRU Motorsports",
   description: "Learn about the CWRU Baja SAE vehicle design and engineering.",
+  alternates: { canonical: "/car" },
 };
 
 export default function CarPage() {

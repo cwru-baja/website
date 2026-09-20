@@ -8,6 +8,7 @@ import * as cls from "./rows";
 export const metadata = {
   title: "Contact — CWRU Motorsports",
   description: "Email CWRU Motorsports or find the team on Instagram, LinkedIn, YouTube and Facebook.",
+  alternates: { canonical: "/contact" },
 };
 
 const EMAIL = "baja-exec@case.edu";

@@ -8,6 +8,7 @@ import PageTitle from "@/components/PageTitle";
 export const metadata = {
   title: "Support — CWRU Motorsports",
   description: "Support CWRU Motorsports through donations or official team apparel.",
+  alternates: { canonical: "/support" },
 };
 
 export default function SupportPage() {
