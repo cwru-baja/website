@@ -16,6 +16,10 @@ Three rendered legs, each one handing over to the next on an identical frame:
 That last equality is what let the canvas take the frame back: the site handed
 over to `108-susp-corner`, whose own frame 1 is the same orbit pose.
 
+The portrait (phone) set has no roll. Its crane lands nose up already, so there
+
+  cockpit-dive  frame 1  == 059-crane-up-0040   (portrait: the helix's last pose)
+
 The site does not play `cockpit-exit` any more (2026-09-17). Flying 6 m out to
 that orbit pose only to push straight back in to the corner walked the viewer
 away from the car and back again, so artifacts/render-cockpit-susp.py replaces
@@ -34,10 +38,19 @@ can actually sit: past 0.64 m the bodywork behind the seat is in the way.
   STAGE    roll | dive | exit | all | verify
   QUALITY  preview (45%, 48 spp, PNG) | final (100%, 256 spp, WEBP)
   STEP     render every Nth frame - preview contact sheets
+  PROFILE  landscape (default) | portrait: the dive only, with KOPT's K and lens
+           shift from portrait-plan.json (see render_profile.py). Phones play no
+           roll: their crane is a helix that already lands on the roll's last
+           pose, nose up (render-crane.py, helix_pose), which is where the dive
+           starts on both sets.
 """
 
 import bpy, os, math, time
 from mathutils import Vector, Matrix
+
+HERE = os.path.dirname(os.path.abspath(globals().get(
+    "__file__", "/Users/aretelew/Developer/baja/baja-website/v2/artifacts/render-dive.py")))
+exec(open(os.path.join(HERE, "render_profile.py")).read())
 
 STAGE   = globals().get("STAGE", "verify")
 QUALITY = globals().get("QUALITY", "preview")
@@ -212,6 +225,15 @@ LEGS = {
     "exit": (exit_pose, N_EXIT, NAME_EXIT),
 }
 
+# Portrait: the stills each leg runs between. The dive travels the whole way, so
+# the plan gives both its ends one K; shift eases on the leg's own curve. There is
+# no portrait roll - the phone's crane lands on "roll-end" itself.
+PORTRAIT_LEGS = {"dive": ("roll-end", "wheel")}
+
+def portrait_cam(leg, i, n):
+    a, b = PORTRAIT_LEGS[leg]
+    return leg_cam(a, b, ease(i / (n - 1)))
+
 
 if STAGE == "verify":
     # Does a plain look_at reproduce the constrained orbit camera at the frame the
@@ -283,7 +305,12 @@ else:
         cy.samples = 256; r.resolution_percentage = 100
         r.image_settings.file_format = 'WEBP'; r.image_settings.color_mode = 'RGBA'
         r.image_settings.quality = 80
+        master_output()
         r.film_transparent = True
+    if PORTRAIT:
+        if STAGE not in PORTRAIT_LEGS:
+            raise ValueError("portrait renders STAGE dive; the page plays no other leg here")
+        portrait_output(QUALITY)
 
     # The car is static; the frame only drives the orbit camera, which is unused here.
     scn.frame_set(32)
@@ -300,6 +327,8 @@ else:
             M, lens = pose_fn(i, n)
             tmp.data.lens = lens
             tmp.matrix_world = M
+            if PORTRAIT:
+                set_portrait_camera(tmp.data, *portrait_cam(leg, i, n))
             bpy.context.view_layer.update()
             r.filepath = os.path.join(OUTDIR, name_fmt % (i + 1))
             bpy.ops.render.render(write_still=True)
@@ -311,5 +340,7 @@ else:
     r.image_settings.file_format = prev["fmt"]; r.image_settings.color_mode = prev["cm"]
     r.image_settings.quality = prev["q"]; r.filepath = prev["fp"]
     r.film_transparent = prev["transp"]; scn.frame_set(prev["frame"])
+    if PORTRAIT:
+        landscape_restore()
     RESULT = {"stage": STAGE, "quality": QUALITY, "frames": shot,
               "seconds": round(time.time() - t_start, 1)}

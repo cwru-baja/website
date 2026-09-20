@@ -51,6 +51,27 @@ export default function GeneralBodyTable() {
     return a[sortField] > b[sortField] ? v : -v;
   });
 
+  const arrow = (field: SortField) =>
+    sortField === field ? (
+      <span className="ml-1 text-white/60">{sortDir === "asc" ? "↑" : "↓"}</span>
+    ) : (
+      <span className="ml-1 text-white/20">↕</span>
+    );
+  const ariaSort = (field: SortField) =>
+    sortField === field ? (sortDir === "asc" ? "ascending" : "descending") : "none";
+  const chips = (subteams: Subteam[]) => (
+    <div className="flex flex-wrap gap-1.5">
+      {subteams.map((s) => (
+        <span
+          key={s}
+          className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.65rem] font-medium tracking-wide ${subteamColors[s]}`}
+        >
+          {s}
+        </span>
+      ))}
+    </div>
+  );
+
   return (
     <section className="bg-bg pb-24">
       <div className="max-w-[1600px] mx-auto px-8 lg:px-16 xl:px-24">
@@ -60,24 +81,67 @@ export default function GeneralBodyTable() {
           <span className="text-[0.65rem] tracking-[0.12em] uppercase text-white/25">{members.length} members</span>
         </div>
 
-        <div className="rounded-sm border border-white/6 overflow-hidden">
+        {/* Phones: a card per member. Four columns don't fit, and a table
+            that scrolls sideways hides three of them. */}
+        <div className="sm:hidden">
+          <div className="mb-2 flex items-center gap-1">
+            <span className="mr-2 text-[0.65rem] tracking-[0.18em] uppercase text-white/25">Sort</span>
+            {(["name", "classOf"] as const).map((field) => (
+              <button
+                key={field}
+                type="button"
+                onClick={() => handleSort(field)}
+                aria-pressed={sortField === field}
+                className={`min-h-11 px-3 text-[0.65rem] tracking-[0.18em] uppercase font-medium ${
+                  sortField === field ? "text-white/70" : "text-white/35"
+                }`}
+              >
+                {field === "name" ? "Name" : "Class of"}
+                {arrow(field)}
+              </button>
+            ))}
+          </div>
+          <ul className="rounded-sm border border-white/6">
+            {sorted.map((m, i) => (
+              <li
+                key={m.name}
+                className={`px-4 py-3.5 ${i === 0 ? "" : "border-t border-white/6"} ${
+                  i % 2 === 0 ? "" : "bg-white/[0.015]"
+                }`}
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="text-sm font-medium text-white">{m.name}</p>
+                  <p className="shrink-0 text-xs text-white/40">{m.classOf}</p>
+                </div>
+                <p className="mt-0.5 text-xs text-white/40">{m.major}</p>
+                <div className="mt-2.5">{chips(m.subteams)}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-sm border border-white/6 overflow-hidden max-sm:hidden">
           <Table>
             <TableHeader>
               <TableRow className="border-white/6 hover:bg-transparent">
                 <TableHead
-                  className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium cursor-pointer select-none hover:text-white/60 w-48"
-                  onClick={() => handleSort("name")}
+                  className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium cursor-pointer select-none hover:text-white/60 w-48 pr-10"
+                  aria-sort={ariaSort("name")}
                 >
-                  Name {sortField === "name" ? (sortDir === "asc" ? <span className="ml-1 text-white/60">↑</span> : <span className="ml-1 text-white/60">↓</span>) : <span className="ml-1 text-white/20">↕</span>}
+                  <button type="button" onClick={() => handleSort("name")} className="-my-[15px] cursor-pointer py-[15px] uppercase">
+                    Name {arrow("name")}
+                  </button>
                 </TableHead>
                 <TableHead className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium">
                   Subteam
                 </TableHead>
                 <TableHead
                   className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium cursor-pointer select-none hover:text-white/60 w-28"
-                  onClick={() => handleSort("classOf")}
+                  aria-sort={ariaSort("classOf")}
                 >
-                  Class of {sortField === "classOf" ? (sortDir === "asc" ? <span className="ml-1 text-white/60">↑</span> : <span className="ml-1 text-white/60">↓</span>) : <span className="ml-1 text-white/20">↕</span>}
+                  <button type="button" onClick={() => handleSort("classOf")} className="-my-[15px] cursor-pointer py-[15px] uppercase">
+                    Class of {arrow("classOf")}
+                  </button>
                 </TableHead>
                 <TableHead className="text-[0.65rem] tracking-[0.18em] uppercase text-white/35 font-medium">
                   Major
@@ -92,21 +156,10 @@ export default function GeneralBodyTable() {
                     i % 2 === 0 ? "bg-transparent" : "bg-white/[0.015]"
                   }`}
                 >
-                  <TableCell className="text-sm font-medium text-white py-3.5">
+                  <TableCell className="text-sm font-medium text-white py-3.5 pr-10">
                     {m.name}
                   </TableCell>
-                  <TableCell className="py-3.5">
-                    <div className="flex flex-wrap gap-1.5">
-                      {m.subteams.map((s) => (
-                        <span
-                          key={s}
-                          className={`inline-flex items-center rounded-sm border px-2 py-0.5 text-[0.65rem] font-medium tracking-wide ${subteamColors[s]}`}
-                        >
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </TableCell>
+                  <TableCell className="py-3.5">{chips(m.subteams)}</TableCell>
                   <TableCell className="text-sm text-white/40 py-3.5">
                     {m.classOf}
                   </TableCell>

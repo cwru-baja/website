@@ -1,12 +1,27 @@
 import bpy, math, os
 from mathutils import Vector, Matrix, Quaternion
 
+# PROFILE "portrait" (with KOPT, see render_profile.py) renders the approach and
+# the isolate for phones, with K and lens shift from portrait-plan.json - and a
+# different approach. The desktop crane rises straight up from the side and
+# lands with the nose to screen right, which is what a 16:9 frame wants and a
+# 4:5 one cannot hold: the car is longer than it is wide. So the phone's crane
+# is a helix instead - it keeps turning the way the orbit turns while it rises,
+# from the side round to behind the car, and lands overhead with the nose to the
+# top of the page. That is the pose the desktop's cockpit roll ends on
+# (render-dive.py, still "roll-end" in the plan), so the dive's first frame is
+# the crane's last and phones play no roll at all. See helix_poses.
+HERE = os.path.dirname(os.path.abspath(globals().get(
+    "__file__", "/Users/aretelew/Developer/baja/baja-website/v2/artifacts/render-crane.py")))
+exec(open(os.path.join(HERE, "render_profile.py")).read())
+
 scn = bpy.context.scene; r = scn.render; cy = scn.cycles
 ARC     = globals().get("ARC", "verify")        # verify | approach | depart | isolate
 QUALITY = globals().get("QUALITY", "preview")   # preview | final
 N       = globals().get("N", 30)
 I0      = globals().get("I0", 0)      # chunk start (0-based, inclusive)
 I1      = globals().get("I1", None)   # chunk end   (0-based, exclusive)
+STEP    = globals().get("STEP", 1)    # approach: every Nth frame, for preview sheets
 OUTDIR  = globals().get("OUTDIR", "/private/tmp/claude-501/-Users-aretelew-Developer-baja-baja-website-v2/0e004e92-1c62-46a8-aefa-be4a4af85fea/scratchpad/crane/")
 os.makedirs(OUTDIR, exist_ok=True)
 
@@ -17,6 +32,8 @@ REAR_BF   = 60                          # Blender frame the orbit resumes from -
                                         # (+1.47 deg; it never hits exactly 0)
 TOP_DIST  = 5.5                         # framing B
 TOP_UP    = Vector((-1, 0, 0))          # screen-up at the pole -> nose stays screen-right
+NOSE_UP   = Vector((0, 1, 0))           # portrait: screen-up at the pole -> nose to the top
+                                        # of the page (render-dive.py's NOSE_UP)
 NAME_UP   = globals().get("NAME_UP",   "crane-up-%04d")
 NAME_DOWN = globals().get("NAME_DOWN", "crane-down-%04d")
 NAME_ISO  = globals().get("NAME_ISO",  "top-drivetrain")
@@ -130,6 +147,89 @@ def radius_profile(P, n, d_a, R_a, u_a, d_b, R_b, u_b, safety=1.02):
     rad = lerp + dil
     return rad, req, lerp
 
+# ---------- portrait: the helix ----------
+# Where the phone's crane lands: straight overhead, 5.5 m up, nose to the top.
+M_TOP_NOSE_UP = look_at(TGT + d_top * TOP_DIST, TGT, NOSE_UP)
+AZ_SIDE = math.atan2(d_side.x, d_side.y)    # 95.3 deg: 0 is the nose, the orbit
+EL_SIDE = math.asin(d_side.z)               # turns toward +90 (the car's right)
+AZ_REAR = math.pi                           # straight behind the car
+# Metres the helix backs off at its widest. 1.85 keeps the whole car in the 4:5
+# frame through the middle of the move (it touches an edge, never crosses it),
+# as the straight crane this replaces did - it widened to 7.66 m for the desktop
+# frame, which fitted the portrait one too. Measured against 0.65 (never worse
+# than the side view: wheels cut 8% a side all the way up) and 1.2 (4%).
+HELIX_PULL = globals().get("HELIX_PULL", 1.85)
+HELIX_LENS = scn.camera.data.lens           # the orbit's 70 mm, held throughout
+
+def helix_radius(te):
+    """Distance from TGT: the desktop crane's lerp from the orbit radius down to
+    TOP_DIST, plus one smooth pull-back of HELIX_PULL metres at te = 0.4.
+
+    Swinging behind the car turns it corner-on to a frame that is narrow to begin
+    with, and on the lerp alone the car would overflow the 4:5 frame by 15% a
+    side in the middle of the move, against 9% on the side view it leaves. The
+    bump's shape - te (1 - te)^1.5 - is zero at both ends, so the seams keep
+    their poses, and peaks where that overflow does."""
+    lerp = R_side + (TOP_DIST - R_side) * te
+    return lerp + HELIX_PULL * te * (1 - te) ** 1.5 / (0.4 * 0.6 ** 1.5)
+
+def helix_pose(te):
+    """The phone crane at eased progress te: azimuth and elevation both run on te,
+    from the orbit's side pose to straight overhead from behind, so the camera
+    keeps turning the way the orbit does while it climbs. Low down that reads as
+    the orbit carrying on; near the top, where turning about the vertical is a
+    turn about the view axis, it is what stands the car upright - so the frame
+    never rolls against the horizon, and never needs a roll of its own.
+
+    Screen-up is the elevation tangent, which is exactly look_at's world-up
+    everywhere below the pole and is still defined at it: there it points from
+    behind the car to its nose. Both ends are built the way the neighbouring
+    renders build them, so each seam is the same matrix, not a close one."""
+    if te <= 0.0:
+        return look_at(TGT + d_side * R_side, TGT, Vector((0, 0, 1)))
+    if te >= 1.0:
+        return M_TOP_NOSE_UP.copy()
+    az = AZ_SIDE + (AZ_REAR - AZ_SIDE) * te
+    el = EL_SIDE + (math.pi / 2 - EL_SIDE) * te
+    d = Vector((math.cos(el) * math.sin(az), math.cos(el) * math.cos(az), math.sin(el)))
+    up = Vector((-math.sin(el) * math.sin(az), -math.sin(el) * math.cos(az), math.cos(el)))
+    return look_at(TGT + d * helix_radius(te), TGT, up)
+
+def helix_screen(te, pts):
+    """Where the sampled car points land in the portrait frame at progress te, in
+    pixels - the pose and the eased lens shift together, as the frame is rendered."""
+    import numpy as np
+    K, (sx, sy) = leg_cam("orbit-%03d" % SIDE_BF, "roll-end", te)
+    u, v = desk_uv(helix_pose(te), HELIX_LENS, pts)
+    return np.stack([(0.5 + (u - 0.5) * K / 0.45 - sx * 1.25) * PORTRAIT_RES[0],
+                     (0.5 + (v - 0.5) * K - sy) * PORTRAIT_RES[1]], 1)
+
+def helix_progress(n, samples=400):
+    """te for each of n frames. Even steps in te would be slow to leave the side
+    view and fast over the top - the turn about the view axis moves the car most
+    on screen, and it all happens late (5 px a frame early on, 24 px at frame 24
+    of 40). So the frames are spaced by how far the car actually moves across
+    the frame - the mean pixel travel of points sampled over it - and that
+    travel is spread with smootherstep, which starts and stops with zero speed
+    and zero acceleration where the leg meets a still."""
+    import numpy as np
+    pts = world_verts(car_names())[::40]
+    ts = np.linspace(0.0, 1.0, samples + 1)
+    prev, cost = helix_screen(0.0, pts), [0.0]
+    for t in ts[1:]:
+        cur = helix_screen(float(t), pts)
+        cost.append(cost[-1] + float(np.linalg.norm(cur - prev, axis=1).mean()))
+        prev = cur
+    cost = np.array(cost)
+    x = np.linspace(0.0, 1.0, n)
+    want = cost[-1] * (x * x * x * (x * (6 * x - 15) + 10))
+    te = np.interp(want, cost, ts)
+    te[0], te[-1] = 0.0, 1.0
+    return [float(t) for t in te]
+
+def helix_poses(n, progress=None):
+    return [helix_pose(te) for te in (progress or helix_progress(n))]
+
 if ARC == "verify":
     # does a plain look_at reproduce the constrained orbit camera? if so the
     # crane can hand back to the canvas with no visible jump.
@@ -160,6 +260,7 @@ else:
         cy.samples = 256; r.resolution_percentage = 100
         r.image_settings.file_format = 'WEBP'; r.image_settings.color_mode = 'RGBA'
         r.image_settings.quality = 80
+        master_output()
     scn.frame_set(SIDE_BF)   # car is static; frame only drives the (now unused) orbit cam
 
     def setvis(names):
@@ -188,11 +289,21 @@ else:
         return out
 
     UP_Z = Vector((0, 0, 1))
+    if PORTRAIT and ARC not in ("approach", "isolate"):
+        raise ValueError("portrait renders only the approach and the isolate; the page plays nothing else")
     if ARC == "approach":      # side view -> straight overhead
         setvis(None)
-        poses = arc_poses(N, d_side, R_side, UP_Z, d_top, TOP_DIST, TOP_UP)
-        for i in range(I0, I1 if I1 is not None else N):
+        if PORTRAIT:           # side view -> overhead from behind, nose up (helix_pose)
+            progress = helix_progress(N)
+            poses = helix_poses(N, progress)
+            portrait_output(QUALITY)
+        else:
+            poses = arc_poses(N, d_side, R_side, UP_Z, d_top, TOP_DIST, TOP_UP)
+        for i in range(I0, I1 if I1 is not None else N, STEP):
             tmp.matrix_world = poses[i]
+            if PORTRAIT:
+                set_portrait_camera(tmp.data, *leg_cam("orbit-%03d" % SIDE_BF, "roll-end",
+                                                       progress[i]))
             bpy.context.view_layer.update(); shoot(NAME_UP % (i + 1))
     elif ARC == "depart":      # straight overhead -> rear view
         setvis(None)
@@ -203,9 +314,15 @@ else:
     elif ARC == "isolate":     # drivetrain, seen from directly overhead
         setvis(DRIVE)
         tmp.matrix_world = look_at(TGT + d_top * TOP_DIST, TGT, TOP_UP)
+        if PORTRAIT:           # where the helix lands: nose to the top of the page
+            tmp.matrix_world = M_TOP_NOSE_UP
+            portrait_output(QUALITY)
+            set_portrait_camera(tmp.data, *still("roll-end"))
         bpy.context.view_layer.update(); shoot(NAME_ISO)
 
     setvis(None)
+    if PORTRAIT:
+        landscape_restore()
     scn.camera = prev["cam"]; bpy.data.objects.remove(tmp, do_unlink=True)
     cy.samples = prev["samples"]; r.resolution_percentage = prev["pct"]
     r.image_settings.file_format = prev["fmt"]; r.image_settings.color_mode = prev["cm"]

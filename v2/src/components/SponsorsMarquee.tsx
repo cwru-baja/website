@@ -212,12 +212,23 @@ export default function SponsorsMarquee() {
       const marquee = marqueeRef.current;
       if (!marquee) return;
 
-      gsap.to(marquee, {
-        xPercent: -50,
-        repeat: -1,
-        duration: 120,
-        ease: "none",
+      // Still under reduced motion; otherwise it only runs while on screen.
+      const media = gsap.matchMedia();
+      media.add("(prefers-reduced-motion: no-preference)", () => {
+        const loop = gsap.to(marquee, {
+          xPercent: -50,
+          repeat: -1,
+          duration: 120,
+          ease: "none",
+        });
+        const observer = new IntersectionObserver(([entry]) => {
+          if (entry.isIntersecting) loop.play();
+          else loop.pause();
+        });
+        observer.observe(marquee);
+        return () => observer.disconnect();
       });
+      return () => media.revert();
     },
     { scope: container },
   );
@@ -226,7 +237,7 @@ export default function SponsorsMarquee() {
     <section className="py-24" ref={container}>
       <PageContainer>
         {/* Header row */}
-        <div className="flex items-start justify-between mb-25">
+        <div className="mb-12 flex items-start justify-between sm:mb-25">
           {/* Big stacked title */}
           <div className="leading-none">
             <div className="font-coolvetica font-bold text-[clamp(2rem,4.5vw,5rem)] tracking-wide text-white leading-none">
@@ -258,7 +269,7 @@ export default function SponsorsMarquee() {
                 href={sponsor.url || undefined}
                 target={sponsor.url ? "_blank" : undefined}
                 rel={sponsor.url ? "noopener noreferrer" : undefined}
-                className="flex items-center justify-center px-12 shrink-0 opacity-100 transition-opacity duration-300"
+                className="flex items-center justify-center px-6 shrink-0 opacity-100 transition-opacity duration-300 sm:px-12"
               >
                 <Image
                   src={logoSrc(sponsor.file, sponsor.png)}

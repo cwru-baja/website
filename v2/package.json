@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "mobile-check": "node scripts/mobile-check.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

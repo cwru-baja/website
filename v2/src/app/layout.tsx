@@ -1,18 +1,12 @@
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import type { Metadata } from "next";
-import { Bebas_Neue, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import type { CSSProperties } from "react";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
 import { CURRENT_THEME, liveryVariables } from "@/lib/livery";
-
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  variable: "--font-bebas-neue",
-  subsets: ["latin"],
-});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -22,6 +16,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CWRU Motorsports — Baja SAE",
   description: "Case Western Reserve University's Baja SAE racing team. We design, build, and race off-road vehicles.",
+};
+
+// Mobile browsers tint their toolbars with themeColor, so it matches the page
+// background; colorScheme keeps native controls and scrollbars dark. The
+// width=device-width, initial-scale=1 default is left alone. viewportFit:
+// "cover" waits for safe-area padding on the gutters, or sideways phones would
+// put text under the notch.
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
+  colorScheme: "dark",
 };
 
 // Runs while <head> is parsed, before anything paints, so a skipped intro never
@@ -67,7 +71,7 @@ export default function RootLayout({
         <InlineScript html={introGate} />
       </head>
       <body
-        className={`${bebasNeue.variable} ${geistMono.variable} font-sans antialiased bg-bg text-white`}
+        className={`${geistMono.variable} font-sans antialiased bg-bg text-white`}
       >
         <ScrollToTop />
         {children}

@@ -100,6 +100,22 @@ describe("seasonResults", () => {
     ]);
   });
 
+  it("reads the shortened score columns SAE used at New York 2026", () => {
+    const us = row(1, 927.74, { "Business Presentation": 4, "Cost Event": 8, "Suspension & Traction": 2 });
+    Object.assign(us.Overall, { "Business (50)": 70, "Cost (100)": 85.14, "S&T (75)": 67.69 });
+    const data: BajaData = { "New York 2026": { Us: us } };
+
+    const [competition] = seasonResults(data, "Us")[0].competitions;
+
+    expect(competition.name).toBe("Baja SAE New York");
+    expect(competition.awards).toEqual([
+      { event: "Overall", place: 1, points: 927.74, max: 1000 },
+      { event: "Suspension & Traction", place: 2, points: 67.69, max: 75 },
+      { event: "Business Presentation", place: 4, points: 70, max: 50 },
+      { event: "Cost", place: 8, points: 85.14, max: 100 },
+    ]);
+  });
+
   it("orders events overall first, then dynamic, then static, whatever order the file lists them in", () => {
     const data: BajaData = {
       "2014 Illinois ": {

@@ -1,6 +1,15 @@
 "use client";
 
-import { memo, useCallback, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Cell, Pie, PieChart } from "recharts";
 
 import {
@@ -62,15 +71,42 @@ const chartConfig = {
   logistics: { label: "Logistics", color: "#414141" },
 } satisfies ChartConfig;
 
+const DIMMED_OPACITY = 0.28;
+
+// Phones and tablets get no spending chart: the section is hidden below
+// Tailwind's lg. The donut doesn't even mount there, because hidden, recharts
+// would still measure its 0 x 0 box and warn about it, production included.
+// The server never draws the pie anyway, so desktop loses nothing.
+const DESKTOP_QUERY = "(min-width: 64rem)";
+const subscribeDesktop = (onChange: () => void) => {
+  const query = window.matchMedia(DESKTOP_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+};
+const readDesktop = () => window.matchMedia(DESKTOP_QUERY).matches;
+const readServerDesktop = () => false;
+
+// Each slice's opacity comes from CSS variables that the chart's wrapper sets
+// for the active category. That way the pie never re-renders when the active
+// category changes. Recharts restarts its sweep animation whenever <Pie> gets
+// new props. With nothing active the variables are unset, so every slice is at 1.
+const sliceStyles: Record<string, CSSProperties> = Object.fromEntries(
+  financeData.map(({ category }) => [
+    category,
+    { opacity: `var(--slice-${category}, var(--slice-dim, 1))` },
+  ]),
+);
+
 type FinancePieProps = {
-  onCategoryEnter: (category: string) => void;
+  onSliceEnter: (index: number) => void;
+  onSliceClick: (index: number) => void;
 };
 
-const FinancePie = memo(function FinancePie({ onCategoryEnter }: FinancePieProps) {
+const FinancePie = memo(function FinancePie({ onSliceEnter, onSliceClick }: FinancePieProps) {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mx-auto aspect-square h-auto w-full [&_.recharts-pie:hover_.recharts-pie-sector]:opacity-[0.28] [&_.recharts-pie:hover_.recharts-pie-sector:hover]:opacity-100"
+      className="mx-auto aspect-square h-auto w-full"
       initialDimension={{ width: 480, height: 480 }}
     >
       <PieChart accessibilityLayer>
@@ -84,12 +120,14 @@ const FinancePie = memo(function FinancePie({ onCategoryEnter }: FinancePieProps
           stroke="#0a0a0a"
           strokeWidth={2}
           animationDuration={700}
-          onMouseEnter={(_data, index) => onCategoryEnter(financeData[index].category)}
+          onMouseEnter={(_data, index) => onSliceEnter(index)}
+          onClick={(_data, index) => onSliceClick(index)}
         >
           {financeData.map((item) => (
             <Cell
               key={item.category}
               fill={item.fill}
+              style={sliceStyles[item.category]}
             />
           ))}
         </Pie>
@@ -99,24 +137,83 @@ const FinancePie = memo(function FinancePie({ onCategoryEnter }: FinancePieProps
 });
 
 export default function FinanceDonutChart() {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  // A mouse previews the slice under it. A tap on a slice selects its category
+  // until the same slice is tapped again, anything else is tapped, or Escape
+  // is pressed. The hover wins while it lasts, so leaving the chart falls back
+  // to the selection.
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const isDesktop = useSyncExternalStore(subscribeDesktop, readDesktop, readServerDesktop);
+  const activeCategory = hoveredCategory ?? selectedCategory;
   const activeItem = financeData.find((item) => item.category === activeCategory);
-  const handleCategoryEnter = useCallback((category: string) => {
-    setActiveCategory(category);
-  }, []);
-  const handleChartLeave = useCallback(() => {
-    setActiveCategory(null);
+
+  const chartRef = useRef<HTMLDivElement>(null);
+  // A tap also sends the slice compatibility mouse events (mouseenter, then
+  // click), so the slice handlers check which kind of pointer is behind them.
+  const pointerType = useRef("mouse");
+  const trackPointer = useCallback((event: ReactPointerEvent) => {
+    pointerType.current = event.pointerType;
   }, []);
 
+  const toggleCategory = useCallback((category: string) => {
+    setSelectedCategory((current) => (current === category ? null : category));
+  }, []);
+  const handleSliceEnter = useCallback((index: number) => {
+    if (pointerType.current === "mouse") setHoveredCategory(financeData[index].category);
+  }, []);
+  // Hover already shows a mouse user the slice, so a mouse click does nothing, as before.
+  const handleSliceClick = useCallback(
+    (index: number) => {
+      if (pointerType.current !== "mouse") toggleCategory(financeData[index].category);
+    },
+    [toggleCategory],
+  );
+  const handleChartLeave = useCallback(() => {
+    setHoveredCategory(null);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCategory) return;
+    // pointerup, not pointerdown or click. A touch that turns into a scroll
+    // ends in pointercancel, so scrolling past keeps the selection. And iOS
+    // sends no click for a tap on plain text.
+    const clearOnTapElsewhere = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const onSlice = chartRef.current?.contains(target) && target.closest(".recharts-pie-sector");
+      if (onSlice) return;
+      setSelectedCategory(null);
+    };
+    const clearOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedCategory(null);
+    };
+    document.addEventListener("pointerup", clearOnTapElsewhere);
+    document.addEventListener("keydown", clearOnEscape);
+    return () => {
+      document.removeEventListener("pointerup", clearOnTapElsewhere);
+      document.removeEventListener("keydown", clearOnEscape);
+    };
+  }, [selectedCategory]);
+
+  const sliceOpacities = activeItem
+    ? ({ "--slice-dim": DIMMED_OPACITY, [`--slice-${activeItem.category}`]: 1 } as CSSProperties)
+    : undefined;
+
   return (
-    <div className="flex min-w-0 items-center justify-center py-12 sm:py-16 lg:py-24">
+    <div className="hidden min-w-0 justify-center py-24 [-webkit-tap-highlight-color:transparent] lg:flex">
       <div
+        ref={chartRef}
         role="img"
         aria-label="Donut chart showing the percentage distribution of team spending by category"
-        className="relative w-full max-w-[30rem]"
+        className="relative aspect-square w-full max-w-[30rem]"
+        style={sliceOpacities}
         onMouseLeave={handleChartLeave}
+        onPointerOver={trackPointer}
+        onPointerDown={trackPointer}
       >
-        <FinancePie onCategoryEnter={handleCategoryEnter} />
+        {isDesktop && (
+          <FinancePie onSliceEnter={handleSliceEnter} onSliceClick={handleSliceClick} />
+        )}
 
         <div
           aria-live="polite"

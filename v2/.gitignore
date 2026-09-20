@@ -45,6 +45,8 @@ next-env.d.ts
 /artifacts/*
 !/artifacts/*.py
 !/artifacts/*.mjs
+# The per-still K and lens-shift plan the portrait renders are made from.
+!/artifacts/portrait-plan.json
 !/artifacts/orbit-preview/
 /artifacts/orbit-preview/*
 !/artifacts/orbit-preview/*.py
@@ -53,3 +55,9 @@ next-env.d.ts
 /public/renders-sr26/temp/
 /design-qa*.md
 /*.png
+
+# scripts/mobile-check.mjs output
+/.mobile-check/
+
+# Local-only portrait preview renders for /lab/portrait
+/public/renders-sr26/portrait-preview/

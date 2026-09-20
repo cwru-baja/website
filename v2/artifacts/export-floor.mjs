@@ -27,7 +27,7 @@ import sharp from "sharp";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = join(ROOT, "artifacts/floor/final");
-const CAR_PX = [4200, 3000];                 // homepage-car-sr26.png
+const CAR_PX = [4200, 3000];                 // homepage-car-sr26.webp
 const EXTEND = { L: 0.3, R: 0.1, T: 0, B: 0.3 }; // must match render-floor.py
 
 async function premultiplied(path) {

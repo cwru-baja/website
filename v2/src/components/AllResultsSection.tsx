@@ -9,6 +9,7 @@ import {
   type CompetitionResult,
   type SeasonResult,
 } from "@/lib/results";
+import { useScrollFade } from "./useScrollFade";
 
 function FinishDisplay({ finish, fontSize }: { finish: string; fontSize: string }) {
   const match = finish.match(/^(\d+)(st|nd|rd|th)$/i);
@@ -34,7 +35,10 @@ function FinishDisplay({ finish, fontSize }: { finish: string; fontSize: string 
   );
 }
 
-const COLS_YEAR = "5rem 1fr 8rem 7rem";
+// Below sm the columns shrink to what they hold at 320px (chevron 40px plus an
+// 8px gap before the year, year 62px, rank 63px, the "Podiums" label 56px),
+// with a few px to spare for other fonts' metrics.
+const COLS_YEAR = "grid-cols-[3rem_1fr_4.75rem_3.75rem] sm:grid-cols-[5rem_1fr_8rem_7rem]";
 const FINISH_YEAR = "clamp(1.8rem,3vw,3rem)";
 const FINISH_EVENT = "clamp(1.25rem,2vw,1.75rem)";
 const FINISH_PODIUM = "clamp(1.5rem,2.4vw,2.125rem)";
@@ -50,6 +54,7 @@ const venue = (competition: CompetitionResult) =>
 function Ledger({ result }: { result: SeasonResult }) {
   const [picked, setPicked] = useState(0);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  const tabList = useScrollFade<HTMLDivElement>();
   const id = (part: string, i: number) => `results-${result.year}-${part}-${i}`;
 
   function onTabKey(event: KeyboardEvent) {
@@ -71,9 +76,10 @@ function Ledger({ result }: { result: SeasonResult }) {
       {/* The rule is an inset shadow so the active underline can cover it
           without a negative margin, which the scroll container would clip. */}
       <div
+        ref={tabList}
         role="tablist"
         aria-label={`${result.year} competitions`}
-        className="flex items-baseline gap-x-6 sm:gap-x-8 overflow-x-auto whitespace-nowrap shadow-[inset_0_-1px_0_rgb(255_255_255/0.08)]"
+        className="scroll-fade-x flex items-baseline gap-x-6 sm:gap-x-8 overflow-x-auto whitespace-nowrap shadow-[inset_0_-1px_0_rgb(255_255_255/0.08)]"
         onKeyDown={onTabKey}
       >
         {result.competitions.map((competition, i) => {
@@ -140,7 +146,7 @@ function CompetitionLedger({ competition }: { competition: CompetitionResult }) 
         }
         score={scoreLabel(overall ?? {})}
         finish={placeLabel(overall)}
-        podium={false}
+        podium={overall !== undefined && isPodium(overall)}
       />
       {events.map((award) => (
         <LedgerRow
@@ -166,6 +172,9 @@ function LedgerRow({
   finish: string;
   podium: boolean;
 }) {
+  const scoreStyle = `font-clash font-medium whitespace-nowrap leading-none text-[0.8rem] sm:text-[0.9375rem] tracking-[0.02em] ${
+    podium ? "text-livery-pop/90" : "text-white/55"
+  }`;
   return (
     <div
       className={`grid grid-cols-[1fr_auto] items-center gap-3 sm:gap-4 border-b border-white/6 py-3 sm:py-[13px] ${
@@ -177,6 +186,9 @@ function LedgerRow({
         style={{ fontSize: EVENT_NAME }}
       >
         {name}
+        {/* On a phone the score drops under the name: beside it, the score and
+            place columns left 88px for names like MANEUVERABILITY (129px). */}
+        <span className={`mt-1.5 block sm:hidden ${scoreStyle}`}>{score}</span>
       </span>
       {/* Held to the event name's line height so a podium's larger numeral
           overflows into the padding instead of making its row taller. */}
@@ -187,11 +199,7 @@ function LedgerRow({
         {/* Score and place share a baseline, so the score sits level with the
             bottom of the place digits. */}
         <div className="flex items-baseline gap-3 sm:gap-4">
-          <span
-            className={`w-[5.5rem] sm:w-[7rem] font-clash font-medium text-right whitespace-nowrap leading-none text-[0.8rem] sm:text-[0.9375rem] tracking-[0.02em] ${
-              podium ? "text-livery-pop/90" : "text-white/55"
-            }`}
-          >
+          <span className={`w-[5.5rem] sm:w-[7rem] text-right max-sm:hidden ${scoreStyle}`}>
             {score}
           </span>
           <div className="flex w-14 sm:w-[5.5rem] justify-end">
@@ -241,16 +249,16 @@ export default function AllResultsSection({ results }: { results: SeasonResult[]
       <div className="mt-8" style={{ overflowAnchor: "none" }}>
         {/* Column headers */}
         <div
-          className="grid items-center border-b border-white/8 py-3"
-          style={{ gridTemplateColumns: COLS_YEAR }}
+          className={`grid items-center border-b border-white/8 py-3 ${COLS_YEAR}`}
         >
+          {/* The chevron column is too narrow for its label on a phone. */}
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30">
-            Results
+            <span className="max-sm:sr-only">Results</span>
           </span>
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30">
             Year
           </span>
-          <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right pr-6">
+          <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right pr-2 sm:pr-6">
             Season Rank
           </span>
           <span className="text-[0.6rem] tracking-[0.2em] uppercase text-white/30 text-right">
@@ -272,10 +280,9 @@ export default function AllResultsSection({ results }: { results: SeasonResult[]
                   setOpenYear(isOpen ? null : result.year);
                 }}
                 aria-expanded={isOpen}
-                className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${
+                className={`w-full grid items-center border-b border-white/8 py-4 transition-none group cursor-pointer ${COLS_YEAR} ${
                   isOpen ? "bg-livery" : "hover:bg-livery"
                 }`}
-                style={{ gridTemplateColumns: COLS_YEAR }}
               >
                 <svg
                   width="24"
@@ -297,7 +304,7 @@ export default function AllResultsSection({ results }: { results: SeasonResult[]
                   {result.year}
                 </span>
 
-                <div className={`text-right pr-6 transition-none ${tone}`}>
+                <div className={`text-right pr-2 sm:pr-6 transition-none ${tone}`}>
                   <FinishDisplay finish={ordinal(result.seasonRank)} fontSize={FINISH_YEAR} />
                 </div>
 

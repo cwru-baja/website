@@ -2,11 +2,22 @@ import bpy, os
 from mathutils import Vector, Matrix
 import numpy as np
 
+HERE = os.path.dirname(os.path.abspath(globals().get(
+    "__file__", "/Users/aretelew/Developer/baja/baja-website/v2/artifacts/render-layers.py")))
+exec(open(os.path.join(HERE, "render_profile.py")).read())
+
+# STAGE "frame" renders only 031-frame, the one still here the page still plays.
+# It is also the only stage the portrait profile (PROFILE, KOPT, QUALITY) runs:
+# the frame isolate sits on orbit frame 32 and takes that still's K and shift.
 STAGE = globals().get("STAGE", "all")
+QUALITY = globals().get("QUALITY", "final")     # portrait only; landscape is always final
 scn = bpy.context.scene
 r, cy = scn.render, scn.cycles
-OUT = "/Users/aretelew/Developer/baja/baja-website/v2/public/renders-sr26/layers/"
+OUT = globals().get("OUTDIR", profile_dir(
+    "/Users/aretelew/Developer/baja/baja-website/v2/public/renders-sr26/layers/"))
 os.makedirs(OUT, exist_ok=True)
+if PORTRAIT and STAGE != "frame":
+    raise ValueError("portrait renders only STAGE 'frame' here; the other stills are not played")
 
 # ---------- FIX A (idempotent, same as the orbit pass) ----------
 DARK = {"Rubber Black":0.035,"Black Rubber":0.035,"Black 3d Print":0.035,
@@ -31,8 +42,11 @@ cy.use_denoising=True; cy.denoiser='OPENIMAGEDENOISE'; cy.denoising_prefilter='A
 r.use_persistent_data=True; r.use_motion_blur=False; r.film_transparent=True
 r.resolution_x, r.resolution_y, r.resolution_percentage = 1920,1080,100
 r.image_settings.file_format='WEBP'; r.image_settings.color_mode='RGBA'; r.image_settings.quality=80
+master_output()
 scn.display_settings.display_device='sRGB'
 scn.view_settings.view_transform='AgX'
+if PORTRAIT:
+    portrait_output(QUALITY)
 
 MESHY={'MESH','CURVE','SURFACE','META','FONT','GPENCIL'}
 def meshes(): return [o for o in bpy.data.objects if o.type in MESHY]
@@ -56,7 +70,15 @@ def isolate(names, frame, out, occlude=False):
         else:
             o.hide_render = not occlude
             o.is_holdout = occlude
-    shoot(out)
+    if PORTRAIT:
+        # the orbit camera at this frame, with the orbit still's K and shift
+        _, _, undo = orbit_camera(frame)
+        try:
+            shoot(out)
+        finally:
+            undo()
+    else:
+        shoot(out)
 
 def without(names, frame, out):
     """Render the car with `names` taken out of view.
@@ -118,8 +140,8 @@ DRIVE   = ({o.name for o in meshes() if "-DRT-" in o.name or "_DRT_" in o.name}
            | UJOINT | LINK | {"26-KOHLER ENGINE_step", "Outboard Yoke Spacer"})
 STEER   = "26-FI-SUS-C1-00 Steering Wheel and Column Assem"
 
-if STAGE in ("all", "stills", "drivetrain", "suspension"):
-    if STAGE in ("all", "stills"):
+if STAGE in ("all", "stills", "drivetrain", "suspension", "frame"):
+    if STAGE in ("all", "stills", "frame"):
         # The brakes beat dollies into a closeup rather than dissolving the tire
         # from 6m out, so its base and part are sequences now - see
         # artifacts/render-brake-push.py. The stills this used to write are the
@@ -208,4 +230,6 @@ if STAGE.startswith("steer") or STAGE == "all":
         bpy.data.objects.remove(tmp, do_unlink=True)
 
 reset(); scn.frame_set(1)
+if PORTRAIT:
+    landscape_restore()
 print("[layer] STAGE %s DONE" % STAGE, flush=True)

@@ -1,12 +1,94 @@
 export const SEQUENCE_CONFIG = {
-  basePath: "/renders-sr26/full",
-  layersPath: "/renders-sr26/layers",
   frameCount: 120,
   filenameDigits: 4,
+  /** The format every set has its frames in; see FRAME_SETS for any others. */
   extension: "webp",
-  nativeWidth: 1920,
-  nativeHeight: 1080,
 } as const;
+
+/**
+ * The same sequence is rendered twice: 16:9 for anything held wide, and 4:5 for
+ * a phone held upright, where a 16:9 frame would play in a strip a quarter of
+ * the screen tall. Both sets use the same file names under their own root -
+ * full/ for the orbit, layers/ for legs and reveals, mattes/ for the part masks
+ * - so every URL below is the same path with a different root. The one place the
+ * sets part ways is the cockpit run, which phones play differently (see
+ * PORTRAIT_EXCURSION): their crane has ten more frames and they have no roll.
+ *
+ * A page load uses exactly one set: it is chosen once, before the first frame is
+ * requested, and turning the phone afterwards letterboxes the set already
+ * loading rather than fetching the other one.
+ */
+export type FrameSet = "landscape" | "portrait";
+
+/**
+ * The landscape set is also encoded as AVIF (artifacts/export-frames.mjs): about
+ * a third smaller than its WebP and never worse on SSIM, PSNR or VMAF. It goes
+ * only to engines that decode it at least as fast as the WebP - Chromium and
+ * Firefox. Safari, and every iOS browser with it, decodes these frames ~65%
+ * slower as AVIF (24 vs 15 ms each), which the canvas pays on the main thread
+ * whenever a scrub outruns the decoder, so it keeps the WebP. Measured
+ * 2026-09-18; the portrait set is WebP only.
+ */
+export type FrameFormat = "avif" | "webp";
+
+/** The frames one page load fetches: which set, in which format. */
+export interface FrameSource {
+  set: FrameSet;
+  format: FrameFormat;
+}
+
+/** A set named on its own means its WebP files, which every set has. */
+export type FrameSourceLike = FrameSet | FrameSource;
+
+const sourceOf = (source: FrameSourceLike): FrameSource =>
+  typeof source === "string" ? { set: source, format: SEQUENCE_CONFIG.extension } : source;
+
+export const FRAME_SETS = {
+  landscape: { root: "/renders-sr26", width: 16, height: 9, formats: ["avif", "webp"] },
+  portrait: { root: "/renders-sr26/portrait", width: 4, height: 5, formats: ["webp"] },
+} as const satisfies Record<
+  FrameSet,
+  { root: string; width: number; height: number; formats: readonly FrameFormat[] }
+>;
+
+/** The screens the portrait set is for: phones, and small tablets, held upright. */
+export const PORTRAIT_SET_MEDIA = "(orientation: portrait) and (max-width: 1023px)";
+
+/** Which set a screen gets, given a matchMedia-style test. */
+export const pickFrameSet = (matches: (query: string) => boolean): FrameSet =>
+  matches(PORTRAIT_SET_MEDIA) ? "portrait" : "landscape";
+
+/**
+ * Which format a set is fetched in: AVIF where the set has it, the browser can
+ * decode it, and the engine is not Apple's (see FrameFormat); WebP otherwise.
+ */
+export const pickFrameFormat = (
+  set: FrameSet,
+  browser: { avif: boolean; apple: boolean },
+): FrameFormat =>
+  browser.avif &&
+  !browser.apple &&
+  (FRAME_SETS[set].formats as readonly FrameFormat[]).includes("avif")
+    ? "avif"
+    : "webp";
+
+/**
+ * A 2x2 AVIF encoded the way the frames are (8-bit 4:4:4 with alpha, which needs
+ * AV1's High profile), so a browser that can't decode the frames fails this too.
+ */
+export const AVIF_PROBE =
+  "data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUEAAAGGbWV0YQAAAAAAAAAhaGRscgAAAAAAAAAA" +
+  "cGljdAAAAAAAAAAAAAAAAAAAAAAOcGl0bQAAAAAAAQAAACxpbG9jAAAAAEQAAAIAAQAAAAEAAAG+AAAA" +
+  "JQACAAAAAQAAAa4AAAAQAAAAQmlpbmYAAAAAAAIAAAAaaW5mZQIAAAAAAQAAYXYwMUNvbG9yAAAAABpp" +
+  "bmZlAgAAAAACAABhdjAxQWxwaGEAAAAAGmlyZWYAAAAAAAAADmF1eGwAAgABAAEAAADDaXBycAAAAJ1p" +
+  "cGNvAAAAFGlzcGUAAAAAAAAAAgAAAAIAAAAQcGl4aQAAAAADCAgIAAAADGF2MUOBIAAAAAAAE2NvbHJu" +
+  "Y2x4AAEADQAGgAAAAA5waXhpAAAAAAEIAAAADGF2MUOBABwAAAAAOGF1eEMAAAAAdXJuOm1wZWc6bXBl" +
+  "Z0I6Y2ljcDpzeXN0ZW1zOmF1eGlsaWFyeTphbHBoYQAAAAAeaXBtYQAAAAAAAAACAAEEAQKDBAACBAEF" +
+  "hgcAAAA9bWRhdBIACgQYADZVMgYQwAABEA8SAAoHOAA20BDQaTIYGIJjBMAANIAAAAAASFTNhi3IYphT" +
+  "/SDs";
+
+const frameNumber = (index: number) =>
+  String(index + 1).padStart(SEQUENCE_CONFIG.filenameDigits, "0");
 
 export const CHAPTER_TIMING = {
   framesPerViewport: 30,
@@ -210,7 +292,7 @@ export const CAR_REVEALS: CarReveal[] = [
     //
     // The layers are the first frame of each sequence - identical images, named
     // for it. See artifacts/render-brake-arc.py; the straight-push layers this
-    // replaces are still in layers/ and can be put back by flipping these names.
+    // replaced are gone from layers/ - artifacts/render-brake-push.py re-renders them.
     id: "brakes",
     frame: 0,
     kind: "remove",
@@ -339,11 +421,38 @@ export const CAR_EXCURSION: CarExcursion = {
     // reached by flying 6 m out to frame 108 and immediately pushing back in,
     // which walked the viewer away from the car and then back to it; this leg
     // lands on the pose that push ends at, so the beat opens already there and
-    // only its way back out is still played. The old `cockpit-exit` leg is
-    // orphaned but kept in layers/. See artifacts/render-cockpit-susp.py.
+    // only its way back out is still played. The old `cockpit-exit` leg it
+    // replaced is no longer in layers/. See artifacts/render-cockpit-susp.py.
     { kind: "move", prefix: "cockpit-susp", count: 40 },
   ],
 };
+
+/**
+ * The same run for the portrait set, which frames the overhead beat differently.
+ * The desktop crane lands with the nose to screen right, which fills a 16:9
+ * frame; in a 4:5 one the car is longer than the frame is wide, so its nose and
+ * tail would run off both sides. The phone's crane is a helix instead: it keeps
+ * turning the way the orbit turns while it climbs, round to behind the car, and
+ * lands overhead with the nose to the top of the screen. That is the pose the
+ * desktop's roll ends on and the dive starts from, so phones have no roll - the
+ * dive picks up straight from the crane's last frame. Its 40 frames do the work
+ * of the crane's 30 and the roll's 20. See artifacts/render-crane.py
+ * (helix_pose); everything after the crane is the same leg on both sets.
+ */
+export const PORTRAIT_EXCURSION: CarExcursion = {
+  ...CAR_EXCURSION,
+  steps: [
+    { kind: "move", prefix: "059-crane-up", count: 40 },
+    { kind: "isolate", frame: 59, layer: "059-drivetrain-top", blur: 14 },
+    { kind: "move", prefix: "cockpit-dive", count: 40 },
+    { kind: "hold", frame: 76 },
+    { kind: "move", prefix: "cockpit-susp", count: 40 },
+  ],
+};
+
+/** The cockpit run a set plays. */
+export const excursionFor = (source: FrameSourceLike): CarExcursion =>
+  sourceOf(source).set === "portrait" ? PORTRAIT_EXCURSION : CAR_EXCURSION;
 
 /**
  * A place the sequence stops to point things out. Its labels live in
@@ -372,23 +481,97 @@ export const CAR_CHAPTERS: CarChapter[] = [
 ];
 
 // Frames are indexed 0-based here, but the rendered files are 1-based Blender
-// frames, so index i resolves to (i + 1).webp. Reveal layers are named after the
+// frames, so index i resolves to (i + 1).webp (or .avif). Reveal layers are named after the
 // pauseFrame they belong to and must therefore be RENDERED at pauseFrame + 1 -
 // one orbit frame is ~3 degrees, which reads as the layer sitting visibly off to
 // one side of the car. See artifacts/render-layers.py.
-export const frameUrl = (index: number) =>
-  `${SEQUENCE_CONFIG.basePath}/${String(index + 1).padStart(
-    SEQUENCE_CONFIG.filenameDigits,
-    "0",
-  )}.${SEQUENCE_CONFIG.extension}`;
+export const frameUrl = (source: FrameSourceLike, index: number) => {
+  const { set, format } = sourceOf(source);
+  return `${FRAME_SETS[set].root}/full/${frameNumber(index)}.${format}`;
+};
 
-export const layerUrl = (name: string) =>
-  `${SEQUENCE_CONFIG.layersPath}/${name}.${SEQUENCE_CONFIG.extension}`;
+export const layerUrl = (source: FrameSourceLike, name: string) => {
+  const { set, format } = sourceOf(source);
+  return `${FRAME_SETS[set].root}/layers/${name}.${format}`;
+};
 
-export const sequenceLayerUrl = (prefix: string, index: number) =>
-  layerUrl(
-    `${prefix}-${String(index + 1).padStart(SEQUENCE_CONFIG.filenameDigits, "0")}`,
-  );
+export const sequenceLayerUrl = (source: FrameSourceLike, prefix: string, index: number) =>
+  layerUrl(source, `${prefix}-${frameNumber(index)}`);
+
+/** A part mask, by the file name car-part-mattes.json lists it under. */
+export const matteUrl = (source: FrameSourceLike, chapterId: string, file: string) =>
+  `${FRAME_SETS[sourceOf(source).set].root}/mattes/${chapterId}/${file}`;
+
+// What a beat's <img> holds before it plays. A landed beat opens on the LAST
+// frame of its push, so that is the frame its element carries from the start: a
+// hidden <img> is decoded lazily, so revealing one whose decoded content is still
+// the push's first frame paints that frame for a tick - and for the suspension
+// beat, the push's first frame is the wide orbit pose this whole leg exists to
+// skip. See https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/decode
+export const revealBaseSrc = (source: FrameSourceLike, reveal: CarReveal) =>
+  reveal.push?.landed
+    ? sequenceLayerUrl(source, reveal.push.base, reveal.push.count - 1)
+    : layerUrl(source, reveal.base ?? "");
+
+export const revealPartSrc = (source: FrameSourceLike, reveal: CarReveal) =>
+  reveal.push?.landed
+    ? sequenceLayerUrl(source, reveal.push.part, reveal.push.partCount - 1)
+    : layerUrl(source, reveal.part ?? "");
+
+/**
+ * The layer frames on screen at the very top of the sequence, beside orbit
+ * frame 0: a push on the first stop starts at once, so its base and part are
+ * showing from the first scroll - the same image as frame 0, so the handover is
+ * unseen only if they are already here.
+ */
+export const openingLayerUrls = (
+  source: FrameSourceLike,
+  chapters: CarChapter[] = CAR_CHAPTERS,
+  reveals: CarReveal[] = CAR_REVEALS,
+) =>
+  reveals
+    .filter(
+      (reveal) =>
+        reveal.frame === chapters[0]?.pauseFrame && reveal.push && !reveal.push.landed,
+    )
+    .flatMap((reveal) => [revealBaseSrc(source, reveal), revealPartSrc(source, reveal)]);
+
+/**
+ * Every layer the sequence plays, in the order the landscape loader warms them:
+ * each reveal's stills and push frames, then each excursion leg and isolate.
+ * The order is part of the desktop loader's tuning, so it is kept as it was.
+ */
+export const warmLayerUrls = (
+  source: FrameSourceLike,
+  reveals: CarReveal[] = CAR_REVEALS,
+  excursion: CarExcursion = excursionFor(source),
+) => {
+  const urls: string[] = [];
+  const run = (prefix: string, count: number) => {
+    for (let index = 0; index < count; index += 1) {
+      urls.push(sequenceLayerUrl(source, prefix, index));
+    }
+  };
+  reveals.forEach((reveal) => {
+    if (reveal.base) urls.push(layerUrl(source, reveal.base));
+    if (reveal.part) urls.push(layerUrl(source, reveal.part));
+    if (reveal.isolate) urls.push(layerUrl(source, reveal.isolate));
+    if (reveal.push) {
+      run(reveal.push.base, reveal.push.count);
+      run(reveal.push.part, reveal.push.partCount);
+      const exit = reveal.push.exit;
+      if (exit) {
+        run(exit.base, exit.count);
+        run(exit.part, exit.partCount);
+      }
+    }
+  });
+  excursion.steps.forEach((step) => {
+    if (step.kind === "move") run(step.prefix, step.count);
+    else if (step.kind === "isolate") urls.push(layerUrl(source, step.layer));
+  });
+  return urls;
+};
 
 export const revealsForFrame = (frame: number) =>
   CAR_REVEALS.filter((reveal) => reveal.frame === frame);
@@ -510,29 +693,30 @@ export const orbitChapters = (
  * frame's only beat hangs its labels on the top of the move.
  */
 export const pauseLayerUrl = (
+  source: FrameSourceLike,
   frame: number,
   reveals: CarReveal[] = CAR_REVEALS,
-  excursion: CarExcursion = CAR_EXCURSION,
+  excursion: CarExcursion = excursionFor(source),
 ): string | null => {
   const beat = excursion.steps.findIndex(
     (step) => step.kind !== "move" && step.frame === frame,
   );
   if (beat !== -1) {
     const step = excursion.steps[beat];
-    if (step.kind === "isolate") return layerUrl(step.layer);
+    if (step.kind === "isolate") return layerUrl(source, step.layer);
     const leg = excursion.steps
       .slice(0, beat)
       .findLast((candidate) => candidate.kind === "move");
     return leg?.kind === "move"
-      ? sequenceLayerUrl(leg.prefix, leg.count - 1)
+      ? sequenceLayerUrl(source, leg.prefix, leg.count - 1)
       : null;
   }
 
   const here = reveals.filter((reveal) => reveal.frame === frame);
   const isolate = here.find((reveal) => reveal.kind === "isolate");
-  if (isolate?.isolate) return layerUrl(isolate.isolate);
+  if (isolate?.isolate) return layerUrl(source, isolate.isolate);
   const push = here.find((reveal) => reveal.push)?.push;
-  if (push) return sequenceLayerUrl(push.base, push.count - 1);
+  if (push) return sequenceLayerUrl(source, push.base, push.count - 1);
   return null;
 };
 

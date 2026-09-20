@@ -1,5 +1,5 @@
 """The homepage hero's showroom floor: a separate RGBA layer that sits under
-`public/homepage-car-sr26.png` on the page, rendered from the same camera.
+`src/assets/homepage-car-sr26.webp` on the page, rendered from the same camera.
 
 What it holds, and why it is its own image rather than baked into the car:
 

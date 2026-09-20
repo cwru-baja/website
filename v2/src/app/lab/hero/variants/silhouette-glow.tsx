@@ -3,7 +3,7 @@
 // PROTOTYPE — throwaway. Silhouette glow: a blurred, livery-coloured copy of the
 // car's own alpha sits behind the render, so light hugs the real outline like a rim light.
 
-import carSr26 from "../../../../../public/homepage-car-sr26.png";
+import carSr26 from "@/assets/homepage-car-sr26.webp";
 import { PALETTE } from "../lab";
 import type { Variant } from "./types";
 

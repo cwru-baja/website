@@ -7,14 +7,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, type ReactNode } from "react";
-import carSr26 from "../../../../public/homepage-car-sr26.png";
+import carSr26 from "@/assets/homepage-car-sr26.webp";
 import { LabContext, emptyGeometry, type HeroGeometry } from "./lab";
 
-// Car body inside homepage-car-sr26.png (4200x3000), measured from its alpha
+// Car body inside homepage-car-sr26.webp (4200x3000), measured from its alpha
 // channel: bounding box and alpha centroid as fractions of the image. gx/gy is
 // the middle of the three visible tyre contact patches (eyeballed at 1440x900).
-const CAR_IN_PNG = { x0: 0.013, y0: 0.011, x1: 0.957, y1: 0.987, cx: 0.5, cy: 0.544, gx: 0.517, gy: 0.88 };
-const PNG_ASPECT = 4200 / 3000;
+const CAR_IN_SRC = { x0: 0.013, y0: 0.011, x1: 0.957, y1: 0.987, cx: 0.5, cy: 0.544, gx: 0.517, gy: 0.88 };
+const SRC_ASPECT = 4200 / 3000;
 
 export default function HeroShell({
   background,
@@ -50,21 +50,21 @@ export default function HeroShell({
       g.width = s.width;
       g.height = s.height;
       // object-contain, object-position: left center
-      const scale = Math.min(b.width / PNG_ASPECT, b.height);
-      const iw = scale * PNG_ASPECT;
+      const scale = Math.min(b.width / SRC_ASPECT, b.height);
+      const iw = scale * SRC_ASPECT;
       const ih = scale;
       const ix = b.left - s.left;
       const iy = b.top - s.top + (b.height - ih) / 2;
       g.car = {
-        l: ix + CAR_IN_PNG.x0 * iw,
-        t: iy + CAR_IN_PNG.y0 * ih,
-        w: (CAR_IN_PNG.x1 - CAR_IN_PNG.x0) * iw,
-        h: (CAR_IN_PNG.y1 - CAR_IN_PNG.y0) * ih,
-        cx: ix + CAR_IN_PNG.cx * iw,
-        cy: iy + CAR_IN_PNG.cy * ih,
-        floor: iy + CAR_IN_PNG.y1 * ih,
-        gx: ix + CAR_IN_PNG.gx * iw,
-        gy: iy + CAR_IN_PNG.gy * ih,
+        l: ix + CAR_IN_SRC.x0 * iw,
+        t: iy + CAR_IN_SRC.y0 * ih,
+        w: (CAR_IN_SRC.x1 - CAR_IN_SRC.x0) * iw,
+        h: (CAR_IN_SRC.y1 - CAR_IN_SRC.y0) * ih,
+        cx: ix + CAR_IN_SRC.cx * iw,
+        cy: iy + CAR_IN_SRC.cy * ih,
+        floor: iy + CAR_IN_SRC.y1 * ih,
+        gx: ix + CAR_IN_SRC.gx * iw,
+        gy: iy + CAR_IN_SRC.gy * ih,
       };
       write("--hero-w", g.width);
       write("--hero-h", g.height);

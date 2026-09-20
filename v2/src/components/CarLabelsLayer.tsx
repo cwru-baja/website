@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Fragment,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -23,7 +22,7 @@ import {
   type LabelGeometry,
   type LabelPoint,
 } from "./carLabels";
-import { pauseLayerUrl, type CarChapter } from "./carSequenceModel";
+import { pauseLayerUrl, type CarChapter, type FrameSourceLike } from "./carSequenceModel";
 
 /** The pieces the scroll timeline animates, by label id. */
 export interface LabelElements {
@@ -45,11 +44,15 @@ export interface LabelPlacement {
 }
 
 interface CarLabelsLayerProps {
+  /** The frames on screen, which the highlight's still and masks come from. */
+  frameSet: FrameSourceLike;
   chapters: CarChapter[];
   labels: CarLabelSet;
   elements: RefObject<LabelElements>;
   /** Only in the placement tool: one pause's labels, shown, with drag handles. */
   placement?: LabelPlacement | null;
+  /** Told when a hovered label starts and stops lighting its part. */
+  onHighlight?: (on: boolean) => void;
 }
 
 // Start hidden and leave the rest to the timeline. These objects never change,
@@ -68,7 +71,20 @@ const HOVER_FADE = "opacity 280ms ease";
 const LINE_FADE = "stroke 280ms ease";
 const LINE_ON = "#ffffff";
 /** How far the rest of the still dims while a part is highlighted. */
-const DIM = "rgba(0, 0, 0, 0.62)";
+const DIM_ALPHA = 0.62;
+const DIM = `rgba(0, 0, 0, ${DIM_ALPHA})`;
+/**
+ * The stage around the frame while a part is lit: the page background dimmed by
+ * exactly what DIM does to it inside the frame, on the same fade. The dim only
+ * covers the frame, so without this its edge reads as a black box drawn round
+ * the car. Mixed in sRGB, as the dim layer is composited, so the two meet on the
+ * same 8-bit value. The frame keeps an undimmed base of its own under the dim,
+ * or its empty areas would be darkened twice.
+ */
+export const STAGE_DIM = `color-mix(in srgb, var(--color-bg) ${Math.round(
+  (1 - DIM_ALPHA) * 100,
+)}%, #000)`;
+export const STAGE_DIM_FADE = "background-color 280ms ease";
 /** How much the highlighted part lifts. */
 const LIFT = "brightness(1.18) contrast(1.04)";
 /** Other labels on the pause, while one is hovered. */
@@ -103,11 +119,59 @@ interface Highlight {
   matte: string;
 }
 
+/**
+ * A part lit on a pause's still: the rest of the still dims through the part's
+ * matte, and the part itself is lifted by a copy of the still cut to the matte.
+ * Always mounted and faded by `on`, so lighting one is a fade, not a load.
+ * Desktop label hover and the phone caption band's chips both light parts with
+ * this, which is what keeps the two looking the same.
+ */
+export function PartHighlight({
+  labelId,
+  still,
+  matte,
+  on,
+}: {
+  labelId: string;
+  still: string;
+  matte: string;
+  on: boolean;
+}) {
+  return (
+    <>
+      <div
+        data-label-dim={labelId}
+        className="absolute inset-0"
+        style={{
+          ...outsideMask(matte),
+          background: DIM,
+          opacity: on ? 1 : 0,
+          transition: HOVER_FADE,
+        }}
+      />
+      <img
+        data-label-lift={labelId}
+        src={still}
+        alt=""
+        className="absolute inset-0 h-full w-full"
+        style={{
+          ...insideMask(matte),
+          filter: LIFT,
+          opacity: on ? 1 : 0,
+          transition: HOVER_FADE,
+        }}
+      />
+    </>
+  );
+}
+
 export default function CarLabelsLayer({
+  frameSet,
   chapters,
   labels,
   elements,
   placement = null,
+  onHighlight,
 }: CarLabelsLayerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<LabelBox>({ width: 0, height: 0 });
@@ -180,10 +244,12 @@ export default function CarLabelsLayer({
     ? {}
     : Object.fromEntries(
         shown.flatMap((chapter) => {
-          const still = pauseLayerUrl(chapter.pauseFrame);
+          const still = pauseLayerUrl(frameSet, chapter.pauseFrame);
           return (labels[chapter.id] ?? []).flatMap((label) => {
             const matte =
-              still && label.part ? partMatteUrl(chapter.id, label.part) : null;
+              still && label.part
+                ? partMatteUrl(frameSet, chapter.id, label.part)
+                : null;
             return still && matte
               ? [[label.id, { chapterId: chapter.id, still, matte }]]
               : [];
@@ -205,6 +271,13 @@ export default function CarLabelsLayer({
     active && labelId !== active && chapterOf[labelId] === activeChapter
       ? QUIET
       : 1;
+
+  const highlighted = active !== null;
+  useEffect(() => {
+    if (!highlighted) return;
+    onHighlight?.(true);
+    return () => onHighlight?.(false);
+  }, [highlighted, onHighlight]);
 
   // Masks sit on transparent layers until a hover, which a browser may not
   // fetch for - so fetch them up front rather than on the first hover.
@@ -321,35 +394,15 @@ export default function CarLabelsLayer({
       className="pointer-events-none absolute inset-0 z-30 hidden select-none lg:block"
       style={{ containerType: "inline-size" }}
     >
-      {Object.entries(highlights).map(([labelId, { still, matte }]) => {
-        const on = labelId === active;
-        return (
-          <Fragment key={labelId}>
-            <div
-              data-label-dim={labelId}
-              className="absolute inset-0"
-              style={{
-                ...outsideMask(matte),
-                background: DIM,
-                opacity: on ? 1 : 0,
-                transition: HOVER_FADE,
-              }}
-            />
-            <img
-              data-label-lift={labelId}
-              src={still}
-              alt=""
-              className="absolute inset-0 h-full w-full"
-              style={{
-                ...insideMask(matte),
-                filter: LIFT,
-                opacity: on ? 1 : 0,
-                transition: HOVER_FADE,
-              }}
-            />
-          </Fragment>
-        );
-      })}
+      {Object.entries(highlights).map(([labelId, { still, matte }]) => (
+        <PartHighlight
+          key={labelId}
+          labelId={labelId}
+          still={still}
+          matte={matte}
+          on={labelId === active}
+        />
+      ))}
 
       <svg
         className="absolute inset-0 h-full w-full overflow-visible"

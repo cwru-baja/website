@@ -1,9 +1,10 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
+import PageTitle from "@/components/PageTitle";
 import Image from "next/image";
 import { SEASON } from "@/lib/events";
-import { logoBox, logoSrc, type TierKey } from "@/lib/logoSizing";
+import { logoBox, logoSrc, phoneLogoHeight, type TierKey } from "@/lib/logoSizing";
 
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
 
@@ -137,30 +138,33 @@ export default function SponsorsPage() {
       {/* Page header */}
       <section className="bg-bg pt-40 pb-0">
         <PageContainer>
-          <h1
-            className="font-coolvetica font-bold leading-[0.88] text-white"
-            style={{ fontSize: "clamp(5rem, 10vw, 11rem)" }}
-          >
-            OUR <span className="text-livery-ink">SPONSORS.</span>
-          </h1>
+          <PageTitle lead="OUR" accent="SPONSORS." />
 
           <div className="mt-8 h-px w-full bg-white/8" />
 
-          <div className="mt-6 flex flex-wrap gap-x-10 gap-y-2">
-            {[
-              { value: totalSponsors, label: "Sponsors & Partners" },
-              { value: tiers.length, label: "Tiers" },
-              { value: SEASON, label: "Season" },
-            ].map(({ value, label }) => (
-              <div key={label} className="flex items-baseline gap-2">
-                <span className="font-clash font-medium text-2xl tracking-wide text-white">
-                  {value}
-                </span>
-                <span className="text-[0.7rem] font-medium tracking-[0.18em] uppercase text-white/35">
-                  {label}
-                </span>
-              </div>
-            ))}
+          {/* Stats row, with the blurb pulled to the far edge on desktop */}
+          <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-wrap gap-x-10 gap-y-2">
+              {[
+                { value: totalSponsors, label: "Sponsors & Partners" },
+                { value: tiers.length, label: "Tiers" },
+                { value: SEASON, label: "Season" },
+              ].map(({ value, label }) => (
+                <div key={label} className="flex items-baseline gap-2">
+                  <span className="font-clash font-medium text-2xl tracking-wide text-white">
+                    {value}
+                  </span>
+                  <span className="text-[0.7rem] font-medium tracking-[0.18em] uppercase text-white/35">
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p className="max-w-xl text-base leading-relaxed text-white/60 lg:text-right lg:text-lg">
+              Every season runs on materials, software, and manufacturing support from the
+              companies backing this team.
+            </p>
           </div>
         </PageContainer>
       </section>
@@ -172,7 +176,8 @@ export default function SponsorsPage() {
             {tiers.map((tier, i) => {
               const right = i % 2 === 1;
               return (
-              <div key={tier.key} className={right ? "text-right" : ""}>
+              // A size container, so phone logos and gaps can be sized in cqi.
+              <div key={tier.key} className={`@container ${right ? "text-right" : ""}`}>
                 {/* Tier header */}
                 <div className="leading-none mb-12">
                   <div className="font-coolvetica font-bold text-[clamp(2rem,4vw,4rem)] tracking-wide text-white leading-none">
@@ -183,8 +188,10 @@ export default function SponsorsPage() {
                   </div>
                 </div>
 
-                {/* Logo row */}
-                <div className={`flex flex-wrap items-center gap-x-20 gap-y-12 ${right ? "justify-end" : ""}`}>
+                {/* Logo row. On phones the column gap scales with the row
+                    like the logos do (28px on a 390px phone), see
+                    phoneLogoHeight. */}
+                <div className={`flex flex-wrap items-center gap-x-[min(8.6cqi,2.5rem)] gap-y-9 sm:gap-x-20 sm:gap-y-12 ${right ? "justify-end" : ""}`}>
                   {tier.sponsors.map((sponsor) => {
                     const box = logoBox(sponsor.file, tier.key);
                     return (
@@ -193,15 +200,24 @@ export default function SponsorsPage() {
                         href={sponsor.url || undefined}
                         target={sponsor.url ? "_blank" : undefined}
                         rel={sponsor.url ? "noopener noreferrer" : undefined}
-                        className="group"
+                        // A 320px phone draws logos as small as 26px wide and
+                        // 12px tall; the padding makes every link at least a
+                        // 44px target without moving anything.
+                        className="group -mx-2.5 -my-4 px-2.5 py-4"
                       >
                         <Image
                           src={logoSrc(sponsor.file, sponsor.png)}
                           alt={sponsor.name}
                           width={box.width}
                           height={box.height}
-                          className="w-auto max-w-full object-contain"
-                          style={{ height: box.height, filter: "brightness(0) invert(1)" }}
+                          className="h-(--logo-h) w-auto max-w-full object-contain max-sm:h-(--logo-h-phone)"
+                          style={
+                            {
+                              "--logo-h": `${box.height}px`,
+                              "--logo-h-phone": phoneLogoHeight(box),
+                              filter: "brightness(0) invert(1)",
+                            } as React.CSSProperties
+                          }
                         />
                       </a>
                     );

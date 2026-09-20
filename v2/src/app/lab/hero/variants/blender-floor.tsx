@@ -2,7 +2,7 @@
 
 // PROTOTYPE — throwaway. #20's showroom floor, rendered physically in Blender instead
 // of faked in CSS: the car's real reflection (underside included), contact shadows and
-// a light-linked teal spot pool, from the same camera as homepage-car-sr26.png.
+// a light-linked teal spot pool, from the same camera as homepage-car-sr26.webp.
 // Renders: v2/artifacts/floor/v5 (floor view layer with the car Indirect Only),
 // exported by premultiplying, dithering and unmultiplying to straight-alpha 8-bit PNG.
 //

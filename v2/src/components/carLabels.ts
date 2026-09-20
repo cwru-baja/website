@@ -1,5 +1,7 @@
 import partMattes from "../data/car-part-mattes.json";
+import portraitPartMattes from "../data/car-part-mattes-portrait.json";
 import savedLabels from "./carLabels.json";
+import { matteUrl, type FrameSourceLike } from "./carSequenceModel";
 
 /** A point in percent of the still a pause shows, so it holds at any display size. */
 export interface LabelPoint {
@@ -50,19 +52,31 @@ export const CAR_LABELS: CarLabelSet = savedLabels;
  */
 export type PartMattes = Record<string, Record<string, string>>;
 
-export const CAR_PART_MATTES = Object.fromEntries(
-  Object.entries(partMattes).filter(([key]) => !key.startsWith("_")),
-) as PartMattes;
+const withoutMeta = (manifest: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.entries(manifest).filter(([key]) => !key.startsWith("_")),
+  ) as PartMattes;
 
-const MATTES_PATH = "/renders-sr26/mattes";
+export const CAR_PART_MATTES = withoutMeta(partMattes);
 
+/** The phone set's masks, rendered off its own 4:5 stills, with their own hashes. */
+export const CAR_PART_MATTES_PORTRAIT = withoutMeta(portraitPartMattes);
+
+/**
+ * A part's mask in the frame set on screen. Each set has its own masks and
+ * manifest, since a mask is cut for the still it sits on and a content hash is
+ * what keeps a replaced file from being served stale.
+ */
 export const partMatteUrl = (
+  set: FrameSourceLike,
   chapterId: string,
   part: string,
-  mattes: PartMattes = CAR_PART_MATTES,
+  mattes: PartMattes = (typeof set === "string" ? set : set.set) === "portrait"
+    ? CAR_PART_MATTES_PORTRAIT
+    : CAR_PART_MATTES,
 ) => {
   const file = mattes[chapterId]?.[part];
-  return file ? `${MATTES_PATH}/${chapterId}/${file}` : null;
+  return file ? matteUrl(set, chapterId, file) : null;
 };
 
 /** "master-cylinders" reads as "Master cylinders" in the placement tool. */

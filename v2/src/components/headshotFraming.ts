@@ -8,7 +8,8 @@ export const DEFAULT_FRAMING: HeadshotFraming = { zoom: 1, x: 0, y: 0 };
 
 export const ZOOM_RANGE = { min: 1, max: 3, step: 0.01 } as const;
 
-/** Width of the round photo frame in CSS pixels (`h-44 w-44`). */
+/** Largest width of the round photo frame in CSS pixels (`max-w-44`). It
+ * shrinks to its grid column when that is narrower, so this is an upper bound. */
 export const FRAME_SIZE = 176;
 
 export function clampZoom(zoom: number): number {
@@ -81,6 +82,6 @@ export function roundFraming(framing: HeadshotFraming): HeadshotFraming {
 }
 
 /** Convert a pointer drag in CSS pixels into frame-relative percentages. */
-export function dragToPan(deltaPx: number): number {
-  return (deltaPx / FRAME_SIZE) * 100;
+export function dragToPan(deltaPx: number, frameSize = FRAME_SIZE): number {
+  return (deltaPx / frameSize) * 100;
 }

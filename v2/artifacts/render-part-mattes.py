@@ -30,7 +30,12 @@ their parts, so it stops instead.
 
   PAUSE    which pause to render (brakes | drivetrain | suspension)
   SAMPLES  anti-aliasing samples; a matte needs no light, so few are plenty
-  OUTDIR   where the 8-bit PNG mattes go (artifacts/part-mattes/<pause>/)
+  PROFILE  landscape (default) | portrait: the phone set's 4:5 still, same pose,
+           with the K and lens shift artifacts/portrait-plan.json gives that
+           still (KOPT picks the option, default k070). The alignment check then
+           runs against the still's lossless master in artifacts/masters/portrait/.
+  OUTDIR   where the 8-bit PNG mattes go (artifacts/part-mattes/<pause>/, or
+           artifacts/part-mattes-portrait/<pause>/ in portrait)
 
 Run with the car .blend:
   blender --background <blend> --python artifacts/render-part-mattes.py
@@ -47,7 +52,16 @@ HERE = os.path.dirname(os.path.abspath(globals().get(
 REPO = os.path.dirname(HERE)
 PAUSE = globals().get("PAUSE", os.environ.get("PAUSE", "brakes"))
 SAMPLES = int(globals().get("SAMPLES", os.environ.get("SAMPLES", 32)))
-OUTDIR = globals().get("OUTDIR", os.path.join(HERE, "part-mattes", PAUSE))
+PROFILE = globals().get("PROFILE", os.environ.get("PROFILE", "landscape"))
+PORTRAIT = PROFILE == "portrait"
+KOPT = globals().get("KOPT", os.environ.get("KOPT", "k070"))
+OUTDIR = globals().get("OUTDIR", os.path.join(
+    HERE, "part-mattes-portrait" if PORTRAIT else "part-mattes", PAUSE))
+# Each pause's still in the portrait plan, and where its lossless master is. The
+# phone's drivetrain still is overhead with the nose up, the pose the desktop's
+# roll ends on, so it takes that still's K and shift.
+PORTRAIT_STILL = {"brakes": "brake-close", "drivetrain": "roll-end", "suspension": "corner"}
+PORTRAIT_MASTERS = os.path.join("artifacts", "masters", "portrait", KOPT)
 
 RESERVOIRS = ["Translucent White PLastic", "Pink Fluid (Foggy Container)", "face2160.004"]
 
@@ -239,8 +253,9 @@ def brakes_camera():
 
 def drivetrain_camera():
     """The crane script's overhead isolate: straight down on the car with the nose
-    to screen right, and only its drivetrain set rendering. The studio planes stay
-    on, as they do in that shot."""
+    to screen right (to the top of the page in portrait, where the phone's crane
+    lands), and only its drivetrain set rendering. The studio planes stay on, as
+    they do in that shot."""
     g = dict(cfg["settings"], OUTDIR=OUTDIR)
     exec(open(os.path.join(HERE, cfg["script"])).read(), g)
     cam = bpy.data.objects.new("TMP_MATTECAM", bpy.data.cameras.new("TMP_MATTECAM"))
@@ -248,6 +263,8 @@ def drivetrain_camera():
     scn.collection.objects.link(cam)
     scn.frame_set(g["SIDE_BF"])
     cam.matrix_world = g["look_at"](g["TGT"] + g["d_top"] * g["TOP_DIST"], g["TGT"], g["TOP_UP"])
+    if PORTRAIT:
+        cam.matrix_world = g["M_TOP_NOSE_UP"]
     scn.camera = cam
     for o in g["meshes"]():
         o.hide_render = not (o.name.startswith("Plane") or o.name in g["DRIVE"])
@@ -420,6 +437,13 @@ def write_matte(path, alpha):
 
 cleanup = {"brakes": brakes_camera, "drivetrain": drivetrain_camera,
            "suspension": suspension_camera}[PAUSE]()
+if PORTRAIT:
+    # Same pose and focal length as the landscape still; only the sensor and the
+    # shift change, exactly as the portrait frames were rendered.
+    profile = dict(PROFILE="portrait", KOPT=KOPT, HERE=HERE)
+    exec(open(os.path.join(HERE, "render_profile.py")).read(), profile)
+    profile["set_portrait_camera"](scn.camera.data, *profile["still"](PORTRAIT_STILL[PAUSE]))
+RES = (1080, 1350) if PORTRAIT else (1920, 1080)
 undo_splits = apply_splits()
 check_parts()
 exr = os.path.join(OUTDIR, "cryptomatte.exr")
@@ -428,7 +452,7 @@ try:
     cy.device = "GPU"
     r.use_motion_blur = False
     r.film_transparent = True
-    r.resolution_x, r.resolution_y, r.resolution_percentage = 1920, 1080, 100
+    r.resolution_x, r.resolution_y, r.resolution_percentage = RES[0], RES[1], 100
     cy.samples = SAMPLES
     cy.use_adaptive_sampling = False
     cy.use_denoising = False
@@ -453,7 +477,11 @@ finally:
 names, attrs = subimages(exr)
 view = layer.name
 
-still, _ = read(os.path.join(REPO, cfg["still"]))
+still_path = cfg["still"]
+if PORTRAIT:
+    still_path = os.path.join(PORTRAIT_MASTERS, os.path.splitext(
+        cfg["still"].replace("public/renders-sr26/", "", 1))[0] + ".png")
+still, _ = read(os.path.join(REPO, still_path))
 still_alpha = still[..., 3]
 render_alpha = read(exr, names[f"{view}.Combined"])[0][..., 3]
 inside, reference = render_alpha > 0.5, still_alpha > 0.5
@@ -505,7 +533,7 @@ for part, spec in cfg["parts"].items():
 
 # Every part lit and the rest dimmed, to eyeball against the still.
 check_out = oiio.ImageOutput.create(os.path.join(OUTDIR, "check.png"))
-check_out.open(os.path.join(OUTDIR, "check.png"), oiio.ImageSpec(1920, 1080, 3, oiio.UINT8))
+check_out.open(os.path.join(OUTDIR, "check.png"), oiio.ImageSpec(RES[0], RES[1], 3, oiio.UINT8))
 check_out.write_image((np.clip(check, 0, 1) * 255 + 0.5).astype(np.uint8))
 check_out.close()
 os.remove(exr)

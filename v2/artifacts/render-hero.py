@@ -1,5 +1,5 @@
 """The homepage hero still: one frame, matched to the camera that shot
-`public/homepage-car-sr26.png`, re-rendered with tyres that read as rubber
+`src/assets/homepage-car-sr26.webp`, re-rendered with tyres that read as rubber
 rather than as a hole in the page.
 
 The pose was not recorded anywhere, so it was solved back out of the existing
@@ -25,6 +25,16 @@ so no frame needs choosing.
 
   STAGE    preview (25%, 64 spp) | final (100%, 384 spp, RGBA PNG)
   VARIANT  current | lift | full  - see TYRE below
+
+This writes a PNG into OUTDIR, but the shipped file is WebP - a straight PNG
+copy would put 9 MB back where 1.4 MB now sits. Convert before shipping:
+
+  node -e "require('sharp')('artifacts/hero/<name>.png')
+    .webp({quality:95,alphaQuality:100,effort:6})
+    .toFile('src/assets/homepage-car-sr26.webp')"
+
+alphaQuality 100 keeps the alpha channel bit-exact, which HeroShell's
+CAR_IN_SRC constants are measured from. Lossy alpha would move them.
 """
 
 import bpy, os, math, time

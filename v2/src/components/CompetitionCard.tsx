@@ -350,7 +350,7 @@ export const CompetitionCard = forwardRef<HTMLDivElement, Props>(
       <LazyMotion features={domAnimation}>
         <div
           ref={ref}
-          className="fixed top-0 left-0 z-50 pointer-events-none w-[480px] rounded-xl overflow-hidden border border-white/15 bg-black shadow-2xl opacity-0 scale-[0.88]"
+          className="fixed top-0 left-0 z-50 pointer-events-none w-[min(480px,calc(100vw-16px))] rounded-xl overflow-hidden border border-white/15 bg-black shadow-2xl opacity-0 scale-[0.88]"
         >
           <div className="invisible pointer-events-none select-none" aria-hidden>
             <div className="px-3 py-2.5">
