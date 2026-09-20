@@ -52,7 +52,7 @@ import os from "node:os";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const ROUTES = ["/", "/team", "/competition", "/sponsors", "/support", "/car"];
+const ROUTES = ["/", "/team", "/competition", "/sponsors", "/support", "/contact", "/car"];
 // Small and common phones, a big phone, portrait and landscape tablets, and a
 // phone held sideways.
 const SIZES = ["320x568", "360x780", "390x844", "430x932", "768x1024", "1024x768", "844x390"];

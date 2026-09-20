@@ -12,6 +12,7 @@ const links = [
   { label: "Car", href: "/car" },
   { label: "Sponsors", href: "/sponsors" },
   { label: "Support", href: "/support" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export default function Navbar() {
