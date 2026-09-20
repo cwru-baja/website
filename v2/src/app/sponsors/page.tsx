@@ -4,7 +4,7 @@ import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 import Image from "next/image";
 import { SEASON } from "@/lib/events";
-import { logoBox, logoSrc, type TierKey } from "@/lib/logoSizing";
+import { logoBox, logoSrc, phoneLogoHeight, type TierKey } from "@/lib/logoSizing";
 
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
 
@@ -168,7 +168,8 @@ export default function SponsorsPage() {
             {tiers.map((tier, i) => {
               const right = i % 2 === 1;
               return (
-              <div key={tier.key} className={right ? "text-right" : ""}>
+              // A size container, so phone logos and gaps can be sized in cqi.
+              <div key={tier.key} className={`@container ${right ? "text-right" : ""}`}>
                 {/* Tier header */}
                 <div className="leading-none mb-12">
                   <div className="font-coolvetica font-bold text-[clamp(2rem,4vw,4rem)] tracking-wide text-white leading-none">
@@ -179,8 +180,10 @@ export default function SponsorsPage() {
                   </div>
                 </div>
 
-                {/* Logo row */}
-                <div className={`flex flex-wrap items-center gap-x-10 gap-y-12 sm:gap-x-20 ${right ? "justify-end" : ""}`}>
+                {/* Logo row. On phones the column gap scales with the row
+                    like the logos do (28px on a 390px phone), see
+                    phoneLogoHeight. */}
+                <div className={`flex flex-wrap items-center gap-x-[min(8.6cqi,2.5rem)] gap-y-9 sm:gap-x-20 sm:gap-y-12 ${right ? "justify-end" : ""}`}>
                   {tier.sponsors.map((sponsor) => {
                     const box = logoBox(sponsor.file, tier.key);
                     return (
@@ -189,18 +192,24 @@ export default function SponsorsPage() {
                         href={sponsor.url || undefined}
                         target={sponsor.url ? "_blank" : undefined}
                         rel={sponsor.url ? "noopener noreferrer" : undefined}
-                        // Logos run 23-43px tall (phones draw them at 80%); the
-                        // padding makes every link at least a 44px target
-                        // without moving anything.
-                        className="group -my-3 py-3"
+                        // A 320px phone draws logos as small as 26px wide and
+                        // 12px tall; the padding makes every link at least a
+                        // 44px target without moving anything.
+                        className="group -mx-2.5 -my-4 px-2.5 py-4"
                       >
                         <Image
                           src={logoSrc(sponsor.file, sponsor.png)}
                           alt={sponsor.name}
                           width={box.width}
                           height={box.height}
-                          className="h-(--logo-h) w-auto max-w-full object-contain max-sm:h-[calc(var(--logo-h)*0.8)]"
-                          style={{ "--logo-h": `${box.height}px`, filter: "brightness(0) invert(1)" } as React.CSSProperties}
+                          className="h-(--logo-h) w-auto max-w-full object-contain max-sm:h-(--logo-h-phone)"
+                          style={
+                            {
+                              "--logo-h": `${box.height}px`,
+                              "--logo-h-phone": phoneLogoHeight(box),
+                              filter: "brightness(0) invert(1)",
+                            } as React.CSSProperties
+                          }
                         />
                       </a>
                     );

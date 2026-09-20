@@ -80,6 +80,29 @@ export function logoBox(file: string, tier: TierKey, scale = 1): LogoBox {
   return { width: Math.round(height * m.aspect), height: Math.round(height) };
 }
 
+/**
+ * Phones draw the /sponsors wall smaller, and size it against the width of the
+ * logo row (in cqi) rather than in pixels. How many logos share a row depends
+ * only on their widths relative to the row, so scaling with the row makes a
+ * 320px phone pack every tier exactly as a 390px one does. Fixed pixel sizes
+ * put Platinum back to one logo per row on narrow phones.
+ *
+ * The row is the tier block, which the page marks as an inline-size container.
+ * The page sizes the row's column gap in cqi too, so it keeps pace with the logos.
+ */
+/** Share of the desktop height a logo gets on a 390px-wide phone. */
+const PHONE_SCALE = 0.55;
+/** Logo row width on that phone: 390px less PageContainer's 32px gutters. */
+const PHONE_ROW = 326;
+/** Wider phones and small tablets stop growing here, below the sm breakpoint. */
+const PHONE_MAX_SCALE = 0.8;
+
+/** CSS height for a logo below sm, as `min(<cqi>, <cap px>)`. */
+export function phoneLogoHeight(box: LogoBox): string {
+  const cqi = (box.height * PHONE_SCALE * 100) / PHONE_ROW;
+  return `min(${cqi.toFixed(2)}cqi, ${Math.round(box.height * PHONE_MAX_SCALE)}px)`;
+}
+
 /** Path to the trimmed asset. Four SVGs carry live <text> and were rasterised
  *  by the build script, so they resolve to PNG regardless of the `png` flag. */
 export function logoSrc(file: string, png?: boolean): string {
