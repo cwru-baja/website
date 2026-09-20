@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 // Imported rather than referenced by path on purpose. A string src keeps the same
-// /_next/image?url=/homepage-car-sr26.png&w=... URL when the file is replaced, so
-// every layer that keys on that URL - Next's own image cache and the browser's -
-// can hand back the previous render. A static import is content-hashed, so new
-// bytes mean a new URL and a stale copy is unreachable at every width.
-import carSr26 from "../../public/homepage-car-sr26.png";
+// /_next/image?url=/<file>&w=... URL when the file is replaced, so every layer that
+// keys on that URL - Next's own image cache and the browser's - can hand back the
+// previous render. A static import is content-hashed, so new bytes mean a new URL
+// and a stale copy is unreachable at every width. The car sits in src/assets rather
+// than public/ so its source has no URL of its own to be fetched at full size.
+import carSr26 from "@/assets/homepage-car-sr26.webp";
 import floor from "../../public/homepage-floor-sr26.webp";
 import floor2x from "../../public/homepage-floor-sr26@2x.webp";
 import floorBox from "@/data/hero-floor.json";

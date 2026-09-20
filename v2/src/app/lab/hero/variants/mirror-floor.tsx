@@ -5,7 +5,7 @@
 // through the tyre contact points (a single horizontal flip line can't serve a
 // 3/4 view), over a flat teal light pool, with a faint backdrop glow behind.
 
-import carSr26 from "../../../../../public/homepage-car-sr26.png";
+import carSr26 from "@/assets/homepage-car-sr26.webp";
 import { PALETTE } from "../lab";
 import type { Variant } from "./types";
 
