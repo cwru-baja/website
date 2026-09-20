@@ -16,6 +16,10 @@ Three rendered legs, each one handing over to the next on an identical frame:
 That last equality is what let the canvas take the frame back: the site handed
 over to `108-susp-corner`, whose own frame 1 is the same orbit pose.
 
+The portrait (phone) set has no roll. Its crane lands nose up already, so there
+
+  cockpit-dive  frame 1  == 059-crane-up-0040   (portrait: the helix's last pose)
+
 The site does not play `cockpit-exit` any more (2026-09-17). Flying 6 m out to
 that orbit pose only to push straight back in to the corner walked the viewer
 away from the car and back again, so artifacts/render-cockpit-susp.py replaces
@@ -34,8 +38,11 @@ can actually sit: past 0.64 m the bodywork behind the seat is in the way.
   STAGE    roll | dive | exit | all | verify
   QUALITY  preview (45%, 48 spp, PNG) | final (100%, 256 spp, WEBP)
   STEP     render every Nth frame - preview contact sheets
-  PROFILE  landscape (default) | portrait: roll and dive only, with KOPT's K and
-           lens shift from portrait-plan.json (see render_profile.py)
+  PROFILE  landscape (default) | portrait: the dive only, with KOPT's K and lens
+           shift from portrait-plan.json (see render_profile.py). Phones play no
+           roll: their crane is a helix that already lands on the roll's last
+           pose, nose up (render-crane.py, helix_pose), which is where the dive
+           starts on both sets.
 """
 
 import bpy, os, math, time
@@ -218,10 +225,10 @@ LEGS = {
     "exit": (exit_pose, N_EXIT, NAME_EXIT),
 }
 
-# Portrait: the stills each leg runs between. The roll turns the camera in place,
-# so K may change across it; the dive travels the whole way, so the plan gives
-# both its ends one K. Shift eases on the leg's own curve either way.
-PORTRAIT_LEGS = {"roll": ("crane-top", "roll-end"), "dive": ("roll-end", "wheel")}
+# Portrait: the stills each leg runs between. The dive travels the whole way, so
+# the plan gives both its ends one K; shift eases on the leg's own curve. There is
+# no portrait roll - the phone's crane lands on "roll-end" itself.
+PORTRAIT_LEGS = {"dive": ("roll-end", "wheel")}
 
 def portrait_cam(leg, i, n):
     a, b = PORTRAIT_LEGS[leg]
@@ -302,7 +309,7 @@ else:
         r.film_transparent = True
     if PORTRAIT:
         if STAGE not in PORTRAIT_LEGS:
-            raise ValueError("portrait renders STAGE roll or dive; the page plays no other leg here")
+            raise ValueError("portrait renders STAGE dive; the page plays no other leg here")
         portrait_output(QUALITY)
 
     # The car is static; the frame only drives the orbit camera, which is unused here.

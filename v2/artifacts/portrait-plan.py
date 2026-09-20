@@ -12,12 +12,19 @@ Stills and their subjects - what has to fit, centred, in the 4:5 frame:
   orbit-001    full/0001, head-on          the whole car
   brake-close  000-brake-arc-0030          caliper, rotor, master cylinders
   orbit-032    full/0032 + 031-frame       the frame tubes (the frame beat)
-  crane-top    059-crane-up-0030 + 059-drivetrain-top   every drivetrain part
-  roll-end     cockpit-roll-0020           the same drivetrain parts, turned
+  roll-end     059-crane-up-0040 + 059-drivetrain-top   every drivetrain part,
+               overhead with the nose to the top of the page
   wheel        cockpit-dive-0040           the steering wheel's face
   corner       108-susp-corner-0024        shocks, wishbones, uprights, hubs
   orbit-109    full/0109                   the whole car
   orbit-120    full/0120, the last frame   the whole car
+
+The desktop crane lands overhead with the nose to screen right and then rolls
+the car upright before the dive. A 4:5 frame cannot hold the car sideways, so
+the phone's crane is a helix that lands nose up already - on the roll's last
+pose, "roll-end" - and phones play no roll (render-crane.py, helix_pose). The
+drivetrain is measured on the desktop's sideways still and turned with the roll,
+which about the view axis is exact.
 
 A pause's parts are measured from its hover mattes (public/renders-sr26/mattes),
 which are exactly what can be seen of each part in the desktop still - so a part
@@ -71,8 +78,7 @@ LEGS = [
     ("orbit-001", "orbit-032", "orbit", "full/0001-0032"),
     ("orbit-001", "brake-close", "push", "000-brake-arc (+ cover)"),
     ("brake-close", "orbit-032", "push", "brake-exit (+ cover)"),
-    ("orbit-032", "crane-top", "push", "059-crane-up"),
-    ("crane-top", "roll-end", "rotate", "cockpit-roll"),
+    ("orbit-032", "roll-end", "push", "059-crane-up (helix, lands nose up)"),
     ("roll-end", "wheel", "push", "cockpit-dive"),
     ("wheel", "corner", "tail", "cockpit-susp"),
     ("corner", "orbit-109", "push", "108-susp-corner (+ wheels), played back out"),
@@ -80,10 +86,10 @@ LEGS = [
 ]
 RULE = ("kvar: each still's largest K (3% margin a side, cap 0.8). A push must hold "
         "one K, so every still joined by pushes takes the smallest K among them. K "
-        "eases only across orbit frames (linear in frame, as the orbit turns), the "
-        "roll (the camera turns in place, on the roll's own easing) and cockpit-susp's "
-        "focal ramp (the last stretch, once the camera has nearly stopped). Shift eases "
-        "on each leg's own curve. Both are each still's value exactly at every seam.")
+        "eases only across orbit frames (linear in frame, as the orbit turns) and "
+        "cockpit-susp's focal ramp (the last stretch, once the camera has nearly "
+        "stopped). Shift eases on each leg's own curve. Both are each still's value "
+        "exactly at every seam.")
 
 
 def arc_globals(**kw):
@@ -177,13 +183,15 @@ def make_plan():
 
     DRIVE_PARTS = ["engine", "cvt", "gearbox", "rear-half-shafts", "propshaft", "bevel-box", "dog-clutch",
                    "front-transfer-case", "torque-limiter", "front-hub-and-spindle", "rear-hub-and-spindle"]
+    # The desktop's sideways overhead still, which the drivetrain mattes were cut
+    # from, turned onto the pose the phone's crane lands on.
     M_top = crane["look_at"](crane["TGT"] + crane["d_top"] * crane["TOP_DIST"], crane["TGT"], crane["TOP_UP"])
     top_ext = matte_extent("drivetrain", DRIVE_PARTS)
-    add("crane-top", M_top, lens_orbit, "drivetrain mattes (all 11 parts)", top_ext,
-        "059-crane-up-0030, 059-drivetrain-top, cockpit-roll-0001")
     M_roll, lens_roll = dive["roll_pose"](dive["N_ROLL"] - 1)
-    add("roll-end", M_roll, lens_roll, "drivetrain mattes, turned with the roll",
-        rotate_extent(top_ext, M_top, M_roll, lens_roll), "cockpit-roll-0020, cockpit-dive-0001")
+    assert pose_key(M_roll) == pose_key(crane["M_TOP_NOSE_UP"]), "the helix does not land on roll-end"
+    add("roll-end", M_roll, lens_roll, "drivetrain mattes (all 11 parts), turned nose up",
+        rotate_extent(top_ext, M_top, M_roll, lens_roll),
+        "059-crane-up-0040, 059-drivetrain-top, cockpit-dive-0001")
 
     M_wheel, lens_wheel = dive["dive_pose"](dive["N_DIVE"] - 1)
     sw = prof["world_verts"](["26-FI-SUS-C1-00 Steering Wheel and Column Assem"])
@@ -232,13 +240,18 @@ def make_plan():
 
 # ---------- the render invocations the page needs, per option ----------
 ORBIT_FRAMES = list(range(1, 33)) + list(range(109, 121))
+CRANE_N = 40        # the phone's helix: the desktop crane's 30 and roll's 20 in one
 
 def invocations(root, kopt, portrait=True):
-    """(name, script, globals) for every render call the page's portrait set needs."""
+    """(name, script, globals) for every render call the page's portrait set needs,
+    or with portrait=False the desktop's own calls (for VPROFILE "landscape"). The
+    two differ in the cockpit run: the phone's crane is a 40-frame helix that
+    lands nose up, and it has no roll."""
     base = os.path.join(root, kopt) if portrait else root
     full, layers = os.path.join(base, "full/"), os.path.join(base, "layers/")
     arcdir = os.path.join(layers, "brake-arc/")
     P = dict(PROFILE="portrait", KOPT=kopt) if portrait else {}
+    roll = [] if portrait else [("roll", "render-dive.py", dict(P, STAGE="roll", OUTDIR=layers))]
     return [
         ("orbit", "render-orbit.py", dict(P, FRAMES=ORBIT_FRAMES, OUTDIR=full)),
         ("arc-in", "render-brake-arc.py", arc_globals(**P, STAGE="all", OUTDIR=arcdir)),
@@ -246,9 +259,10 @@ def invocations(root, kopt, portrait=True):
                                                        NAME_BASE="brake-exit-%04d",
                                                        NAME_PART="brake-exit-cover-%04d", OUTDIR=arcdir)),
         ("frame", "render-layers.py", dict(P, STAGE="frame" if portrait else "stills", OUTDIR=layers)),
-        ("crane", "render-crane.py", dict(P, ARC="approach", N=30, NAME_UP="059-crane-up-%04d", OUTDIR=layers)),
+        ("crane", "render-crane.py", dict(P, ARC="approach", N=CRANE_N if portrait else 30,
+                                          NAME_UP="059-crane-up-%04d", OUTDIR=layers)),
         ("drive", "render-crane.py", dict(P, ARC="isolate", NAME_ISO="059-drivetrain-top", OUTDIR=layers)),
-        ("roll", "render-dive.py", dict(P, STAGE="roll", OUTDIR=layers)),
+    ] + roll + [
         ("dive", "render-dive.py", dict(P, STAGE="dive", OUTDIR=layers)),
         ("susp", "render-cockpit-susp.py", dict(P, STAGE="render", N=40, OUTDIR=layers)),
         ("corner", "render-susp-corner.py", dict(P, STAGE="all", OUTDIR=layers)),
@@ -338,9 +352,8 @@ SEAMS = [
     ("layers/brake-arc/brake-exit-0030", "full/0032"),
     ("full/0032", "layers/031-frame"),
     ("full/0032", "layers/059-crane-up-0001"),
-    ("layers/059-crane-up-0030", "layers/059-drivetrain-top"),
-    ("layers/059-drivetrain-top", "layers/cockpit-roll-0001"),
-    ("layers/cockpit-roll-0020", "layers/cockpit-dive-0001"),
+    ("layers/059-crane-up-%04d" % CRANE_N, "layers/059-drivetrain-top"),
+    ("layers/059-drivetrain-top", "layers/cockpit-dive-0001"),
     ("layers/cockpit-dive-0040", "layers/cockpit-susp-0001"),
     ("layers/cockpit-susp-0040", "layers/108-susp-corner-0024"),
     ("layers/108-susp-corner-0001", "full/0109"),
@@ -390,8 +403,8 @@ elif STAGE == "verify":
         # each still's K and shift, as rendered, against the plan
         K_of = lambda c: round(prof["DESK_V_MM"] / c["key"][11], 4)
         still_files = {"orbit-001": "full/0001", "brake-close": "layers/brake-arc/000-brake-arc-0030",
-                       "orbit-032": "full/0032", "crane-top": "layers/059-drivetrain-top",
-                       "roll-end": "layers/cockpit-roll-0020", "wheel": "layers/cockpit-dive-0040",
+                       "orbit-032": "full/0032", "roll-end": "layers/059-drivetrain-top",
+                       "wheel": "layers/cockpit-dive-0040",
                        "corner": "layers/108-susp-corner-0024", "orbit-109": "full/0109", "orbit-120": "full/0120"}
         res["stills"] = {}
         for sid, f in still_files.items():
@@ -401,8 +414,7 @@ elif STAGE == "verify":
             res["stills"][sid] = [K_of(c), c["key"][12], c["key"][13], "MATCH" if ok else "PLAN MISMATCH"]
         # K changes only where the rule allows it: report per file the K steps
         order = (["full/%04d" % b for b in range(1, 33)] +
-                 ["layers/059-crane-up-%04d" % i for i in range(1, 31)] +
-                 ["layers/cockpit-roll-%04d" % i for i in range(1, 21)] +
+                 ["layers/059-crane-up-%04d" % i for i in range(1, CRANE_N + 1)] +
                  ["layers/cockpit-dive-%04d" % i for i in range(1, 41)] +
                  ["layers/cockpit-susp-%04d" % i for i in range(1, 41)] +
                  ["layers/108-susp-corner-%04d" % i for i in range(24, 0, -1)] +
@@ -420,7 +432,7 @@ elif STAGE == "verify":
         # what clips: the whole car on orbit frames and the crane, each still's subject
         car = prof["world_verts"](prof["car_names"]())[::5]
         clip = {}
-        for f in ["full/%04d" % b for b in ORBIT_FRAMES] + ["layers/059-crane-up-%04d" % i for i in range(1, 31)]:
+        for f in ["full/%04d" % b for b in ORBIT_FRAMES] + ["layers/059-crane-up-%04d" % i for i in range(1, CRANE_N + 1)]:
             c = byfile[f]
             M = Matrix([c["matrix"][0:4], c["matrix"][4:8], c["matrix"][8:12], c["matrix"][12:16]])
             K, sx, sy = K_of(c), c["key"][12], c["key"][13]
@@ -447,6 +459,9 @@ elif STAGE == "render":
     inv = [i for i in invocations(ROOT, KOPT) if i[0] == INV][0]
     baseline()
     t0 = time.time()
+    # MASTER="png" makes a final write lossless masters for an encode step
+    # (artifacts/export-portrait-frames.mjs) instead of the scripts' WebP.
     run(inv, dict(QUALITY=globals().get("QUALITY", "preview"),
-                  PREVIEW_SPP=globals().get("PREVIEW_SPP", 32)))
+                  PREVIEW_SPP=globals().get("PREVIEW_SPP", 32),
+                  MASTER=globals().get("MASTER")))
     print("[render] %s %s done in %.1fs" % (KOPT, INV, time.time() - t0), flush=True)

@@ -2,7 +2,7 @@
  "generated": "artifacts/portrait-plan.py STAGE=plan - do not edit",
  "margin": 0.03,
  "k_cap": 0.8,
- "rule": "kvar: each still's largest K (3% margin a side, cap 0.8). A push must hold one K, so every still joined by pushes takes the smallest K among them. K eases only across orbit frames (linear in frame, as the orbit turns), the roll (the camera turns in place, on the roll's own easing) and cockpit-susp's focal ramp (the last stretch, once the camera has nearly stopped). Shift eases on each leg's own curve. Both are each still's value exactly at every seam.",
+ "rule": "kvar: each still's largest K (3% margin a side, cap 0.8). A push must hold one K, so every still joined by pushes takes the smallest K among them. K eases only across orbit frames (linear in frame, as the orbit turns) and cockpit-susp's focal ramp (the last stretch, once the camera has nearly stopped). Shift eases on each leg's own curve. Both are each still's value exactly at every seam.",
  "legs": [
   [
    "orbit-001",
@@ -24,15 +24,9 @@
   ],
   [
    "orbit-032",
-   "crane-top",
-   "push",
-   "059-crane-up"
-  ],
-  [
-   "crane-top",
    "roll-end",
-   "rotate",
-   "cockpit-roll"
+   "push",
+   "059-crane-up (helix, lands nose up)"
   ],
   [
    "roll-end",
@@ -162,29 +156,9 @@
    "kmax": 1.2187,
    "with_brake_lines_kmax": 0.6162
   },
-  "crane-top": {
-   "files": "059-crane-up-0030, 059-drivetrain-top, cockpit-roll-0001",
-   "subject": "drivetrain mattes (all 11 parts)",
-   "lens": 70.0,
-   "pose": [
-    0.0,
-    0.172,
-    5.919,
-    0.0,
-    0.0,
-    -1.0
-   ],
-   "extent": [
-    0.19844,
-    0.79167,
-    0.08056,
-    0.91944
-   ],
-   "kmax": 0.713
-  },
   "roll-end": {
-   "files": "cockpit-roll-0020, cockpit-dive-0001",
-   "subject": "drivetrain mattes, turned with the roll",
+   "files": "059-crane-up-0040, 059-drivetrain-top, cockpit-dive-0001",
+   "subject": "drivetrain mattes (all 11 parts), turned nose up",
    "lens": 70.0,
    "pose": [
     0.0,
@@ -246,9 +220,10 @@
  "kvar_groups": [
   [
    "brake-close",
-   "crane-top",
    "orbit-001",
-   "orbit-032"
+   "orbit-032",
+   "roll-end",
+   "wheel"
   ],
   [
    "corner",
@@ -256,10 +231,6 @@
   ],
   [
    "orbit-120"
-  ],
-  [
-   "roll-end",
-   "wheel"
   ]
  ],
  "options": {
@@ -317,17 +288,6 @@
     "span": [
      0.415,
      0.4242
-    ]
-   },
-   "crane-top": {
-    "K": 0.55,
-    "shift": [
-     -0.004835,
-     0.0
-    ],
-    "span": [
-     0.7251,
-     0.4614
     ]
    },
    "roll-end": {
@@ -420,17 +380,6 @@
      0.5399
     ]
    },
-   "crane-top": {
-    "K": 0.7,
-    "shift": [
-     -0.006154,
-     0.0
-    ],
-    "span": [
-     0.9228,
-     0.5872
-    ]
-   },
    "roll-end": {
     "K": 0.7,
     "shift": [
@@ -521,37 +470,26 @@
      0.5402
     ]
    },
-   "crane-top": {
+   "roll-end": {
     "K": 0.7004,
     "shift": [
-     -0.006157,
-     0.0
-    ],
-    "span": [
-     0.9233,
-     0.5876
-    ]
-   },
-   "roll-end": {
-    "K": 0.7484,
-    "shift": [
      0.0,
-     -0.006582
+     -0.00616
     ],
     "span": [
-     0.7848,
-     0.7893
+     0.7345,
+     0.7387
     ]
    },
    "wheel": {
-    "K": 0.7484,
+    "K": 0.7004,
     "shift": [
-     0.000412,
-     -0.095971
+     0.000386,
+     -0.089816
     ],
     "span": [
-     0.94,
-     0.4624
+     0.8797,
+     0.4327
     ]
    },
    "corner": {

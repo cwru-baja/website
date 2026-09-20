@@ -2,11 +2,16 @@
 /**
  * Web masks for the /car hover highlight, from render-part-mattes.py's mattes.
  *
- *   node artifacts/export-part-mattes.mjs
+ *   node artifacts/export-part-mattes.mjs            the desktop set
+ *   node artifacts/export-part-mattes.mjs portrait   the phone set
  *
  * Reads  artifacts/part-mattes/<pause>/<part>.png   (1920x1080, coverage in alpha)
  * Writes public/renders-sr26/mattes/<pause>/<part>.webp
  *        src/data/car-part-mattes.json               (which parts each pause has)
+ *
+ * With "portrait" it reads artifacts/part-mattes-portrait/ (1080x1350), writes
+ * public/renders-sr26/portrait/mattes/ and src/data/car-part-mattes-portrait.json,
+ * so each set's masks carry their own content hashes.
  *
  * The site only uses a mask's alpha (CSS mask-image in alpha mode), so the colour
  * is dropped to flat white and the file is lossless WebP: a lossy edge would
@@ -21,11 +26,14 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SRC = join(ROOT, "artifacts/part-mattes");
-const OUT = join(ROOT, "public/renders-sr26/mattes");
-const MANIFEST = join(ROOT, "src/data/car-part-mattes.json");
+const PORTRAIT = process.argv[2] === "portrait";
+const SRC = join(ROOT, PORTRAIT ? "artifacts/part-mattes-portrait" : "artifacts/part-mattes");
+const OUT = join(ROOT, PORTRAIT ? "public/renders-sr26/portrait/mattes" : "public/renders-sr26/mattes");
+const MANIFEST = join(ROOT, PORTRAIT ? "src/data/car-part-mattes-portrait.json" : "src/data/car-part-mattes.json");
 
-const manifest = { _generated: "artifacts/export-part-mattes.mjs - do not edit" };
+const manifest = {
+  _generated: `artifacts/export-part-mattes.mjs${PORTRAIT ? " portrait" : ""} - do not edit`,
+};
 
 for (const pause of readdirSync(SRC).sort()) {
   const parts = readdirSync(join(SRC, pause))
