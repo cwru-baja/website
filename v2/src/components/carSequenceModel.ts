@@ -474,7 +474,10 @@ export const CAR_CHAPTERS: CarChapter[] = [
   // The overhead view is the only place engine and driveline read as one chain,
   // so they share the pause.
   { id: "drivetrain", label: "Engine & drivetrain", pauseFrame: 59 },
-  { id: "electronics", label: "Electronics", pauseFrame: 76 },
+  // Named for the subteam, which is what the team calls it; the id stays
+  // "electronics" because carLabels.json, the part mattes and the render
+  // scripts are all keyed to it.
+  { id: "electronics", label: "Systems", pauseFrame: 76 },
   // Labels here sit on the corner closeup the push lands on, not the orbit frame
   // it starts from - see pauseLayerUrl.
   { id: "suspension", label: "Suspension", pauseFrame: 108 },

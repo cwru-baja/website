@@ -19,6 +19,8 @@ import CarLabelsLayer, {
   type LabelElements,
   type LabelHandle,
 } from "./CarLabelsLayer";
+import CarSubteamTag from "./CarSubteamTag";
+import { subteamFor } from "./carSubteams";
 import CockpitEgg, { COCKPIT_STILL, type Freeze } from "./dashPong/CockpitEgg";
 import CarSequenceCalibration, {
   type SaveState,
@@ -1331,7 +1333,9 @@ export default function CarSequence() {
           master.eventCallback("onUpdate", () => {
             drawFrame(playhead.frame);
             syncLabels();
-            if (stream) syncBand();
+            // Both the phone's caption band and the desktop subteam tag read
+            // this, so it runs whichever set is on screen.
+            syncBand();
           });
 
           // Scrolling down onto a labelled pause holds the page there until its
@@ -2023,6 +2027,14 @@ export default function CarSequence() {
                 ) : null;
               })}
             </div>
+          )}
+
+          {/* Who built what the sequence has stopped on. The phone set says the
+              same thing on its caption band, which has room for it. */}
+          {frameSet === "landscape" && (
+            <CarSubteamTag
+              subteam={band.live && !band.ended ? subteamFor(bandChapter.id) : null}
+            />
           )}
 
           {/* Labels are placed on the 16:9 stills, so only the landscape set
