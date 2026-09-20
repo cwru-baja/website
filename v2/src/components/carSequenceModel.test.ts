@@ -6,10 +6,12 @@ import {
   CAR_EXCURSION,
   CHAPTER_TIMING,
   FRAME_SETS,
+  PORTRAIT_EXCURSION,
   PORTRAIT_SET_MEDIA,
   SEQUENCE_CONFIG,
   CAR_REVEALS,
   excursionDuration,
+  excursionFor,
   excursionSlots,
   excursionStepDuration,
   excursionStopFrames,
@@ -470,7 +472,77 @@ describe("frame sets", () => {
     expect(wide.at(-1)).toBe("/renders-sr26/layers/cockpit-susp-0040.webp");
     expect(wide).toHaveLength(282);
     expect(new Set(wide).size).toBe(278);
-    expect(warmLayerUrls("portrait")).toEqual(wide.map(mirror));
+    // The phone's cockpit run differs in one place: a longer crane and no roll.
+    const tall = warmLayerUrls("portrait");
+    const craneAndRoll = /\/(059-crane-up|cockpit-roll)-\d{4}\.webp$/;
+    expect(tall.filter((url) => !craneAndRoll.test(url))).toEqual(
+      wide.filter((url) => !craneAndRoll.test(url)).map(mirror),
+    );
+    expect(tall.filter((url) => url.includes("/cockpit-roll-"))).toEqual([]);
+    expect(tall.filter((url) => url.includes("/059-crane-up-"))).toHaveLength(40);
+    expect(tall).toHaveLength(282 - 30 - 20 + 40);
+  });
+
+  it("has every file the portrait set plays", () => {
+    const orbit = [...orbitFrameSet(PORTRAIT_EXCURSION)].map((index) =>
+      frameUrl("portrait", index),
+    );
+    const missing = [...orbit, ...warmLayerUrls("portrait")].filter(
+      (url) => !existsSync(path.join(process.cwd(), "public", url)),
+    );
+    expect(missing).toEqual([]);
+  });
+});
+
+describe("the phone's cockpit run", () => {
+  it("is the desktop run with the crane landing nose up and no roll", () => {
+    expect(validateCarExcursion(PORTRAIT_EXCURSION, CAR_CHAPTERS)).toEqual([]);
+    expect(PORTRAIT_EXCURSION.fromFrame).toBe(CAR_EXCURSION.fromFrame);
+    expect(PORTRAIT_EXCURSION.toFrame).toBe(CAR_EXCURSION.toFrame);
+    expect(PORTRAIT_EXCURSION.steps).toEqual(
+      CAR_EXCURSION.steps
+        .filter((step) => !(step.kind === "move" && step.prefix === "cockpit-roll"))
+        .map((step) =>
+          step.kind === "move" && step.prefix === "059-crane-up"
+            ? { ...step, count: 40 }
+            : step,
+        ),
+    );
+    // Same beats, so the same chapters stop on the orbit and in the run.
+    expect([...excursionStopFrames(PORTRAIT_EXCURSION)]).toEqual([
+      ...excursionStopFrames(CAR_EXCURSION),
+    ]);
+  });
+
+  it("goes to the portrait set only, whatever the format", () => {
+    expect(excursionFor("portrait")).toBe(PORTRAIT_EXCURSION);
+    expect(excursionFor("landscape")).toBe(CAR_EXCURSION);
+    expect(excursionFor({ set: "landscape", format: "avif" })).toBe(CAR_EXCURSION);
+  });
+
+  it("spends the crane's 40 frames where the desktop spends 50 on crane and roll", () => {
+    expect(
+      excursionDuration(CAR_EXCURSION) - excursionDuration(PORTRAIT_EXCURSION),
+    ).toBeCloseTo((30 + 20 - 40) / CHAPTER_TIMING.framesPerViewport);
+  });
+
+  it("hands the dive the crane's last frame, and holds the wheel on the dive's", () => {
+    // The drivetrain isolate plays over the crane's last pose; the hold on the
+    // wheel labels whatever the leg before it left on screen.
+    expect(pauseLayerUrl("portrait", 59)).toBe(
+      "/renders-sr26/portrait/layers/059-drivetrain-top.webp",
+    );
+    expect(pauseLayerUrl("portrait", 76)).toBe(
+      "/renders-sr26/portrait/layers/cockpit-dive-0040.webp",
+    );
+    const slots = excursionSlots(PORTRAIT_EXCURSION);
+    expect(slots.map(({ step }) => (step.kind === "move" ? step.prefix : step.kind))).toEqual([
+      "059-crane-up",
+      "isolate",
+      "cockpit-dive",
+      "hold",
+      "cockpit-susp",
+    ]);
   });
 });
 

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   CAR_LABELS,
   CAR_PART_MATTES,
+  CAR_PART_MATTES_PORTRAIT,
   LABEL_STYLE,
   labelGeometry,
   labelSide,
@@ -208,6 +209,30 @@ describe("car labels", () => {
       });
     });
     expect(partMatteUrl("landscape", "brakes", "pedal-box")).toBeNull();
+  });
+
+  it("gives the phone set its own masks for the same parts", () => {
+    expect(
+      Object.fromEntries(
+        Object.entries(CAR_PART_MATTES_PORTRAIT).map(([id, parts]) => [id, Object.keys(parts)]),
+      ),
+    ).toEqual(
+      Object.fromEntries(
+        Object.entries(CAR_PART_MATTES).map(([id, parts]) => [id, Object.keys(parts)]),
+      ),
+    );
+    Object.entries(CAR_PART_MATTES_PORTRAIT).forEach(([chapterId, parts]) => {
+      Object.keys(parts).forEach((part) => {
+        const url = partMatteUrl("portrait", chapterId, part);
+        expect(url).toMatch(/^\/renders-sr26\/portrait\/mattes\/.+\.webp\?v=[0-9a-f]{8}$/);
+        expect(url).not.toBe(partMatteUrl("landscape", chapterId, part)?.replace("/renders-sr26/", "/renders-sr26/portrait/"));
+        const file = path.join(process.cwd(), "public", url!.split("?")[0]);
+        expect(existsSync(file)).toBe(true);
+      });
+    });
+    expect(partMatteUrl({ set: "portrait", format: "webp" }, "brakes", "caliper")).toBe(
+      partMatteUrl("portrait", "brakes", "caliper"),
+    );
     expect(partName("master-cylinders")).toBe("Master cylinders");
   });
 

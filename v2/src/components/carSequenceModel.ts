@@ -10,7 +10,9 @@ export const SEQUENCE_CONFIG = {
  * a phone held upright, where a 16:9 frame would play in a strip a quarter of
  * the screen tall. Both sets use the same file names under their own root -
  * full/ for the orbit, layers/ for legs and reveals, mattes/ for the part masks
- * - so every URL below is the same path with a different root.
+ * - so every URL below is the same path with a different root. The one place the
+ * sets part ways is the cockpit run, which phones play differently (see
+ * PORTRAIT_EXCURSION): their crane has ten more frames and they have no roll.
  *
  * A page load uses exactly one set: it is chosen once, before the first frame is
  * requested, and turning the phone afterwards letterboxes the set already
@@ -426,6 +428,33 @@ export const CAR_EXCURSION: CarExcursion = {
 };
 
 /**
+ * The same run for the portrait set, which frames the overhead beat differently.
+ * The desktop crane lands with the nose to screen right, which fills a 16:9
+ * frame; in a 4:5 one the car is longer than the frame is wide, so its nose and
+ * tail would run off both sides. The phone's crane is a helix instead: it keeps
+ * turning the way the orbit turns while it climbs, round to behind the car, and
+ * lands overhead with the nose to the top of the screen. That is the pose the
+ * desktop's roll ends on and the dive starts from, so phones have no roll - the
+ * dive picks up straight from the crane's last frame. Its 40 frames do the work
+ * of the crane's 30 and the roll's 20. See artifacts/render-crane.py
+ * (helix_pose); everything after the crane is the same leg on both sets.
+ */
+export const PORTRAIT_EXCURSION: CarExcursion = {
+  ...CAR_EXCURSION,
+  steps: [
+    { kind: "move", prefix: "059-crane-up", count: 40 },
+    { kind: "isolate", frame: 59, layer: "059-drivetrain-top", blur: 14 },
+    { kind: "move", prefix: "cockpit-dive", count: 40 },
+    { kind: "hold", frame: 76 },
+    { kind: "move", prefix: "cockpit-susp", count: 40 },
+  ],
+};
+
+/** The cockpit run a set plays. */
+export const excursionFor = (source: FrameSourceLike): CarExcursion =>
+  sourceOf(source).set === "portrait" ? PORTRAIT_EXCURSION : CAR_EXCURSION;
+
+/**
  * A place the sequence stops to point things out. Its labels live in
  * carLabels.json, keyed by `id`, which is what the placement tool saves to.
  */
@@ -515,7 +544,7 @@ export const openingLayerUrls = (
 export const warmLayerUrls = (
   source: FrameSourceLike,
   reveals: CarReveal[] = CAR_REVEALS,
-  excursion: CarExcursion = CAR_EXCURSION,
+  excursion: CarExcursion = excursionFor(source),
 ) => {
   const urls: string[] = [];
   const run = (prefix: string, count: number) => {
@@ -667,7 +696,7 @@ export const pauseLayerUrl = (
   source: FrameSourceLike,
   frame: number,
   reveals: CarReveal[] = CAR_REVEALS,
-  excursion: CarExcursion = CAR_EXCURSION,
+  excursion: CarExcursion = excursionFor(source),
 ): string | null => {
   const beat = excursion.steps.findIndex(
     (step) => step.kind !== "move" && step.frame === frame,

@@ -54,6 +54,7 @@ import {
   arrivesGoingDown,
   beatHold,
   excursionDuration,
+  excursionFor,
   excursionSlots,
   frameUrl,
   labelsOutDuration,
@@ -550,6 +551,9 @@ export default function CarSequence() {
           const mode: ResponsiveMode =
             conditions.desktop && frameSet === "landscape" ? "desktop" : "mobile";
           const source: FrameSourceLike = frameSource ?? "landscape";
+          // Phones play their own cockpit run: a crane that lands nose-up, and
+          // so no roll (see PORTRAIT_EXCURSION).
+          const excursion = excursionFor(source);
           // The portrait set streams: as the timeline is laid down it records
           // which file is on screen when, and the stream fetches what is near
           // the scroll position. Every layer shown goes through `showRun`, which
@@ -623,7 +627,7 @@ export default function CarSequence() {
           const { dots, lines, paths, texts } = labelElementsRef.current;
           // The excursion plays the beats on its own frames, so the orbit itself
           // only ever stops on what is left.
-          const orbitStops = orbitChapters(CAR_CHAPTERS, CAR_EXCURSION);
+          const orbitStops = orbitChapters(CAR_CHAPTERS, excursion);
 
           CAR_CHAPTERS.flatMap(labelsFor).forEach((label) => {
             const dot = dots[label.id];
@@ -765,8 +769,8 @@ export default function CarSequence() {
               const chapter = CAR_CHAPTERS.find((item) => item.pauseFrame === frame);
               return chapter ? labelsFor(chapter).length : 0;
             };
-            const slots = excursionSlots(CAR_EXCURSION, labelCount);
-            const total = excursionDuration(CAR_EXCURSION, labelCount);
+            const slots = excursionSlots(excursion, labelCount);
+            const total = excursionDuration(excursion, labelCount);
             const chapterFor = (frame: number) =>
               CAR_CHAPTERS.find((item) => item.pauseFrame === frame);
 
@@ -776,7 +780,7 @@ export default function CarSequence() {
             master.to(
               playhead,
               {
-                frame: CAR_EXCURSION.toFrame,
+                frame: excursion.toFrame,
                 duration: total,
                 ease: "none",
               },
@@ -1274,9 +1278,9 @@ export default function CarSequence() {
               poseEnd - labelsOutDuration(labelCount),
             );
 
-            if (chapter.pauseFrame === CAR_EXCURSION.fromFrame) {
+            if (chapter.pauseFrame === excursion.fromFrame) {
               runExcursion(master.duration());
-              currentFrame = CAR_EXCURSION.toFrame;
+              currentFrame = excursion.toFrame;
             }
           });
 
@@ -1807,6 +1811,8 @@ export default function CarSequence() {
     return () => window.removeEventListener("scroll", clear);
   }, [lit]);
   const bandChapter = CAR_CHAPTERS[band.chapter] ?? CAR_CHAPTERS[0];
+  // The legs and beats this set's cockpit run plays, one surface each.
+  const excursionSteps = excursionFor(frameSource ?? "landscape").steps;
   const bandStill = portrait ? pauseLayerUrl("portrait", bandChapter.pauseFrame) : null;
 
   return (
@@ -1859,7 +1865,7 @@ export default function CarSequence() {
             ),
           )}
 
-          {CAR_EXCURSION.steps.map((step) =>
+          {excursionSteps.map((step) =>
             step.kind === "isolate" ? (
               <img
                 key={step.layer}
@@ -1887,7 +1893,7 @@ export default function CarSequence() {
             className="relative z-10 block max-h-[calc(100svh-4rem)] max-w-[100vw]"
           />
 
-          {CAR_EXCURSION.steps.map((step) =>
+          {excursionSteps.map((step) =>
             step.kind === "move" ? (
               <img
                 key={step.prefix}
