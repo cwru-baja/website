@@ -58,7 +58,7 @@ const operationsBoard: Leader[] = [
   { name: "Ben Roy",             role: "Systems Engineering & Radio Lead",      image: benRoy, graduationYear: "2027", linkedin: "https://www.linkedin.com/in/benmroy603/", framing: { zoom: 1.17, x: 0, y: 8.5 } },
   { name: "Kurt Rehm",           role: "Panels & Composites Lead",              image: kurtRehm, graduationYear: "2029", linkedin: "https://www.linkedin.com/in/kurtrehm/", framing: { zoom: 1.52, x: 1.68, y: 18 } },
   { name: "Zhansar Zhaparov",    role: "Suspension Lead",                      image: zhansarZhaparov, graduationYear: "2028", linkedin: "https://www.linkedin.com/in/zhansar-z-8082922aa/", framing: { zoom: 1.26, x: -4.36, y: 9 } },
-  { name: "Audrey Weaver",       role: "Manufacturing Lead",                   image: audreyWeaver, graduationYear: "2029", linkedin: "https://www.linkedin.com/in/audrey-weaver-206a40391/", framing: { zoom: 1.55, x: -1.85, y: -11.32 } },
+  { name: "Audrey Weaver",       role: "Manufacturing Coordinator",            image: audreyWeaver, graduationYear: "2029", linkedin: "https://www.linkedin.com/in/audrey-weaver-206a40391/", framing: { zoom: 1.55, x: -1.85, y: -11.32 } },
   { name: "Matthew Alcantara",   role: "Race Logistics Lead",                  image: matthewAlcantara, graduationYear: "2027", linkedin: "https://www.linkedin.com/in/matthew-allen-alcantara/", framing: { zoom: 1.36, x: 4.14, y: -11.17 } },
 ];
 
