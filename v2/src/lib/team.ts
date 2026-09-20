@@ -100,7 +100,11 @@ export type Subteam = (typeof SUBTEAMS)[number];
 
 export type GeneralMember = {
   name: string;
-  subteams: Subteam[];
+  /**
+   * Manufacturing is exclusive: it's either someone's only subteam or not one
+   * of theirs at all, so the union rejects it alongside anything else.
+   */
+  subteams: ["Manufacturing"] | Exclude<Subteam, "Manufacturing">[];
   classOf: string;
   major: string;
 };
@@ -113,10 +117,10 @@ export const GENERAL_BODY: GeneralMember[] = [
   { name: "Aryeh Rothenberg",         subteams: ["Manufacturing"],                     classOf: "2027", major: "Mechanical Engineering" },
   { name: "Avaneesh Rao",             subteams: ["Brakes"],                            classOf: "2027", major: "Mechanical & Aerospace Engineering" },
   { name: "Cameron Griffith",         subteams: ["Manufacturing"],                     classOf: "2027", major: "Mechanical Engineering" },
-  { name: "Davis Clarke",             subteams: ["Drivetrain", "Business Presentation", "Manufacturing"], classOf: "2029", major: "Mechanical Engineering" },
+  { name: "Davis Clarke",             subteams: ["Drivetrain", "Business Presentation"], classOf: "2029", major: "Mechanical Engineering" },
   { name: "Elad Dov Kleinerman Mordkowitz", subteams: ["CNC"],                        classOf: "2027", major: "—" },
   { name: "Finn Barrett",             subteams: ["Manufacturing"],                     classOf: "2028", major: "Mechanical Engineering" },
-  { name: "Isaac Hugenberger",        subteams: ["Drivetrain", "Panels", "Brakes"],   classOf: "2028", major: "Mechanical Engineering" },
+  { name: "Isaac Hugenberger",        subteams: ["Drivetrain"],                        classOf: "2028", major: "Mechanical Engineering" },
   { name: "Jack Fink",                subteams: ["Drivetrain"],                        classOf: "2028", major: "Mechanical Engineering" },
   { name: "Jake Meltzer",             subteams: ["Manufacturing"],                     classOf: "2028", major: "Astronomy" },
   { name: "Jason Wei",                subteams: ["Systems"],                           classOf: "2029", major: "—" },
@@ -127,7 +131,7 @@ export const GENERAL_BODY: GeneralMember[] = [
   { name: "Nathan Fenster",           subteams: ["Frame"],                             classOf: "2028", major: "Mechanical Engineering" },
   { name: "Neel Mani Sulkunte",       subteams: ["Manufacturing"],                     classOf: "2027", major: "Mechanical Engineering" },
   { name: "Nick Bulawa",              subteams: ["Drivetrain"],                        classOf: "2027", major: "Mechanical Engineering" },
-  { name: "Nikhil Ramani",            subteams: ["Brakes", "Manufacturing"],          classOf: "2029", major: "Mechanical & Aerospace Engineering" },
+  { name: "Nikhil Ramani",            subteams: ["Brakes"],                            classOf: "2029", major: "Mechanical & Aerospace Engineering" },
   { name: "Niranjan Girish",          subteams: ["Systems"],                           classOf: "2027", major: "Computer & Electrical Engineering" },
   { name: "Sai Charmitha Yelampalli", subteams: ["Business Presentation", "Systems"],  classOf: "2027", major: "Biomedical Engineering (Pre-med)" },
   { name: "Sai Subramanian",          subteams: ["Systems"],                           classOf: "2027", major: "Electrical Engineering" },
