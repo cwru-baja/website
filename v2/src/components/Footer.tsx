@@ -4,6 +4,7 @@ const socialLinks = [
   { label: "Instagram", href: "https://www.instagram.com/cwrubaja/", mr: "-mr-18", hoverColor: "hover:text-[#E1306C]", icon: <InstagramIcon /> },
   { label: "LinkedIn", href: "https://www.linkedin.com/company/cwru-motorsports/", mr: "-mr-14", hoverColor: "hover:text-[#0A66C2]", icon: <LinkedInIcon /> },
   { label: "YouTube", href: "https://www.youtube.com/@CWRUMotorsports", mr: "-mr-10", hoverColor: "hover:text-[#FF0000]", icon: <YouTubeIcon /> },
+  { label: "Facebook", href: "https://www.facebook.com/cwrubaja/", mr: "-mr-6", hoverColor: "hover:text-[#1877F2]", icon: <FacebookIcon /> },
 ];
 
 export default function Footer() {
@@ -141,6 +142,15 @@ function YouTubeIcon() {
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="size-[18px]">
       <rect x="2" y="5" width="20" height="14" rx="4.5" stroke="currentColor" strokeWidth="1.8" />
       <path d="M10 9.2v5.6l4.8-2.8z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function FacebookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="size-[18px]">
+      <rect x="3" y="3" width="18" height="18" rx="3.5" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M13 21V10.4c0-1.9 1.1-3 2.9-3H17M10 13.2h6.2" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
