@@ -53,9 +53,6 @@ next-env.d.ts
 /prof-*/
 /.codex-tmp/
 /public/renders-sr26/temp/
-# Stand-in 4:5 frames from artifacts/make-portrait-standins.mjs; the real
-# portrait renders replace them.
-/public/renders-sr26/portrait/
 /design-qa*.md
 /*.png
 

@@ -1,0 +1,28 @@
+{
+  "_generated": "artifacts/export-part-mattes.mjs portrait - do not edit",
+  "brakes": {
+    "brake-lines": "brake-lines.webp?v=540e9853",
+    "caliper": "caliper.webp?v=af6188d6",
+    "master-cylinders": "master-cylinders.webp?v=1e3ee74c",
+    "rotor": "rotor.webp?v=52bb9b17"
+  },
+  "drivetrain": {
+    "bevel-box": "bevel-box.webp?v=61c59d07",
+    "cvt": "cvt.webp?v=83fce02e",
+    "dog-clutch": "dog-clutch.webp?v=b8e268b1",
+    "engine": "engine.webp?v=f207df54",
+    "front-hub-and-spindle": "front-hub-and-spindle.webp?v=d20216b4",
+    "front-transfer-case": "front-transfer-case.webp?v=5294ed71",
+    "gearbox": "gearbox.webp?v=c6cbb932",
+    "propshaft": "propshaft.webp?v=f5422771",
+    "rear-half-shafts": "rear-half-shafts.webp?v=ffc97f3c",
+    "rear-hub-and-spindle": "rear-hub-and-spindle.webp?v=70363006",
+    "torque-limiter": "torque-limiter.webp?v=5078f083"
+  },
+  "suspension": {
+    "hubs": "hubs.webp?v=49e701e8",
+    "shocks": "shocks.webp?v=e3aa398e",
+    "uprights": "uprights.webp?v=285ee7ac",
+    "wishbones": "wishbones.webp?v=662c71ee"
+  }
+}
