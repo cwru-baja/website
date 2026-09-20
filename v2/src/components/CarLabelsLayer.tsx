@@ -51,6 +51,8 @@ interface CarLabelsLayerProps {
   elements: RefObject<LabelElements>;
   /** Only in the placement tool: one pause's labels, shown, with drag handles. */
   placement?: LabelPlacement | null;
+  /** Told when a hovered label starts and stops lighting its part. */
+  onHighlight?: (on: boolean) => void;
 }
 
 // Start hidden and leave the rest to the timeline. These objects never change,
@@ -69,7 +71,20 @@ const HOVER_FADE = "opacity 280ms ease";
 const LINE_FADE = "stroke 280ms ease";
 const LINE_ON = "#ffffff";
 /** How far the rest of the still dims while a part is highlighted. */
-const DIM = "rgba(0, 0, 0, 0.62)";
+const DIM_ALPHA = 0.62;
+const DIM = `rgba(0, 0, 0, ${DIM_ALPHA})`;
+/**
+ * The stage around the frame while a part is lit: the page background dimmed by
+ * exactly what DIM does to it inside the frame, on the same fade. The dim only
+ * covers the frame, so without this its edge reads as a black box drawn round
+ * the car. Mixed in sRGB, as the dim layer is composited, so the two meet on the
+ * same 8-bit value. The frame keeps an undimmed base of its own under the dim,
+ * or its empty areas would be darkened twice.
+ */
+export const STAGE_DIM = `color-mix(in srgb, var(--color-bg) ${Math.round(
+  (1 - DIM_ALPHA) * 100,
+)}%, #000)`;
+export const STAGE_DIM_FADE = "background-color 280ms ease";
 /** How much the highlighted part lifts. */
 const LIFT = "brightness(1.18) contrast(1.04)";
 /** Other labels on the pause, while one is hovered. */
@@ -156,6 +171,7 @@ export default function CarLabelsLayer({
   labels,
   elements,
   placement = null,
+  onHighlight,
 }: CarLabelsLayerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState<LabelBox>({ width: 0, height: 0 });
@@ -255,6 +271,13 @@ export default function CarLabelsLayer({
     active && labelId !== active && chapterOf[labelId] === activeChapter
       ? QUIET
       : 1;
+
+  const highlighted = active !== null;
+  useEffect(() => {
+    if (!highlighted) return;
+    onHighlight?.(true);
+    return () => onHighlight?.(false);
+  }, [highlighted, onHighlight]);
 
   // Masks sit on transparent layers until a hover, which a browser may not
   // fetch for - so fetch them up front rather than on the first hover.

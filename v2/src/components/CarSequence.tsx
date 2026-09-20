@@ -14,6 +14,8 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import CarCaptionBand from "./CarCaptionBand";
 import CarLabelsLayer, {
   PartHighlight,
+  STAGE_DIM,
+  STAGE_DIM_FADE,
   type LabelElements,
   type LabelHandle,
 } from "./CarLabelsLayer";
@@ -203,6 +205,8 @@ export default function CarSequence() {
   const streamStatsRef = useRef({ shown: 0, misses: 0 });
   const [band, setBand] = useState<BandState>({ chapter: 0, live: false });
   const [litLabel, setLitLabel] = useState<string | null>(null);
+  // A desktop label being hovered lights its part the same way.
+  const [hoverLit, setHoverLit] = useState(false);
 
   const labelElementsRef = useRef<LabelElements>({
     dots: {},
@@ -1823,7 +1827,14 @@ export default function CarSequence() {
         // portrait set's 4:5 frame and caption band are styled in globals.css.
         // "pending" is the server render, before the set is known.
         data-car-stage={frameSet ?? "pending"}
+        data-car-dim={lit || hoverLit ? "" : undefined}
         className="relative flex h-[100svh] items-center justify-center overflow-hidden bg-bg pt-16"
+        // While a part is lit the whole stage dims with the frame, so the dim
+        // has no edge (see STAGE_DIM).
+        style={{
+          backgroundColor: lit || hoverLit ? STAGE_DIM : undefined,
+          transition: STAGE_DIM_FADE,
+        }}
       >
         {!sequenceReady && !loadFailed && (
           <p className="absolute text-xs uppercase tracking-[0.2em] text-white/35">
@@ -1836,7 +1847,7 @@ export default function CarSequence() {
           </p>
         )}
 
-        <div data-car-frame className="relative inline-block max-w-full leading-none">
+        <div data-car-frame className="relative inline-block max-w-full bg-bg leading-none">
           {CAR_REVEALS.filter((reveal) => reveal.kind === "isolate").map(
             (reveal) => (
               <img
@@ -2005,6 +2016,7 @@ export default function CarSequence() {
               chapters={CAR_CHAPTERS}
               labels={calibrationMode ? draftLabels : CAR_LABELS}
               elements={labelElementsRef}
+              onHighlight={setHoverLit}
               placement={
                 calibrationMode
                   ? {
