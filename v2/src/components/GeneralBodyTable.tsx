@@ -13,17 +13,17 @@ import { GENERAL_BODY as members, type Subteam } from "@/lib/team";
 
 
 const subteamColors: Record<Subteam, string> = {
-  "Systems":               "bg-blue-950/60   text-blue-300   border-blue-800/40",
-  "CNC":                   "bg-green-950/60  text-green-300  border-green-800/40",
-  "Brakes":                "bg-red-950/60    text-red-300    border-red-800/40",
-  "Manufacturing":         "bg-yellow-950/60 text-yellow-300 border-yellow-800/40",
-  "Test Engineering":      "bg-orange-950/60 text-orange-300 border-orange-800/40",
-  "Drivetrain":            "bg-cyan-950/60   text-cyan-300   border-cyan-800/40",
-  "Frame":                 "bg-amber-950/60  text-amber-300  border-amber-800/40",
-  "Suspension":            "bg-teal-950/60   text-teal-300   border-teal-800/40",
-  "Panels":                "bg-lime-950/60   text-lime-300   border-lime-800/40",
-  "Business Presentation": "bg-purple-950/60 text-purple-300 border-purple-800/40",
-  "Finance":               "bg-pink-950/60   text-pink-300   border-pink-800/40",
+  "Frame":                 "bg-zinc-900/60    text-zinc-300    border-zinc-700/40",
+  "Panels":                "bg-purple-950/60  text-purple-300  border-purple-800/40",
+  "Suspension":            "bg-blue-950/60    text-blue-300    border-blue-800/40",
+  "Systems":               "bg-orange-950/60  text-orange-300  border-orange-800/40",
+  "Brakes":                "bg-green-950/60   text-green-300   border-green-800/40",
+  "Drivetrain":            "bg-red-950/60     text-red-300     border-red-800/40",
+  "Test Engineering":      "bg-yellow-950/60  text-yellow-300  border-yellow-800/40",
+  "Manufacturing":         "bg-cyan-950/60    text-cyan-300    border-cyan-800/40",
+  "Finance":               "bg-fuchsia-950/60 text-fuchsia-400 border-fuchsia-800/40",
+  "CNC":                   "bg-pink-950/60    text-pink-300    border-pink-800/40",
+  "Business Presentation": "bg-indigo-950/60  text-indigo-300  border-indigo-800/40",
 };
 
 type SortField = "name" | "classOf";
