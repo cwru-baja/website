@@ -241,7 +241,7 @@
     },
     {
       "id": "suspension-2s6a4o",
-      "text": "custom hubs",
+      "text": "front hub",
       "part": "hubs",
       "dot": {
         "x": 69.45,
@@ -254,7 +254,7 @@
     },
     {
       "id": "suspension-whlwf7",
-      "text": "custom uprights",
+      "text": "front upright",
       "part": "uprights",
       "dot": {
         "x": 61.33,
