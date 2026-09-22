@@ -10,14 +10,6 @@ export const SCRUB_STEP = 0.02;
 /** Fraction Page Up / Page Down moves it. */
 export const SCRUB_PAGE = 0.1;
 
-/**
- * Seconds a scrub keeps the label hold off its back. A pan crosses pauses far
- * faster than a scroll does, and a hold that grabbed the page mid-drag would
- * fight the pointer for the rest of it. Sized just past the scrub smoothing, so
- * the hold is free again about as soon as the car has caught up.
- */
-export const SCRUB_HOLD_SUPPRESS = 0.4;
-
 export const clampProgress = (value: number) =>
   value < 0 ? 0 : value > 1 ? 1 : value;
 

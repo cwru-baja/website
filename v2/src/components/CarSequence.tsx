@@ -26,12 +26,24 @@ import CarSequenceCalibration, {
   type SaveState,
 } from "./CarSequenceCalibration";
 import {
-  SCRUB_HOLD_SUPPRESS,
   progressForKey,
   progressFromPointer,
   scrollForProgress,
   scrubPercent,
 } from "./carScrubber";
+import {
+  CAR_SNAP,
+  glideStep,
+  keyTravel,
+  readWheel,
+  settleTarget,
+  snapStops,
+  snapTarget,
+  wheelPixels,
+  type Direction,
+  type Glide,
+  type WheelGesture,
+} from "./carSnap";
 import {
   CAR_LABELS,
   CAR_PART_MATTES,
@@ -51,10 +63,8 @@ import {
   CAR_CHAPTERS,
   CAR_REVEALS,
   CHAPTER_TIMING,
-  LABEL_HOLD,
   LABEL_MOTION,
   SEQUENCE_CONFIG,
-  arrivesGoingDown,
   beatHold,
   excursionDuration,
   excursionFor,
@@ -101,7 +111,14 @@ type LabelBeat = LabelWindow & {
   arriving: gsap.core.Tween | null;
 };
 const SCROLL_DOWN_KEYS = new Set(["ArrowDown", "PageDown", "End", " "]);
-const SCROLL_UP_KEYS = new Set(["ArrowUp", "PageUp", "Home"]);
+// A key press that belongs to what it was pressed on rather than to the page:
+// typing, and Space pressing a button.
+const ownsKey = (target: EventTarget | null, key: string) =>
+  target instanceof Element &&
+  Boolean(
+    target.closest("input, textarea, select, [contenteditable]") ||
+      (key === " " && target.closest("button, [role='button'], summary")),
+  );
 type ResponsiveMode = "desktop" | "mobile";
 // A label's name is revealed from the knee outward, so it grows out of its line.
 // Shown, the clip stands a little clear of the name: a clip also cuts pointer
@@ -552,9 +569,8 @@ export default function CarSequence() {
             return;
           }
 
-          // Labels, their scroll holds and Pong were all laid out on the 16:9
-          // stills, so a tablet turned wide keeps the phone's behaviour if it
-          // loaded the portrait set.
+          // Labels and Pong were both laid out on the 16:9 stills, so a tablet
+          // turned wide keeps the phone's behaviour if it loaded the portrait set.
           const mode: ResponsiveMode =
             conditions.desktop && frameSet === "landscape" ? "desktop" : "mobile";
           const source: FrameSourceLike = frameSource ?? "landscape";
@@ -1338,131 +1354,9 @@ export default function CarSequence() {
             syncBand();
           });
 
-          // Scrolling down onto a labelled pause holds the page there until its
-          // labels have drawn, so a scroll that never stops still sees them
-          // rather than catching them opening and closing on the way past. The
-          // hold only blocks scrolling further down: scrolling up lets go at once.
-          let lastIntent = -Infinity;
-          // While the rail is being panned, the hold keeps its hands off the page.
-          let scrubUntil = 0;
-          const noteIntent = () => {
-            lastIntent = performance.now();
-          };
-          let previousTime = 0;
+          // Pong on the dash is the one thing that holds the page still, and it
+          // hands the page back through here.
           let releaseHold: (() => void) | null = null;
-
-          const holdOn = (beat: LabelBeat, self: ScrollTrigger) => {
-            const target =
-              self.start +
-              ((beat.from + (beat.to - beat.from) * LABEL_HOLD.anchor) /
-                master.duration()) *
-                (self.end - self.start);
-            const started = gsap.ticker.time;
-            let drawnAt: number | null = null;
-            const scroll = { y: window.scrollY };
-            const glide = gsap.to(scroll, {
-              y: target,
-              duration: LABEL_HOLD.glide,
-              ease: "power2.out",
-              onUpdate: () => window.scrollTo(0, scroll.y),
-            });
-
-            const onWheel = (event: WheelEvent) => {
-              if (event.deltaY < 0) release();
-              else event.preventDefault();
-            };
-            let touchY = 0;
-            const onTouchStart = (event: TouchEvent) => {
-              touchY = event.touches[0]?.clientY ?? touchY;
-            };
-            const onTouchMove = (event: TouchEvent) => {
-              const y = event.touches[0]?.clientY ?? touchY;
-              // A finger dragging down scrolls the page up.
-              if (y > touchY) release();
-              else if (event.cancelable) event.preventDefault();
-              touchY = y;
-            };
-            const onKey = (event: KeyboardEvent) => {
-              const target = event.target;
-              if (
-                target instanceof Element &&
-                target.closest("input, textarea, select, button, a, [contenteditable]")
-              ) {
-                return;
-              }
-              if (
-                SCROLL_UP_KEYS.has(event.key) ||
-                (event.key === " " && event.shiftKey)
-              ) {
-                release();
-              } else if (SCROLL_DOWN_KEYS.has(event.key)) {
-                event.preventDefault();
-              }
-            };
-            // Blocked input covers the wheel, touch and keys; anything else that
-            // moves the page - momentum already under way, a dragged scrollbar -
-            // is put back, unless it went up, which lets go like a wheel would.
-            const tick = () => {
-              const now = gsap.ticker.time;
-              if (!glide.isActive()) {
-                if (window.scrollY < target - 40) {
-                  release();
-                  return;
-                }
-                if (Math.abs(window.scrollY - target) > 1) {
-                  window.scrollTo(0, target);
-                }
-              }
-              const drawn =
-                beat.up &&
-                !beat.timeline.reversed() &&
-                beat.timeline.progress() === 1;
-              if (drawn && drawnAt === null) drawnAt = now;
-              if (
-                (drawnAt !== null && now - drawnAt >= LABEL_HOLD.read) ||
-                now - started >= LABEL_HOLD.limit
-              ) {
-                release();
-              }
-            };
-
-            const release = () => {
-              if (releaseHold !== release) return;
-              releaseHold = null;
-              glide.kill();
-              gsap.ticker.remove(tick);
-              window.removeEventListener("wheel", onWheel);
-              window.removeEventListener("touchstart", onTouchStart);
-              window.removeEventListener("touchmove", onTouchMove);
-              window.removeEventListener("keydown", onKey);
-            };
-
-            releaseHold = release;
-            window.addEventListener("wheel", onWheel, { passive: false });
-            window.addEventListener("touchstart", onTouchStart, { passive: true });
-            window.addEventListener("touchmove", onTouchMove, { passive: false });
-            window.addEventListener("keydown", onKey);
-            gsap.ticker.add(tick);
-          };
-
-          const watchForHold = (self: ScrollTrigger) => {
-            const time = self.progress * master.duration();
-            const previous = previousTime;
-            previousTime = time;
-            if (releaseHold) return;
-            if (performance.now() < scrubUntil) return;
-            if (performance.now() - lastIntent > LABEL_HOLD.intent * 1000) return;
-            const beat = labelBeats.find((item) =>
-              arrivesGoingDown(item, previous, time),
-            );
-            if (beat) holdOn(beat, self);
-          };
-          const letGo = () => releaseHold?.();
-
-          window.addEventListener("wheel", noteIntent, { passive: true });
-          window.addEventListener("touchmove", noteIntent, { passive: true });
-          window.addEventListener("keydown", noteIntent);
-          ScrollTrigger.addEventListener("refreshInit", letGo);
 
           // The rail under the navbar follows the trigger's own progress, which
           // tracks the scroll position with no lag of its own - `scrub` is what
@@ -1493,7 +1387,6 @@ export default function CarSequence() {
             anticipatePin: 1,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
-              watchForHold(self);
               paintRail(self.progress);
               // The scroll position leads the scrubbed playhead by the scrub's
               // lag, so the stream plans from where the car is going to be.
@@ -1527,12 +1420,285 @@ export default function CarSequence() {
             },
           });
 
-          // Panning the rail is a jump, not a scroll, so it waves the hold off:
-          // a pan crosses pauses far faster than a scroll does, and a hold that
-          // grabbed the page mid-drag would fight the pointer for the rest of it.
-          const panTo = (progress: number) => {
-            scrubUntil = performance.now() + SCRUB_HOLD_SUPPRESS * 1000;
+          // Scrolling moves the sequence one stop at a time. A flick of the wheel,
+          // a swipe or a scroll key plays the camera all the way to the next still
+          // (or back to the last) and the page waits there for the next gesture.
+          // The stops are the sequence's two ends and the middle of every pause,
+          // so each pause's labels are drawn and read however briefly the visitor
+          // scrolled. What isn't a scroll gesture - the rail, the scrollbar, Home
+          // and End - still goes wherever it is taken. See carSnap.
+          const stops = () => {
+            const duration = master.duration();
+            const span = trigger.end - trigger.start;
+            return snapStops(poseWindows, duration).map((time) =>
+              Math.round(trigger.start + (time / duration) * span),
+            );
+          };
+          const inSequence = () => {
+            const all = stops();
+            const at = window.scrollY;
+            return (
+              at >= all[0] - CAR_SNAP.slack &&
+              at <= all[all.length - 1] + CAR_SNAP.slack
+            );
+          };
+
+          // Stepped on the frame's own timestamp rather than GSAP's ticker, which
+          // times each tick from whenever its callback got to run: a busy frame
+          // would take a longer step, and the page would lurch.
+          let glide:
+            | (Glide & {
+                target: number;
+                direction: Direction;
+                written: number;
+                frameAt: number | null;
+              })
+            | null = null;
+          let glideFrame = 0;
+          // Which way the page last went, and when it came to rest (seconds,
+          // on the clock wheel events are stamped with).
+          let landed: { moved: Direction | null; at: number } = {
+            moved: null,
+            at: -Infinity,
+          };
+          const glideTick = (now: number) => {
+            if (!glide) return;
+            // Something else has moved the page - the scrollbar, a jump - and it
+            // is theirs now. A few pixels is the browser finishing a scroll it
+            // started before the glide took over, which the glide carries on from.
+            const drift = window.scrollY - glide.written;
+            if (Math.abs(drift) > CAR_SNAP.yield) {
+              stopGlide();
+              return;
+            }
+            if (Math.abs(drift) > 1) glide.position += drift;
+            const seconds =
+              glide.frameAt === null ? 1 / 60 : Math.min((now - glide.frameAt) / 1000, 0.05);
+            glide.frameAt = now;
+            const step = glideStep(glide, glide.target, seconds, window.innerHeight);
+            glide.position = step.position;
+            glide.velocity = step.velocity;
+            window.scrollTo(0, step.position);
+            glide.written = window.scrollY;
+            if (step.done) stopGlide();
+            else glideFrame = window.requestAnimationFrame(glideTick);
+          };
+          const stopGlide = () => {
+            if (!glide) return;
+            landed = { moved: glide.direction, at: performance.now() / 1000 };
+            glide = null;
+            window.cancelAnimationFrame(glideFrame);
+          };
+          // A new stop mid-glide keeps the page's speed, so it runs on through
+          // the one it was headed for instead of stopping there and starting over.
+          const glideTo = (target: number) => {
+            const from = glide ? glide.position : window.scrollY;
+            const direction: Direction = target > from ? 1 : -1;
+            if (glide) {
+              glide.target = target;
+              glide.direction = direction;
+              return;
+            }
+            glide = {
+              position: from,
+              velocity: 0,
+              target,
+              direction,
+              written: from,
+              frameAt: null,
+            };
+            glideFrame = window.requestAnimationFrame(glideTick);
+          };
+
+          // Where a gesture going `direction` takes the page, or null to leave it
+          // to the browser. Another key press or swipe the same way mid-glide
+          // goes one stop past the one the page is already headed for; the wheel
+          // never does (see readWheel).
+          const targetFor = (direction: Direction, travel: number) => {
+            const from =
+              glide && (glide.target - glide.position) * direction > 0
+                ? glide.target
+                : window.scrollY;
+            return snapTarget(stops(), from, direction, travel);
+          };
+
+          // A gesture moves the page one stop, however long its momentum goes on
+          // arriving: the rest of it is swallowed rather than scrolling the page
+          // off the stop it just brought it to - and so is any new one the same
+          // way until the page has landed (readWheel).
+          let wheel: WheelGesture | null = null;
+          const onWheel = (event: WheelEvent) => {
+            // Pinch-zoom arrives as a wheel with ctrl held.
+            if (event.ctrlKey) return;
+            const at = event.timeStamp / 1000;
+            // Sideways scrolls - and the back and forward swipe - are the
+            // browser's. One that drifts in partway through a scroll up or down
+            // belongs to it, though, and mustn't nudge the page off its stop.
+            if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+              if (wheel && at - wheel.at <= CAR_SNAP.quiet) {
+                wheel = { ...wheel, at };
+                if (event.deltaY && (glide || (wheel.used && inSequence()))) {
+                  event.preventDefault();
+                }
+              }
+              return;
+            }
+            const pixels = wheelPixels(
+              event.deltaY,
+              event.deltaMode,
+              window.innerHeight,
+            );
+            if (!pixels) return;
+            // Pong holds the page until a scroll up leaves the game, and that
+            // scroll goes on to the stop above like any other.
+            if (releaseHold) {
+              if (pixels > 0) return;
+              releaseHold();
+            }
+            const read = readWheel(wheel, pixels, at, {
+              moving: glide?.direction ?? null,
+              moved: landed.moved,
+              restedAt: landed.at,
+            });
+            wheel = read.gesture;
+            if (!read.move) {
+              if (glide || inSequence()) event.preventDefault();
+              return;
+            }
+            const target = targetFor(wheel.direction, Math.abs(pixels));
+            if (target === null) {
+              if (glide) event.preventDefault();
+              return;
+            }
+            event.preventDefault();
+            wheel = { ...wheel, used: true };
+            glideTo(target);
+          };
+
+          const onKey = (event: KeyboardEvent) => {
+            if (event.defaultPrevented) return;
+            if (event.altKey || event.ctrlKey || event.metaKey) return;
+            if (ownsKey(event.target, event.key)) return;
+            const travel = keyTravel(event.key, event.shiftKey, window.innerHeight);
+            if (!travel) return;
+            // The arrows are Pong's player two; only paging up leaves the game.
+            if (releaseHold) {
+              if (event.key === "ArrowUp" || travel > 0) return;
+              releaseHold();
+            }
+            // A key held down is one press, the way a long flick is one gesture.
+            if (event.repeat) {
+              if (glide || inSequence()) event.preventDefault();
+              return;
+            }
+            const target = targetFor(travel > 0 ? 1 : -1, Math.abs(travel));
+            if (target === null) {
+              if (glide) event.preventDefault();
+              return;
+            }
+            event.preventDefault();
+            glideTo(target);
+          };
+
+          // A touch the browser scrolled can fling on after the finger lifts,
+          // with no events to catch it by, and come to rest between two stops -
+          // it came in from the page above or below, where swipes are the
+          // browser's. Once it has, the page goes on to the next stop the way it
+          // was going, or back to one it has only just passed (settleTarget).
+          let coast: Direction | null = null;
+          let coastCheck = 0;
+
+          // A finger is read once, on its first move. Along the page and with a
+          // stop to go to, the swipe is ours and the page stays put under it;
+          // otherwise it is the browser's for the rest of the touch - which has
+          // to be decided then, since a scroll the browser has started can't be
+          // taken back. The navbar and the rail keep their own touches.
+          let touch: {
+            x: number;
+            y: number;
+            ours: boolean | null;
+            swiped: boolean;
+            direction: Direction;
+          } | null = null;
+          const onTouchStart = (event: TouchEvent) => {
+            coast = null;
+            const point = event.touches[0];
+            const own =
+              event.target instanceof Element &&
+              event.target.closest("nav, [data-car-scrubber]");
+            touch =
+              point && event.touches.length === 1 && !own
+                ? { x: point.clientX, y: point.clientY, ours: null, swiped: false, direction: 1 }
+                : null;
+          };
+          const onTouchMove = (event: TouchEvent) => {
+            const point = event.touches[0];
+            if (!touch || !point) return;
+            if (event.touches.length > 1) {
+              touch = null;
+              return;
+            }
+            const dx = point.clientX - touch.x;
+            const dy = point.clientY - touch.y;
+            if (!dx && !dy) return;
+            // A finger moving up scrolls the page down.
+            touch.direction = dy < 0 ? 1 : -1;
+            if (releaseHold) {
+              if (touch.direction > 0) return;
+              releaseHold();
+            }
+            if (touch.ours === null) {
+              touch.ours =
+                Math.abs(dy) >= Math.abs(dx) &&
+                (glide !== null || targetFor(touch.direction, Math.abs(dy)) !== null);
+            }
+            if (!touch.ours) return;
+            if (event.cancelable) event.preventDefault();
+            if (touch.swiped || Math.abs(dy) < CAR_SNAP.swipe) return;
+            touch.swiped = true;
+            const target = targetFor(touch.direction, Math.abs(dy));
+            if (target !== null) glideTo(target);
+          };
+
+          const settleCoast = () => {
+            window.clearTimeout(coastCheck);
+            coastCheck = window.setTimeout(() => {
+              const direction = coast;
+              if (direction === null || touch || glide || releaseHold) return;
+              coast = null;
+              const target = settleTarget(stops(), window.scrollY, direction);
+              if (target !== null) glideTo(target);
+            }, 150);
+          };
+          const onTouchEnd = () => {
+            if (touch?.ours === false) {
+              coast = touch.direction;
+              settleCoast();
+            }
+            touch = null;
+          };
+          const onScroll = () => {
+            if (coast !== null) settleCoast();
+          };
+
+          const letGo = () => {
+            stopGlide();
             releaseHold?.();
+          };
+
+          window.addEventListener("wheel", onWheel, { passive: false });
+          window.addEventListener("keydown", onKey);
+          window.addEventListener("touchstart", onTouchStart, { passive: true });
+          window.addEventListener("touchmove", onTouchMove, { passive: false });
+          window.addEventListener("touchend", onTouchEnd, { passive: true });
+          window.addEventListener("touchcancel", onTouchEnd, { passive: true });
+          window.addEventListener("scroll", onScroll, { passive: true });
+          ScrollTrigger.addEventListener("refreshInit", letGo);
+
+          // Panning the rail is a jump, not a scroll: the pointer has the page,
+          // so a glide under way lets go of it.
+          const panTo = (progress: number) => {
+            letGo();
             trigger.scroll(
               scrollForProgress(progress, trigger.start, trigger.end),
             );
@@ -1595,14 +1761,13 @@ export default function CarSequence() {
           rail?.addEventListener("pointercancel", onRailPointerUp);
           rail?.addEventListener("keydown", onRailKeyDown);
 
-          // Pong on the cockpit's dash holds the page while it runs. It takes the
-          // label hold's one slot, so whatever already lets go of a hold - the rail,
-          // a refresh, teardown - ends the game too, and no label hold can start
-          // underneath it. Unlike a label hold it has no timer, and the arrow keys
-          // belong to the game (they are player two), so they never let go: only a
-          // scroll up does, or the game itself ending.
+          // Pong on the cockpit's dash holds the page while it runs, and the snap
+          // stands aside for it: whatever lets go of the page - the rail, a
+          // refresh, teardown - ends the game too. The arrow keys belong to the
+          // game (they are player two), so they never let go: only a scroll up
+          // does, or the game itself ending.
           freezeRef.current = (onRelease) => {
-            releaseHold?.();
+            letGo();
             // Settle in the middle of the hold, so the scrub's lag can't carry the
             // camera off the still - and the game with it - mid-rally.
             const hold = cockpitHold;
@@ -1611,27 +1776,27 @@ export default function CarSequence() {
                 ((hold.from + hold.to) / 2 / master.duration()) * (trigger.end - trigger.start)
               : window.scrollY;
             const scroll = { y: window.scrollY };
-            const glide = gsap.to(scroll, {
+            const settle = gsap.to(scroll, {
               y: target,
-              duration: LABEL_HOLD.glide,
+              duration: CAR_SNAP.settle,
               ease: "power2.out",
               onUpdate: () => window.scrollTo(0, scroll.y),
             });
-            const onWheel = (event: WheelEvent) => {
+            const holdWheel = (event: WheelEvent) => {
               if (event.deltaY < 0) release();
               else event.preventDefault();
             };
             let touchY = 0;
-            const onTouchStart = (event: TouchEvent) => {
+            const holdTouchStart = (event: TouchEvent) => {
               touchY = event.touches[0]?.clientY ?? touchY;
             };
-            const onTouchMove = (event: TouchEvent) => {
+            const holdTouchMove = (event: TouchEvent) => {
               const y = event.touches[0]?.clientY ?? touchY;
               if (y > touchY) release();
               else if (event.cancelable) event.preventDefault();
               touchY = y;
             };
-            const onKey = (event: KeyboardEvent) => {
+            const holdKey = (event: KeyboardEvent) => {
               if (event.key === "PageUp" || event.key === "Home" || (event.key === " " && event.shiftKey)) {
                 release();
               } else if (SCROLL_DOWN_KEYS.has(event.key) || event.key === "ArrowUp") {
@@ -1639,7 +1804,7 @@ export default function CarSequence() {
               }
             };
             const tick = () => {
-              if (glide.isActive()) return;
+              if (settle.isActive()) return;
               if (window.scrollY < target - 40) {
                 release();
                 return;
@@ -1649,19 +1814,19 @@ export default function CarSequence() {
             const release = () => {
               if (releaseHold !== release) return;
               releaseHold = null;
-              glide.kill();
+              settle.kill();
               gsap.ticker.remove(tick);
-              window.removeEventListener("wheel", onWheel);
-              window.removeEventListener("touchstart", onTouchStart);
-              window.removeEventListener("touchmove", onTouchMove);
-              window.removeEventListener("keydown", onKey);
+              window.removeEventListener("wheel", holdWheel);
+              window.removeEventListener("touchstart", holdTouchStart);
+              window.removeEventListener("touchmove", holdTouchMove);
+              window.removeEventListener("keydown", holdKey);
               onRelease();
             };
             releaseHold = release;
-            window.addEventListener("wheel", onWheel, { passive: false });
-            window.addEventListener("touchstart", onTouchStart, { passive: true });
-            window.addEventListener("touchmove", onTouchMove, { passive: false });
-            window.addEventListener("keydown", onKey);
+            window.addEventListener("wheel", holdWheel, { passive: false });
+            window.addEventListener("touchstart", holdTouchStart, { passive: true });
+            window.addEventListener("touchmove", holdTouchMove, { passive: false });
+            window.addEventListener("keydown", holdKey);
             gsap.ticker.add(tick);
             return release;
           };
@@ -1690,9 +1855,14 @@ export default function CarSequence() {
               delete rail.dataset.panning;
               gsap.set(rail, { autoAlpha: 0 });
             }
-            window.removeEventListener("wheel", noteIntent);
-            window.removeEventListener("touchmove", noteIntent);
-            window.removeEventListener("keydown", noteIntent);
+            window.clearTimeout(coastCheck);
+            window.removeEventListener("wheel", onWheel);
+            window.removeEventListener("keydown", onKey);
+            window.removeEventListener("touchstart", onTouchStart);
+            window.removeEventListener("touchmove", onTouchMove);
+            window.removeEventListener("touchend", onTouchEnd);
+            window.removeEventListener("touchcancel", onTouchEnd);
+            window.removeEventListener("scroll", onScroll);
             ScrollTrigger.removeEventListener("refreshInit", letGo);
             trigger.kill();
             master.kill();

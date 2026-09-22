@@ -154,34 +154,6 @@ export interface LabelWindow {
 export const labelsUp = ({ from, to }: LabelWindow, time: number) =>
   time >= from && time < to;
 
-/**
- * Scrolling down onto a labelled pause holds the page on it until the labels
- * have drawn and had a moment to be read, so a scroll that never stops still
- * sees them. Seconds, except where noted:
- *   glide   the move onto the pause
- *   anchor  where in the pause's stretch it lands (0 is its start, 1 its end)
- *   read    how long the drawn labels stay held
- *   limit   the longest any hold lasts, whatever the labels are doing
- * Only scrolling the visitor is driving holds: their last wheel, touch or key has
- * to be under `intent` old, and a jump that lands more than `jump` viewports
- * past the pause - a dragged scrollbar, End - goes straight through.
- */
-export const LABEL_HOLD = {
-  glide: 0.4,
-  anchor: 0.3,
-  read: 0.3,
-  limit: 3,
-  intent: 0.3,
-  jump: 1,
-} as const;
-
-/** Whether the scroll just came down onto a pause from above it. */
-export const arrivesGoingDown = (
-  { from, to }: LabelWindow,
-  previous: number,
-  time: number,
-) => previous < from && time >= from && time < to + LABEL_HOLD.jump;
-
 export const labelsInDuration = (count: number) =>
   count ? LABEL_TIMING.in + (count - 1) * LABEL_TIMING.inStagger : 0;
 

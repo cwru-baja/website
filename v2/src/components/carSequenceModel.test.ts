@@ -15,10 +15,8 @@ import {
   excursionSlots,
   excursionStepDuration,
   excursionStopFrames,
-  LABEL_HOLD,
   LABEL_MOTION,
   LABEL_TIMING,
-  arrivesGoingDown,
   beatHold,
   labelsUp,
   labelsInDuration,
@@ -350,21 +348,6 @@ describe("car sequence model", () => {
     // Asked of where the playhead is, not of what it crossed: a scroll that
     // lands past the pause in one update never puts its labels up.
     expect([1.9, 2.6].some((time) => labelsUp(pause, time))).toBe(false);
-  });
-
-  it("holds a pause only for a scroll coming down onto it", () => {
-    const pause = { from: 2, to: 2.5 };
-    // Down across its start, however far into the pause the update lands.
-    expect(arrivesGoingDown(pause, 1.9, 2.05)).toBe(true);
-    expect(arrivesGoingDown(pause, 1.9, 2.7)).toBe(true);
-    // Already on it, coming back up onto it, or not there yet.
-    expect(arrivesGoingDown(pause, 2.1, 2.3)).toBe(false);
-    expect(arrivesGoingDown(pause, 2.7, 2.3)).toBe(false);
-    expect(arrivesGoingDown(pause, 1.5, 1.9)).toBe(false);
-    // A jump well past it is somewhere the visitor meant to go.
-    expect(arrivesGoingDown(pause, 1.9, pause.to + LABEL_HOLD.jump)).toBe(false);
-    expect(LABEL_HOLD.anchor).toBeGreaterThan(0);
-    expect(LABEL_HOLD.anchor).toBeLessThan(1);
   });
 
   it("draws a label's name as its line reaches the run, and leaves faster", () => {
