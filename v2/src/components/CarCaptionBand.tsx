@@ -1,7 +1,10 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { CARS, CURRENT_CAR } from "@/lib/livery";
+import type { Direction } from "./carSnap";
 import type { CarLabel, CarLabelSet } from "./carLabels";
+import { CarStepButton, type CarSteps } from "./CarStepButtons";
 import type { CarChapter } from "./carSequenceModel";
 import { balanceChips } from "./chipWrap";
 import { useScrollFade } from "./useScrollFade";
@@ -18,6 +21,15 @@ import { useScrollFade } from "./useScrollFade";
  * sideways, because a vertical swipe on the band has to keep scrolling the page.
  * On a phone with its browser bars showing that is usually one row; a tall
  * screen shows every chip.
+ *
+ * The chapter's name sits in a pill whose two ends are the previous and next
+ * buttons: the largest pill on the band is the one that moves the car, the
+ * small ones below light its parts.
+ *
+ * Either side of the chapters - the car turning in before the first, and
+ * standing whole after the last - the band names the car itself, with a line
+ * saying where the arrows go, in place of a chapter it isn't showing yet or
+ * any more.
  */
 interface CarCaptionBandProps {
   chapters: CarChapter[];
@@ -26,10 +38,12 @@ interface CarCaptionBandProps {
   chapter: number;
   /** Whether the pause's still is on screen, which is when a part can light. */
   live: boolean;
-  /** Past the last chapter, when the band fades out until scrolled back. */
-  ended: boolean;
+  /** Before the first chapter, on one, or past the last. */
+  stage: "before" | "during" | "after";
   lit: string | null;
   onToggle: (labelId: string) => void;
+  steps: CarSteps;
+  onStep: (direction: Direction) => void;
 }
 
 export default function CarCaptionBand({
@@ -37,39 +51,110 @@ export default function CarCaptionBand({
   labels,
   chapter,
   live,
-  ended,
+  stage,
   lit,
   onToggle,
+  steps,
+  onStep,
 }: CarCaptionBandProps) {
   const current = chapters[chapter] ?? chapters[0];
+  const car = CARS[CURRENT_CAR];
   return (
     <div
       data-car-band
-      // Faded rather than unmounted, so nothing under it moves. visibility
-      // comes along so its chips can't be tapped or tabbed to once it's gone.
-      className={`flex-col gap-2 px-5 pt-3 pb-3 transition-[opacity,visibility] duration-300 ${ended ? "invisible opacity-0" : ""}`}
+      className="flex-col gap-3 px-5 pt-3 pb-3"
       aria-label="Chapter"
       role="group"
     >
-      <p
-        data-car-band-title
-        className="flex h-5 shrink-0 items-center gap-3 font-clash text-[0.8125rem] font-medium uppercase leading-none tracking-[0.18em]"
+      {/* Under 360px the ends narrow, so ENGINE & DRIVETRAIN still fits in
+          two lines at 320. */}
+      <div
+        role="group"
+        aria-label="Vehicle views"
+        data-car-steps="band"
+        className="flex h-12 shrink-0 items-stretch overflow-hidden rounded-full border border-white/20"
       >
-        {/* A fixed box, so a wider or narrower numeral never nudges the name. */}
-        <span className="w-6 shrink-0 text-livery">
-          {String(chapter + 1).padStart(2, "0")}
-        </span>
-        <span className="min-w-0 truncate text-white">{current.label}</span>
-      </p>
-      {/* Keyed by chapter, so a new chapter's chips start scrolled to the start. */}
-      <ChipRow
-        key={current.id}
-        items={labels[current.id] ?? NO_LABELS}
-        live={live}
-        lit={lit}
-        onToggle={onToggle}
-      />
+        <CarStepButton
+          steps={steps}
+          onStep={onStep}
+          direction={-1}
+          className="w-14 border-r border-white/15 max-[359px]:w-12"
+        />
+        <p
+          data-car-band-title
+          className="flex min-w-0 grow items-center justify-center gap-3 px-3 text-center font-clash text-[0.8125rem] font-medium uppercase leading-[1.35] tracking-[0.14em] max-[359px]:gap-2 max-[359px]:px-2"
+        >
+          {stage === "during" ? (
+            <>
+              {/* A fixed box, so a wider or narrower numeral never nudges the name. */}
+              <span className="w-6 shrink-0 text-livery">
+                {String(chapter + 1).padStart(2, "0")}
+              </span>
+              <span className="line-clamp-2 min-w-0 text-white">{current.label}</span>
+            </>
+          ) : (
+            <>
+              <span className="shrink-0 text-livery">{car.year}</span>
+              <span className="min-w-0 truncate text-white">{car.name}</span>
+            </>
+          )}
+        </p>
+        <CarStepButton
+          steps={steps}
+          onStep={onStep}
+          direction={1}
+          className="w-14 border-l border-white/15 max-[359px]:w-12"
+        />
+      </div>
+      {stage === "during" ? (
+        // Keyed by chapter, so a new chapter's chips start scrolled to the start.
+        <ChipRow
+          key={current.id}
+          items={labels[current.id] ?? NO_LABELS}
+          live={live}
+          lit={lit}
+          onToggle={onToggle}
+        />
+      ) : (
+        <p
+          data-car-band-note
+          className="min-h-11 grow basis-0 text-center text-sm leading-relaxed text-white/55"
+        >
+          {stage === "before" ? (
+            <>
+              {chapters.length} systems, one car. Tap <Arrow direction={1} /> to take it
+              apart.
+            </>
+          ) : (
+            <>
+              All {chapters.length}, back together. Tap <Arrow direction={-1} /> to go back
+              through them.
+            </>
+          )}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** The step buttons' chevron, set in a line of text to name them. */
+function Arrow({ direction }: { direction: Direction }) {
+  return (
+    <svg
+      viewBox="0 0 36 36"
+      fill="none"
+      role="img"
+      aria-label={direction > 0 ? "next" : "previous"}
+      className="inline-block size-[0.9em] -translate-y-px align-middle text-livery-ink"
+    >
+      <path
+        d={direction > 0 ? "M6 12L18 24L30 12" : "M6 24L18 12L30 24"}
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="square"
+        strokeLinejoin="miter"
+      />
+    </svg>
   );
 }
 

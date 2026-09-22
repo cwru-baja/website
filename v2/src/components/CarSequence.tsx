@@ -19,6 +19,7 @@ import CarLabelsLayer, {
   type LabelElements,
   type LabelHandle,
 } from "./CarLabelsLayer";
+import CarStepButtons from "./CarStepButtons";
 import CarSubteamTag from "./CarSubteamTag";
 import { subteamFor } from "./carSubteams";
 import CockpitEgg, { COCKPIT_STILL, type Freeze } from "./dashPong/CockpitEgg";
@@ -35,6 +36,7 @@ import {
   CAR_SNAP,
   glideStep,
   keyTravel,
+  nextStop,
   readWheel,
   settleTarget,
   snapStops,
@@ -189,6 +191,8 @@ const CAPTION_LEAD = 0.3;
 interface BandState {
   chapter: number;
   live: boolean;
+  /** Up to the first chapter, when the band introduces the car instead. */
+  started: boolean;
   /** Past the last chapter's still, when the band has nothing left to caption. */
   ended: boolean;
 }
@@ -232,6 +236,10 @@ export default function CarSequence() {
   // asks the timeline's closure to hold the page through `freezeRef`.
   const eggRef = useRef<HTMLDivElement>(null);
   const freezeRef = useRef<Freeze | null>(null);
+  // The previous and next buttons: whether each has a stop to go to, and the
+  // timeline's closure that takes the page there. Null until there are stops.
+  const [steps, setSteps] = useState<{ back: boolean; on: boolean } | null>(null);
+  const stepRef = useRef<((direction: Direction) => void) | null>(null);
   const [eggArmed, setEggArmed] = useState(false);
   // Mounting Pong renders the section again and starts its own ~250 KB - the
   // press crops, the dash plate, the colour table - and each of the 80 crops is
@@ -276,6 +284,7 @@ export default function CarSequence() {
   const [band, setBand] = useState<BandState>({
     chapter: 0,
     live: false,
+    started: false,
     ended: false,
   });
   const [litLabel, setLitLabel] = useState<string | null>(null);
@@ -1401,10 +1410,11 @@ export default function CarSequence() {
 
           // The caption band follows the playhead: a chapter's name comes up as
           // the camera arrives at its still, and its chips can light parts only
-          // while that still is on screen. Once the last still is gone the band
-          // empties, rather than captioning the turn away as that chapter.
+          // while that still is on screen. Before the first chapter and once the
+          // last still is gone it names the whole car instead, rather than
+          // captioning the turn in or away as a chapter.
           poseWindows.sort((left, right) => left.from - right.from);
-          let bandNow: BandState = { chapter: 0, live: false, ended: false };
+          let bandNow: BandState = { chapter: 0, live: false, started: false, ended: false };
           const syncBand = () => {
             const time = master.time();
             let current = poseWindows[0];
@@ -1415,11 +1425,13 @@ export default function CarSequence() {
             const next = {
               chapter: current.chapter,
               live: labelsUp(current, time),
+              started: time >= poseWindows[0].from - CAPTION_LEAD,
               ended: time >= poseWindows[poseWindows.length - 1].to,
             };
             if (
               next.chapter === bandNow.chapter &&
               next.live === bandNow.live &&
+              next.started === bandNow.started &&
               next.ended === bandNow.ended
             ) {
               return;
@@ -1701,8 +1713,8 @@ export default function CarSequence() {
           // A touch the browser scrolled can fling on after the finger lifts,
           // with no events to catch it by, and come to rest between two stops -
           // it came in from the page above or below, where swipes are the
-          // browser's. Once it has, the page goes on to the next stop the way it
-          // was going, or back to one it has only just passed (settleTarget).
+          // browser's. Once it has, the page goes back to the end it came in by
+          // (settleTarget).
           let coast: Direction | null = null;
           let coastCheck = 0;
 
@@ -1711,6 +1723,12 @@ export default function CarSequence() {
           // otherwise it is the browser's for the rest of the touch - which has
           // to be decided then, since a scroll the browser has started can't be
           // taken back. The navbar and the rail keep their own touches.
+          //
+          // Ours, a swipe only docks the page on the sequence from above or
+          // below it. Inside, it goes nowhere: on a touch screen the previous
+          // and next buttons are the only way through, so a thumb resting on
+          // the frame can't send the camera off. At either end a swipe outward
+          // has no stop to go to, so it is the browser's and leaves the page.
           let touch: {
             x: number;
             y: number;
@@ -1754,8 +1772,33 @@ export default function CarSequence() {
             if (event.cancelable) event.preventDefault();
             if (touch.swiped || Math.abs(dy) < CAR_SNAP.swipe) return;
             touch.swiped = true;
+            if (glide || inSequence()) return;
             const target = targetFor(touch.direction, Math.abs(dy));
             if (target !== null) glideTo(target);
+          };
+
+          // The previous and next buttons move the page one stop, like a flick
+          // of the wheel, and chain the same way a key press does. They are a
+          // deliberate press, so they end Pong whichever way they go.
+          stepRef.current = (direction) => {
+            releaseHold?.();
+            const from =
+              glide && (glide.target - glide.position) * direction > 0
+                ? glide.target
+                : window.scrollY;
+            const target = nextStop(stops(), from, direction);
+            if (target !== null) glideTo(target);
+          };
+          let stepsNow: { back: boolean; on: boolean } | null = null;
+          const syncSteps = () => {
+            const all = stops();
+            const next = {
+              back: nextStop(all, window.scrollY, -1) !== null,
+              on: nextStop(all, window.scrollY, 1) !== null,
+            };
+            if (stepsNow?.back === next.back && stepsNow.on === next.on) return;
+            stepsNow = next;
+            setSteps(next);
           };
 
           const settleCoast = () => {
@@ -1777,6 +1820,7 @@ export default function CarSequence() {
           };
           const onScroll = () => {
             if (coast !== null) settleCoast();
+            syncSteps();
           };
 
           const letGo = () => {
@@ -1792,6 +1836,8 @@ export default function CarSequence() {
           window.addEventListener("touchcancel", onTouchEnd, { passive: true });
           window.addEventListener("scroll", onScroll, { passive: true });
           ScrollTrigger.addEventListener("refreshInit", letGo);
+          ScrollTrigger.addEventListener("refresh", syncSteps);
+          syncSteps();
 
           // Panning the rail is a jump, not a scroll: the pointer has the page,
           // so a glide under way lets go of it.
@@ -1966,6 +2012,9 @@ export default function CarSequence() {
             window.removeEventListener("touchcancel", onTouchEnd);
             window.removeEventListener("scroll", onScroll);
             ScrollTrigger.removeEventListener("refreshInit", letGo);
+            ScrollTrigger.removeEventListener("refresh", syncSteps);
+            stepRef.current = null;
+            setSteps(null);
             trigger.kill();
             master.kill();
             labelBeats.forEach((beat) => {
@@ -2108,6 +2157,7 @@ export default function CarSequence() {
   // The legs and beats this set's cockpit run plays, one surface each.
   const excursionSteps = excursionFor(frameSource ?? "landscape").steps;
   const bandStill = portrait ? pauseLayerUrl("portrait", bandChapter.pauseFrame) : null;
+  const step = (direction: Direction) => stepRef.current?.(direction);
 
   return (
     <section
@@ -2311,6 +2361,19 @@ export default function CarSequence() {
             />
           )}
 
+          {/* Previous and next, in the corner across from the credit. They are
+              not held to lg like the credit: a phone on its side gets this set
+              and no caption band, and these are its only buttons. zIndex
+              inline: a new arbitrary class can go uncompiled. */}
+          {frameSet === "landscape" && !calibrationMode && (
+            <div
+              className="absolute right-[3.5%] bottom-[5%]"
+              style={{ zIndex: 35 }}
+            >
+              <CarStepButtons steps={steps} onStep={step} />
+            </div>
+          )}
+
           {/* Labels are placed on the 16:9 stills, so only the landscape set
               has them; the portrait set's caption band stands in for them. */}
           {frameSet === "landscape" && (
@@ -2340,11 +2403,13 @@ export default function CarSequence() {
             labels={CAR_LABELS}
             chapter={band.chapter}
             live={band.live}
-            ended={band.ended}
+            stage={!band.started ? "before" : band.ended ? "after" : "during"}
             lit={lit}
             onToggle={(labelId) =>
               setLitLabel((current) => (current === labelId ? null : labelId))
             }
+            steps={steps}
+            onStep={step}
           />
         )}
       </div>

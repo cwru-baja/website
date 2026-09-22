@@ -87,16 +87,11 @@ describe("snapTarget", () => {
 describe("settleTarget", () => {
   const stops = [1000, 3000, 5000];
 
-  it("finishes a coast that stopped between two stops, the way it was going", () => {
-    expect(settleTarget(stops, 2000, 1)).toBe(3000);
-    expect(settleTarget(stops, 2000, -1)).toBe(1000);
-  });
-
-  it("goes back to a stop the coast has only just passed", () => {
+  it("docks a coast on the end it came in by, however far it flew", () => {
     expect(settleTarget(stops, 1200, 1)).toBe(1000);
-    expect(settleTarget(stops, 1600, 1)).toBe(3000);
-    // In from below, just over the last stop: it docks there.
+    expect(settleTarget(stops, 4000, 1)).toBe(1000);
     expect(settleTarget(stops, 4985, -1)).toBe(5000);
+    expect(settleTarget(stops, 2000, -1)).toBe(5000);
   });
 
   it("leaves a page that is on a stop or outside the sequence", () => {

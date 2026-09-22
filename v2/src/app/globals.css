@@ -224,7 +224,7 @@
 }
 
 [data-car-stage="portrait"] {
-  --car-band-min: 6rem;
+  --car-band-min: 8rem;
   --car-frame-w: min(100vw, calc((100svh - 4rem - var(--car-band-min)) * 0.8));
   flex-direction: column;
   justify-content: flex-start;
@@ -277,7 +277,7 @@
    first paint already has the stage it keeps. */
 @media (orientation: portrait) and (max-width: 1023px) {
   [data-car-stage="pending"] {
-    --car-band-min: 6rem;
+    --car-band-min: 8rem;
     --car-frame-w: min(100vw, calc((100svh - 4rem - var(--car-band-min)) * 0.8));
     flex-direction: column;
     justify-content: flex-start;

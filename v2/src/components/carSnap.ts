@@ -1,7 +1,9 @@
 /**
- * Scrolling the car sequence moves it one stop at a time. A flick of the wheel,
- * a swipe or a scroll key plays the camera all the way to the next still (or
- * back to the previous one), and the page waits there for the next gesture.
+ * Scrolling the car sequence moves it one stop at a time. A flick of the wheel
+ * or a scroll key plays the camera all the way to the next still (or back to
+ * the previous one), and the page waits there for the next gesture. A swipe
+ * only brings the page in to the sequence's near end: on a touch screen the
+ * previous and next buttons are the way through.
  * Everything here is the arithmetic behind that: where the stops are, which
  * wheel events belong to one gesture, and how the page travels between stops.
  * The wiring lives in CarSequence.
@@ -28,8 +30,6 @@ import type { LabelWindow } from "./carSequenceModel";
  *   yield   pixels something else can move the page mid-glide before the glide
  *           gives up, taking it to be the scrollbar or a jump.
  *   slack   pixels either side of a stop that count as being on it.
- *   back    how far past a stop, as a fraction of the way to the next, a
- *           coasting page can come to rest and still go back to it.
  *   settle  seconds Pong takes to settle the page onto the cockpit.
  */
 export const CAR_SNAP = {
@@ -44,7 +44,6 @@ export const CAR_SNAP = {
   swipe: 10,
   yield: 40,
   slack: 2,
-  back: 0.25,
   settle: 0.4,
 } as const;
 
@@ -110,10 +109,10 @@ export const snapTarget = (
 /**
  * Where a page left coasting inside the sequence - a phone's fling, which
  * carries on after the finger has lifted and so can't be caught - finishes:
- * the next stop the way it was going, unless it has only just passed one, which
- * it goes back to. That is how a drag in from the page above or below docks on
- * the end it came in by instead of flying on to the stop after. Null if it
- * stopped on a stop, or outside the sequence.
+ * back on the end it came in by. On a touch screen a swipe never moves the page
+ * through the sequence (the previous and next buttons do), so a fling in from
+ * the page above or below docks where it entered however far it flew. Null if
+ * it stopped on a stop, or outside the sequence.
  */
 export const settleTarget = (
   stops: number[],
@@ -125,12 +124,7 @@ export const settleTarget = (
   if (first === undefined || last === undefined) return null;
   if (position < first || position > last) return null;
   if (stops.some((stop) => Math.abs(stop - position) <= CAR_SNAP.slack)) return null;
-  const ahead = nextStop(stops, position, direction);
-  const behind = nextStop(stops, position, direction > 0 ? -1 : 1);
-  if (ahead === null) return behind;
-  if (behind === null) return ahead;
-  const passed = Math.abs(position - behind) / Math.abs(ahead - behind);
-  return passed < CAR_SNAP.back ? behind : ahead;
+  return direction > 0 ? first : last;
 };
 
 /** A wheel event's vertical travel in pixels, whatever unit it came in. */
