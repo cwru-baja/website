@@ -53,6 +53,7 @@ import {
   type CarLabelSet,
   type LabelPoint,
 } from "./carLabels";
+import { DecodeAhead } from "./carDecodeAhead";
 import {
   FrameStream,
   StreamSchedule,
@@ -208,8 +209,12 @@ export default function CarSequence() {
   // The warmed layer frames. Blink's memory cache only keeps an image something
   // still references, and public/ files are served max-age=0 - so a warmed Image
   // that is let go is collected, and the src swap that shows its frame becomes a
-  // revalidation round trip per frame, mid-scroll.
-  const warmedLayersRef = useRef<HTMLImageElement[]>([]);
+  // revalidation round trip per frame, mid-scroll. Keyed by URL, so the frames
+  // about to be shown can be decoded ahead through them.
+  const warmedLayersRef = useRef(new Map<string, HTMLImageElement>());
+  // The landscape set's decoder, which the timeline steers once it exists; the
+  // canvas draws its orbit bitmaps.
+  const decodeAheadRef = useRef<DecodeAhead | null>(null);
   const requestedFrameRef = useRef(0);
   const drawnFrameRef = useRef(-1);
 
@@ -317,6 +322,11 @@ export default function CarSequence() {
     );
     requestedFrameRef.current = requested;
     canvas.dataset.requestedFrame = String(requested);
+    // A hidden canvas draws nothing. The orbit keeps turning under the legs that
+    // cover it, and a draw there is a decode on the main thread in the middle of
+    // a leg. The timeline shows it and draws it in the same render, before the
+    // browser paints.
+    if (canvas.style.visibility === "hidden") return;
 
     const actual = nearestLoadedFrame(
       requested,
@@ -326,12 +336,17 @@ export default function CarSequence() {
     if (streamRef.current) countShown(canvas, "canvas", requested, actual);
     if (actual === null || actual === drawnFrameRef.current) return;
 
+    // A bitmap decoded ahead where there is one; the Image otherwise, which
+    // decodes on the spot if it has to.
+    const bitmap = decodeAheadRef.current?.bitmap(actual);
     const image = imagesRef.current[actual];
+    const picture =
+      bitmap ?? (image?.complete && image.naturalWidth ? image : null);
     const context = canvas.getContext("2d");
-    if (!image?.complete || !image.naturalWidth || !context) return;
+    if (!picture || !context) return;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    context.drawImage(picture, 0, 0, canvas.width, canvas.height);
     drawnFrameRef.current = actual;
     canvas.dataset.frame = String(actual);
   }, [countShown]);
@@ -444,7 +459,11 @@ export default function CarSequence() {
 
         image.onload = () => {
           const loaded = Boolean(image.naturalWidth);
-          if (typeof image.decode !== "function") {
+          // Only the first frame is decoded as it arrives, because it is drawn
+          // as soon as it does. The rest are decoded just before the canvas
+          // draws them (see DecodeAhead): decoding all 44 up front gives
+          // Chromium's canvas nothing it keeps, and holds ~365 MB in WebKit.
+          if (index !== 0 || typeof image.decode !== "function") {
             finish(loaded);
             return;
           }
@@ -510,7 +529,7 @@ export default function CarSequence() {
             resolve();
           };
           image.src = url;
-          warmed.push(image);
+          warmed.set(url, image);
         });
       let cursor = 0;
       const worker = async () => {
@@ -528,7 +547,7 @@ export default function CarSequence() {
 
     return () => {
       cancelled = true;
-      warmed.length = 0;
+      warmed.clear();
       images.forEach((image) => {
         if (!image) return;
         image.onload = null;
@@ -582,7 +601,24 @@ export default function CarSequence() {
           // the scroll position. Every layer shown goes through `showRun`, which
           // on the landscape set is exactly the old src assignment.
           const stream = frameSet === "portrait" ? streamRef.current : null;
-          const schedule = stream ? new StreamSchedule() : null;
+          // The landscape set has every file in hand already, and decodes what
+          // is about to be shown from the same record.
+          const decoder =
+            frameSet === "landscape"
+              ? new DecodeAhead({
+                  image: (asset) =>
+                    asset.canvasFrame === undefined
+                      ? warmedLayersRef.current.get(asset.url)
+                      : imagesRef.current[asset.canvasFrame],
+                  // WebKit decodes a file's bitmap on the calling thread, and
+                  // its canvas draws the Image's decoded pixels anyway.
+                  bitmaps:
+                    typeof createImageBitmap === "function" &&
+                    !navigator.vendor.startsWith("Apple"),
+                })
+              : null;
+          decodeAheadRef.current = decoder;
+          const schedule = stream || decoder ? new StreamSchedule() : null;
           const runUrl = (prefix: string) => (index: number) =>
             sequenceLayerUrl(source, prefix, index);
           const showRun = (
@@ -598,11 +634,16 @@ export default function CarSequence() {
             },
           ) => {
             if (!stream) {
-              image.src = urlAt(requested);
+              // Every update asks, and most land on the frame already showing.
+              const src = urlAt(requested);
+              if (image.getAttribute("src") !== src) image.src = src;
               if (partner) {
-                partner.image.src = partner.urlAt(
+                const partSrc = partner.urlAt(
                   Math.min(requested, partner.count - 1),
                 );
+                if (partner.image.getAttribute("src") !== partSrc) {
+                  partner.image.src = partSrc;
+                }
               }
               return;
             }
@@ -702,7 +743,7 @@ export default function CarSequence() {
           const labelsBetween = (chapter: CarChapter, from: number, to: number) => {
             poseWindows.push({ chapter: CAR_CHAPTERS.indexOf(chapter), from, to });
             // The pause's masks, for the caption band's chips to light parts with.
-            if (schedule) {
+            if (stream && schedule) {
               Object.keys(CAR_PART_MATTES[chapter.id] ?? {}).forEach((part) => {
                 const matte = partMatteUrl(source, chapter.id, part);
                 if (matte) schedule.add(matte, from, to);
@@ -1346,8 +1387,19 @@ export default function CarSequence() {
             setBand(next);
           };
 
+          // The decoder works from the scrubbed playhead, not the scroll position
+          // it is catching up with: the frames it passes on the way are the ones
+          // about to be shown.
+          let playheadWas = 0;
+          let heading = 1;
           master.eventCallback("onUpdate", () => {
             drawFrame(playhead.frame);
+            if (decoder) {
+              const time = master.time();
+              if (time !== playheadWas) heading = time > playheadWas ? 1 : -1;
+              playheadWas = time;
+              decoder.seek(time, heading);
+            }
             syncLabels();
             // Both the phone's caption band and the desktop subteam tag read
             // this, so it runs whichever set is on screen.
@@ -1366,11 +1418,16 @@ export default function CarSequence() {
           const railFill = railFillRef.current;
           const railHandle = railHandleRef.current;
 
+          let railPercent: number | null = null;
           const paintRail = (progress: number) => {
             if (!rail || !railFill || !railHandle) return;
             const percent = scrubPercent(progress);
             railFill.style.transform = `scaleX(${progress})`;
             railHandle.style.left = `${progress * 100}%`;
+            // The value is what assistive tech is told about, on every change,
+            // so it only changes when the whole percent does.
+            if (percent === railPercent) return;
+            railPercent = percent;
             rail.setAttribute("aria-valuenow", String(percent));
             rail.setAttribute("aria-valuetext", `${percent}%`);
           };
@@ -1837,6 +1894,10 @@ export default function CarSequence() {
             stream.seek(trigger.progress * master.duration(), 1);
             syncBand();
           }
+          if (decoder && schedule) {
+            decoder.setSchedule(schedule.build());
+            decoder.seek(master.time(), 1);
+          }
           const refreshFrame = window.requestAnimationFrame(() =>
             ScrollTrigger.refresh(),
           );
@@ -1870,6 +1931,8 @@ export default function CarSequence() {
               beat.arriving?.kill();
               beat.timeline.kill();
             });
+            decoder?.dispose();
+            if (decodeAheadRef.current === decoder) decodeAheadRef.current = null;
           };
         },
         sectionRef,
