@@ -233,6 +233,40 @@ export default function CarSequence() {
   const eggRef = useRef<HTMLDivElement>(null);
   const freezeRef = useRef<Freeze | null>(null);
   const [eggArmed, setEggArmed] = useState(false);
+  // Mounting Pong renders the section again and starts its own ~250 KB - the
+  // press crops, the dash plate, the colour table - and each of the 80 crops is
+  // decoded. That used to land in the middle of the roll, a viewport and a half
+  // before the cockpit, which cost a frame every time. Once every frame of the
+  // sequence is in, nothing is waiting on the link, so it goes up in the first
+  // idle moment after that instead. The timeline still arms it on the way to
+  // the cockpit, for anyone who gets there while the sequence is still loading.
+  const eggArmRef = useRef({
+    /** This screen plays the cockpit still, so there is an egg to mount. */
+    wanted: false,
+    loaded: false,
+    cancel: null as (() => void) | null,
+    done: false,
+  });
+  const armEggWhenIdle = useCallback(() => {
+    const arm = eggArmRef.current;
+    if (arm.done || arm.cancel || !arm.wanted || !arm.loaded) return;
+    const settle = () => {
+      arm.cancel = null;
+      arm.done = true;
+      setEggArmed(true);
+    };
+    if (typeof window.requestIdleCallback === "function") {
+      const handle = window.requestIdleCallback(settle, { timeout: 4000 });
+      arm.cancel = () => window.cancelIdleCallback(handle);
+    } else {
+      const timer = window.setTimeout(settle, 400);
+      arm.cancel = () => window.clearTimeout(timer);
+    }
+  }, []);
+  useEffect(() => {
+    const arm = eggArmRef.current;
+    return () => arm.cancel?.();
+  }, []);
   // The portrait set's loader, which the timeline steers once it exists.
   const streamRef = useRef<FrameStream | null>(null);
   // Frames the portrait set had to stand in for, for measuring the streaming:
@@ -541,6 +575,9 @@ export default function CarSequence() {
         }
       };
       await Promise.all(Array.from({ length: LOAD_CONCURRENCY }, worker));
+      if (cancelled) return;
+      eggArmRef.current.loaded = true;
+      armEggWhenIdle();
     };
 
     void startLoading();
@@ -964,11 +1001,15 @@ export default function CarSequence() {
                 pauseLayerUrl(source, step.frame) === layerUrl(source, COCKPIT_STILL)
               ) {
                 cockpitHold = { from: at, to: at + duration };
-                // Mount it (and start its ~1 MB of press crops) a viewport and a half
-                // early, so nothing is still loading by the time a button is pressed.
+                // Once the frames are in it is already up (see armEggWhenIdle);
+                // these are for a visitor who arrives before that, and mount it
+                // a viewport and a half early so nothing is still loading by the
+                // time a button is pressed.
                 const arm = () => setEggArmed(true);
                 master.call(arm, undefined, Math.max(startAt, at - 1.5));
                 master.call(arm, undefined, at);
+                eggArmRef.current.wanted = true;
+                armEggWhenIdle();
                 master.set(egg, { autoAlpha: 1 }, at);
                 master.set(egg, { autoAlpha: 0 }, at + duration);
               }
