@@ -18,11 +18,9 @@ import {
 } from "./contentTransition";
 import { createHoverHandoffController } from "./hoverHandoff";
 import { dockCard, nearestWithin, tapAction } from "./mapTouch";
+import { createDotMapCanvas, type Dot, type DotMapCanvas } from "./dotMapCanvas";
 
-const BASE_R = 0.22;
-const MAX_R = 0.38;
-const HOVER_RADIUS = 6;
-const MAGNETIC_RADIUS = 7; // SVG viewBox units
+const MAGNETIC_RADIUS = 7; // viewBox units
 const CARD_W = 480;
 const CARD_H = 330; // approx: header ~55px + 16:9 image ~270px + padding
 const CARD_GAP = 18; // gap between cursor and card edge
@@ -44,13 +42,14 @@ const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 const TOUCH_FIRST = "(hover: none), (pointer: coarse)";
 
 interface Props {
-  dots: [number, number, 0 | 1][];
+  dots: Dot[];
   viewBox: string;
   competitions: CompetitionMarker[];
 }
 
 export function USADotMap({ dots, viewBox, competitions }: Props) {
-  const svgRef = useRef<SVGSVGElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const rendererRef = useRef<DotMapCanvas | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<HTMLDivElement>(null);
   const sessionRef = useRef(0);
@@ -76,27 +75,25 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     );
   }, []);
 
-  // GSAP scroll entrance animation
+  // Draw the dots, and fade them in when the map scrolls into view
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
-    const svg = svgRef.current;
-    if (!svg) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    const circles = svg.querySelectorAll<SVGCircleElement>(".dot");
-    if (!circles.length) return;
+    const renderer = createDotMapCanvas(canvas, {
+      dots,
+      viewBox: [vbX, vbY, vbW, vbH],
+      // The canvas carries text-livery-pop, so this is the resolved colour.
+      venueFill: getComputedStyle(canvas).color,
+    });
+    rendererRef.current = renderer;
 
-    gsap.set(circles, { opacity: 0 });
-
-    const tween = gsap.to(circles, {
-      opacity: 1,
-      duration: 0.3,
-      stagger: { amount: 0.8, from: "random" },
-      ease: "power2.out",
-      scrollTrigger: {
-        trigger: svg,
-        start: "top 80%",
-        toggleActions: "play none none none",
-      },
+    const trigger = ScrollTrigger.create({
+      trigger: canvas,
+      start: "top 80%",
+      once: true,
+      onEnter: () => renderer.startFade(),
     });
 
     // The touch venue markers arrive as the last dots do.
@@ -110,7 +107,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
         delay: 0.6,
         ease: "power2.out",
         scrollTrigger: {
-          trigger: svg,
+          trigger: canvas,
           start: "top 80%",
           toggleActions: "play none none none",
         },
@@ -118,23 +115,35 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     }
 
     return () => {
-      tween.kill();
+      trigger.kill();
       markersTween?.kill();
+      renderer.dispose();
+      rendererRef.current = null;
     };
-  }, []);
+  }, [dots, vbX, vbY, vbW, vbH]);
 
   // Magnetic cursor + hover radius effect for a mouse; tap-to-dock for touch
   useEffect(() => {
-    const svg = svgRef.current;
+    const canvas = canvasRef.current;
     const card = cardRef.current;
     const markers = markersRef.current;
-    if (!svg || !card) return;
+    if (!canvas || !card) return;
 
-    const circles = Array.from(svg.querySelectorAll<SVGCircleElement>(".dot"));
-    const positions = circles.map((c) => ({
-      cx: parseFloat(c.getAttribute("cx")!),
-      cy: parseFloat(c.getAttribute("cy")!),
-    }));
+    // The canvas keeps the viewBox's aspect ratio, so one scale maps both axes.
+    const toMap = (clientX: number, clientY: number) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: vbX + ((clientX - rect.left) / rect.width) * vbW,
+        y: vbY + ((clientY - rect.top) / rect.height) * vbH,
+      };
+    };
+    const toScreen = (x: number, y: number) => {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: rect.left + ((x - vbX) / vbW) * rect.width,
+        y: rect.top + ((y - vbY) / vbH) * rect.height,
+      };
+    };
 
     gsap.set(card, { opacity: 0, scale: 0.88, x: 0, y: 0 });
 
@@ -246,13 +255,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
 
     const onMouseMove = (e: MouseEvent) => {
       cancelAnimationFrame(rafId);
-      const ctm = svg.getScreenCTM();
-      if (!ctm) return;
-
-      const pt = svg.createSVGPoint();
-      pt.x = e.clientX;
-      pt.y = e.clientY;
-      const { x: mx, y: my } = pt.matrixTransform(ctm.inverse());
+      const { x: mx, y: my } = toMap(e.clientX, e.clientY);
 
       // Resolve hover state synchronously so a target entered near the end of
       // the grace window cancels dismissal before the grace timer can fire.
@@ -270,10 +273,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
 
       const hoveredComp = nearestComp && nearestDist < MAGNETIC_RADIUS ? nearestComp : null;
       if (hoveredComp) {
-        const cpt = svg.createSVGPoint();
-        cpt.x = hoveredComp.svgX;
-        cpt.y = hoveredComp.svgY;
-        const compScreen = cpt.matrixTransform(ctm);
+        const compScreen = toScreen(hoveredComp.svgX, hoveredComp.svgY);
 
         const t = 1 - nearestDist / MAGNETIC_RADIUS;
         placeCard(
@@ -289,27 +289,15 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
         handoff.schedule();
       }
 
-      rafId = requestAnimationFrame(() => {
-        // Dot hover radius — grow dots near cursor
-        for (let i = 0; i < circles.length; i++) {
-          const dx = positions[i].cx - mx;
-          const dy = positions[i].cy - my;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          circles[i].setAttribute(
-            "r",
-            dist < HOVER_RADIUS
-              ? (BASE_R + (MAX_R - BASE_R) * (1 - dist / HOVER_RADIUS)).toFixed(3)
-              : BASE_R.toFixed(3)
-          );
-        }
-      });
+      // Grow the dots near the cursor
+      rafId = requestAnimationFrame(() => rendererRef.current?.setCursor(mx, my));
     };
 
     const onMouseEnter = () => preloadCompetitionImages(competitions);
 
     const onMouseLeave = () => {
       cancelAnimationFrame(rafId);
-      for (const c of circles) c.setAttribute("r", BASE_R.toFixed(3));
+      rendererRef.current?.setCursor(null, null);
       handoff.dismissNow();
     };
 
@@ -355,7 +343,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       // A mouse hover card (touchscreen laptops) gives way to the docked one.
       if (handoff.current() !== null) handoff.dismissNow();
 
-      const mapRect = svg.getBoundingClientRect();
+      const mapRect = canvas.getBoundingClientRect();
       const dock = dockCard({
         map: mapRect,
         // Layout size, unaffected by the scale transform. The card's height is
@@ -453,15 +441,10 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     };
 
     const onTap = (x: number, y: number) => {
-      const ctm = svg.getScreenCTM();
-      if (!ctm) return;
-      const venues = competitions.map((comp) => {
-        const pt = svg.createSVGPoint();
-        pt.x = comp.svgX;
-        pt.y = comp.svgY;
-        const screen = pt.matrixTransform(ctm);
-        return { comp, x: screen.x, y: screen.y };
-      });
+      const venues = competitions.map((comp) => ({
+        comp,
+        ...toScreen(comp.svgX, comp.svgY),
+      }));
       const hit = nearestWithin(venues, x, y, TAP_RADIUS_PX);
 
       switch (tapAction(docked?.id ?? null, hit?.comp.id ?? null)) {
@@ -530,7 +513,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       noteTouch(e);
       if (docked === null) return;
       const target = e.target as Node | null;
-      if (target && (svg.contains(target) || card.contains(target))) return;
+      if (target && (target === canvas || card.contains(target))) return;
       closeDocked();
     };
 
@@ -544,7 +527,7 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
     const onScroll = () => {
       if (
         docked !== null &&
-        Math.abs(svg.getBoundingClientRect().top - dockedMapTop) >
+        Math.abs(canvas.getBoundingClientRect().top - dockedMapTop) >
           DOCK_SCROLL_CLOSE_PX
       ) {
         closeDocked();
@@ -569,15 +552,15 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
         },
         { rootMargin: "200px 0px" },
       );
-      preloadObserver.observe(svg);
+      preloadObserver.observe(canvas);
     }
 
-    svg.addEventListener("mouseenter", onMouseEnter, { once: true });
-    svg.addEventListener("mousemove", onMouseMoveFromMouse);
-    svg.addEventListener("mouseleave", onMouseLeave);
-    svg.addEventListener("pointerdown", onPointerDown);
-    svg.addEventListener("pointerup", onPointerUp);
-    svg.addEventListener("pointercancel", onPointerCancel);
+    canvas.addEventListener("mouseenter", onMouseEnter, { once: true });
+    canvas.addEventListener("mousemove", onMouseMoveFromMouse);
+    canvas.addEventListener("mouseleave", onMouseLeave);
+    canvas.addEventListener("pointerdown", onPointerDown);
+    canvas.addEventListener("pointerup", onPointerUp);
+    canvas.addEventListener("pointercancel", onPointerCancel);
     document.addEventListener("pointerdown", onDocumentPointerDown, true);
     document.addEventListener("pointerup", noteTouch, true);
     document.addEventListener("pointercancel", noteTouch, true);
@@ -594,12 +577,12 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       card.style.pointerEvents = "";
       markSelected(null);
       preloadObserver?.disconnect();
-      svg.removeEventListener("mouseenter", onMouseEnter);
-      svg.removeEventListener("mousemove", onMouseMoveFromMouse);
-      svg.removeEventListener("mouseleave", onMouseLeave);
-      svg.removeEventListener("pointerdown", onPointerDown);
-      svg.removeEventListener("pointerup", onPointerUp);
-      svg.removeEventListener("pointercancel", onPointerCancel);
+      canvas.removeEventListener("mouseenter", onMouseEnter);
+      canvas.removeEventListener("mousemove", onMouseMoveFromMouse);
+      canvas.removeEventListener("mouseleave", onMouseLeave);
+      canvas.removeEventListener("pointerdown", onPointerDown);
+      canvas.removeEventListener("pointerup", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerCancel);
       document.removeEventListener("pointerdown", onDocumentPointerDown, true);
       document.removeEventListener("pointerup", noteTouch, true);
       document.removeEventListener("pointercancel", noteTouch, true);
@@ -607,29 +590,19 @@ export function USADotMap({ dots, viewBox, competitions }: Props) {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
     };
-  }, [competitions]);
+  }, [competitions, vbX, vbY, vbW, vbH]);
 
   return (
     <>
       <div className="relative">
-        <svg
-          ref={svgRef}
-          viewBox={viewBox}
-          xmlns="http://www.w3.org/2000/svg"
+        <canvas
+          ref={canvasRef}
+          aria-hidden
           // manipulation: no double-tap zoom when a venue is tapped twice.
-          className="w-full h-auto cursor-crosshair touch-manipulation"
-        >
-          {dots.map(([cx, cy, isVenue], i) => (
-            <circle
-              key={i}
-              className={isVenue ? "dot fill-livery-pop" : "dot"}
-              cx={cx}
-              cy={cy}
-              r={BASE_R}
-              fill={isVenue ? undefined : "rgba(255,255,255,0.5)"}
-            />
-          ))}
-        </svg>
+          // text-livery-pop is read back as the venue dots' fill.
+          className="block w-full cursor-crosshair touch-manipulation text-livery-pop"
+          style={{ aspectRatio: `${vbW} / ${vbH}` }}
+        />
 
         {/* Venue markers sized in screen pixels. The map's own venue dots are
             about a pixel across on a phone, so small and touch screens show
