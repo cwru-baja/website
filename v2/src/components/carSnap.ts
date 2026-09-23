@@ -31,6 +31,10 @@ import type { LabelWindow } from "./carSequenceModel";
  *           gives up, taking it to be the scrollbar or a jump.
  *   slack   pixels either side of a stop that count as being on it.
  *   settle  seconds Pong takes to settle the page onto the cockpit.
+ *   launch  viewports a second a press of the previous or next button sets the
+ *           page off at, rather than from a standstill: it starts at the
+ *           still's edge (see leaveStill), and the scrub's own lag eases the
+ *           camera into it.
  */
 export const CAR_SNAP = {
   speed: 1.5,
@@ -45,6 +49,7 @@ export const CAR_SNAP = {
   yield: 40,
   slack: 2,
   settle: 0.4,
+  launch: 1.5,
 } as const;
 
 export type Direction = 1 | -1;
@@ -78,6 +83,25 @@ export const nextStop = (
     if (stops[index] < position - slack) return stops[index];
   }
   return null;
+};
+
+/**
+ * Where a press of the previous or next button sets the page off from. A stop
+ * is the middle of a still - a stretch where the car holds and its labels are
+ * up (`stills`, in scroll pixels) - so from rest the page has half of it to
+ * cover before anything on screen changes, and a press would sit dead for
+ * half a second. Nothing on that stretch moves, so the page can start from the
+ * still's edge the way it is going instead: the labels leave at once and the
+ * camera follows. Null when the page is not inside a still.
+ */
+export const leaveStill = (
+  stills: LabelWindow[],
+  position: number,
+  direction: Direction,
+): number | null => {
+  const still = stills.find(({ from, to }) => position > from && position < to);
+  if (!still) return null;
+  return direction > 0 ? still.to : still.from;
 };
 
 /**

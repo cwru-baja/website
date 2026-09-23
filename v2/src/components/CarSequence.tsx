@@ -36,6 +36,7 @@ import {
   CAR_SNAP,
   glideStep,
   keyTravel,
+  leaveStill,
   nextStop,
   readWheel,
   settleTarget,
@@ -1600,8 +1601,10 @@ export default function CarSequence() {
             window.cancelAnimationFrame(glideFrame);
           };
           // A new stop mid-glide keeps the page's speed, so it runs on through
-          // the one it was headed for instead of stopping there and starting over.
-          const glideTo = (target: number) => {
+          // the one it was headed for instead of stopping there and starting over,
+          // and a page the wheel already has moving (`velocity`, pixels a second)
+          // carries that into the glide instead of stopping dead first.
+          const glideTo = (target: number, velocity = 0) => {
             const from = glide ? glide.position : window.scrollY;
             const direction: Direction = target > from ? 1 : -1;
             if (glide) {
@@ -1611,7 +1614,7 @@ export default function CarSequence() {
             }
             glide = {
               position: from,
-              velocity: 0,
+              velocity: velocity * direction > 0 ? velocity : 0,
               target,
               direction,
               written: from,
@@ -1780,6 +1783,12 @@ export default function CarSequence() {
           // The previous and next buttons move the page one stop, like a flick
           // of the wheel, and chain the same way a key press does. They are a
           // deliberate press, so they end Pong whichever way they go.
+          //
+          // From rest, a press answers at once: the page jumps over the rest of
+          // the still it is sitting in - nothing there moves - and sets off from
+          // its edge already at speed, so the labels start to leave on the next
+          // frame and the camera follows (see leaveStill). The playhead is put
+          // on the edge too, or the scrub would spend its lag crossing the still.
           stepRef.current = (direction) => {
             releaseHold?.();
             const from =
@@ -1787,7 +1796,31 @@ export default function CarSequence() {
                 ? glide.target
                 : window.scrollY;
             const target = nextStop(stops(), from, direction);
-            if (target !== null) glideTo(target);
+            if (target === null) return;
+            if (glide) {
+              glideTo(target);
+              return;
+            }
+            const duration = master.duration();
+            const span = trigger.end - trigger.start;
+            const toScroll = (time: number) => trigger.start + (time / duration) * span;
+            const edge = leaveStill(
+              poseWindows.map(({ from: start, to: end }) => ({
+                from: toScroll(start),
+                to: toScroll(end),
+              })),
+              from,
+              direction,
+            );
+            if (edge !== null) {
+              // A whole pixel past the edge, so the playhead is out of the still.
+              const leave = direction > 0 ? Math.ceil(edge) + 1 : Math.floor(edge) - 1;
+              window.scrollTo(0, leave);
+              // A scrub still settling from the last landing would draw over it.
+              trigger.getTween()?.progress(1);
+              master.time(((leave - trigger.start) / span) * duration);
+            }
+            glideTo(target, direction * CAR_SNAP.launch * window.innerHeight);
           };
           let stepsNow: { back: boolean; on: boolean } | null = null;
           const syncSteps = () => {

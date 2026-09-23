@@ -3,6 +3,7 @@ import {
   CAR_SNAP,
   glideStep,
   keyTravel,
+  leaveStill,
   nextStop,
   readWheel,
   settleTarget,
@@ -54,6 +55,29 @@ describe("nextStop", () => {
   it("has nowhere to go past either end", () => {
     expect(nextStop(stops, 900, 1)).toBeNull();
     expect(nextStop(stops, 100, -1)).toBeNull();
+  });
+});
+
+describe("leaveStill", () => {
+  const stills = [
+    { from: 800, to: 1400 },
+    { from: 3000, to: 3000 },
+    { from: 4000, to: 4500 },
+  ];
+
+  it("leaves from the edge of the still the page is resting in", () => {
+    expect(leaveStill(stills, 1100, 1)).toBe(1400);
+    expect(leaveStill(stills, 1100, -1)).toBe(800);
+    expect(leaveStill(stills, 4250, 1)).toBe(4500);
+  });
+
+  it("leaves from where the page is outside a still, or on its edge", () => {
+    expect(leaveStill(stills, 0, 1)).toBeNull();
+    expect(leaveStill(stills, 2000, -1)).toBeNull();
+    expect(leaveStill(stills, 1400, 1)).toBeNull();
+    expect(leaveStill(stills, 800, -1)).toBeNull();
+    // A still with no length has no middle to rest in.
+    expect(leaveStill(stills, 3000, 1)).toBeNull();
   });
 });
 

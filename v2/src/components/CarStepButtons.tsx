@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { Direction } from "./carSnap";
 
 /**
@@ -14,6 +15,11 @@ import type { Direction } from "./carSnap";
  * Up and down rather than left and right, because that is the way the page
  * goes: the next stop is further down it. The ends are aria-disabled, not
  * disabled, so a button that runs out under keyboard focus keeps it.
+ *
+ * A press goes on the pointer going down, not on the click: a click only lands
+ * when the button comes back up, a tenth of a second or so later, and the
+ * camera should be moving by then. The click still steps for a press that
+ * came from anywhere else - Enter or Space, assistive tech.
  *
  * Drawn the way the competition page's season rows are: a heavy square-capped
  * chevron in the livery's ink, and a solid livery fill on hover (a press, on a
@@ -52,14 +58,25 @@ export function CarStepButton({
   iconClassName = "size-6",
 }: CarStepButtonProps) {
   const able = Boolean(steps && (direction > 0 ? steps.on : steps.back));
+  // Whether this press already stepped on the way down, so its click doesn't.
+  const pressed = useRef(false);
   return (
     <button
       type="button"
       aria-label={direction > 0 ? "Next view" : "Previous view"}
       aria-disabled={!able}
       data-car-step={direction > 0 ? "next" : "previous"}
-      onClick={() => {
+      onPointerDown={(event) => {
+        if (!event.isPrimary || event.button !== 0) return;
+        pressed.current = true;
         if (able) onStep(direction);
+      }}
+      onClick={(event) => {
+        // A click with no pointer press behind it: the keyboard (detail 0), or
+        // a press that went down somewhere else.
+        const stepped = pressed.current && event.detail > 0;
+        pressed.current = false;
+        if (able && !stepped) onStep(direction);
       }}
       // Only opacity and visibility transition - the fade in once there are
       // stops, invisible until then so it can't be tabbed to. The hover fill
