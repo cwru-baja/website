@@ -35,8 +35,9 @@ export default function CarPage() {
     <>
       <Navbar />
 
-      {/* Page header */}
-      <section className="bg-bg pt-40 pb-16">
+      {/* Page header. On a touch screen it is taken out of the page while the
+          car is part-way through (see globals.css). */}
+      <section data-car-page-top className="bg-bg pt-40 pb-16">
         <PageContainer>
           <PageTitle lead="THE" accent="CAR." />
           <div className="mt-8 h-px w-full bg-white/8" />

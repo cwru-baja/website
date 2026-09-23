@@ -4,6 +4,13 @@
  * the previous one), and the page waits there for the next gesture. A swipe
  * only brings the page in to the sequence's near end: on a touch screen the
  * previous and next buttons are the way through.
+ *
+ * The wheel is ours on the page above and below the sequence too. A browser
+ * only lets a scroll gesture be cancelled from its first event: one that starts
+ * on the page header and is left to the browser can't be stopped once it
+ * reaches the car, and its momentum carries the camera off the first still. So
+ * there the page scrolls by the wheel's own amounts, as it would have, and the
+ * move that would cross into the sequence docks on its end instead.
  * Everything here is the arithmetic behind that: where the stops are, which
  * wheel events belong to one gesture, and how the page travels between stops.
  * The wiring lives in CarSequence.
@@ -31,6 +38,14 @@ import type { LabelWindow } from "./carSequenceModel";
  *           gives up, taking it to be the scrollbar or a jump.
  *   slack   pixels either side of a stop that count as being on it.
  *   settle  seconds Pong takes to settle the page onto the cockpit.
+ *   notch   pixels the first wheel event after a pause has to reach to be eased
+ *           in outside the sequence, the way a browser eases a mouse wheel's
+ *           click. A trackpad's stream moves the page at once: easing one that
+ *           is already under way would slow it down.
+ *   ease    seconds that easing takes to close most of the distance (its time
+ *           constant).
+ *   follow  the same, for the camera following the buttons on a touch screen,
+ *           where no scrub does it: about the desktop's `scrub: 0.3`.
  *   launch  viewports a second a press of the previous or next button sets the
  *           page off at, rather than from a standstill: it starts at the
  *           still's edge (see leaveStill), and the scrub's own lag eases the
@@ -49,6 +64,9 @@ export const CAR_SNAP = {
   yield: 40,
   slack: 2,
   settle: 0.4,
+  notch: 50,
+  ease: 0.06,
+  follow: 0.1,
   launch: 1.5,
 } as const;
 
@@ -105,12 +123,12 @@ export const leaveStill = (
 };
 
 /**
- * Where a gesture takes the page, or null to leave it to the browser. `stops`
- * are scroll positions, the first and last being the sequence's two ends. From
- * inside the sequence it is the next stop that way; past the last one the page
- * scrolls on out. From outside, it is the near end - but only if this move
- * (`travel` pixels) would carry the page into the sequence, so the page above
- * and below it scrolls as it always has.
+ * Which stop a gesture takes the page to, or null for none: the page just
+ * scrolls. `stops` are scroll positions, the first and last being the
+ * sequence's two ends. From inside the sequence it is the next stop that way;
+ * past the last one the page scrolls on out. From outside, it is the near end -
+ * but only if this move (`travel` pixels) would carry the page into the
+ * sequence, so the page above and below it scrolls as it always has.
  */
 export const snapTarget = (
   stops: number[],
@@ -121,11 +139,14 @@ export const snapTarget = (
   const first = stops[0];
   const last = stops[stops.length - 1];
   if (first === undefined || last === undefined) return null;
+  // A move that would land on the end - within the slack that counts as on it -
+  // docks there too: landing on it by itself would leave the rest of the
+  // scroll free to carry on to the next stop.
   if (position < first - CAR_SNAP.slack) {
-    return direction > 0 && position + travel > first ? first : null;
+    return direction > 0 && position + travel >= first - CAR_SNAP.slack ? first : null;
   }
   if (position > last + CAR_SNAP.slack) {
-    return direction < 0 && position - travel < last ? last : null;
+    return direction < 0 && position - travel <= last + CAR_SNAP.slack ? last : null;
   }
   return nextStop(stops, position, direction);
 };
@@ -316,4 +337,49 @@ export const glideStep = (
   const position = glide.position + toward * speed * seconds;
   if ((target - position) * toward <= 0) return { position: target, velocity: 0, done: true };
   return { position, velocity: toward * speed, done: false };
+};
+
+/**
+ * One tick of the page easing toward where the wheel has sent it outside the
+ * sequence: most of the way in `constant` seconds (`ease`), the rest trailing
+ * off, done once it is within half a pixel.
+ */
+export const easeStep = (
+  position: number,
+  target: number,
+  seconds: number,
+  constant: number = CAR_SNAP.ease,
+): { position: number; done: boolean } => {
+  const next = position + (target - position) * (1 - Math.exp(-seconds / constant));
+  if (Math.abs(target - next) < 0.5) return { position: target, done: true };
+  return { position: next, done: false };
+};
+
+/**
+ * On a touch screen the car is played by its previous and next buttons alone,
+ * and no swipe may carry the page onto it part-way through - a browser won't
+ * let a finger's scroll be stopped once it has started. So the page only holds
+ * what a swipe is allowed to reach, and the rest is taken out of it: which of
+ * the page above the car and the page below it are there. Coming from either,
+ * only that one - so the page ends at the car and a fling stops on it. On the
+ * car, the page above only from its first view and the page below only from
+ * its last, and neither in between (or while it plays), when the page can't
+ * scroll at all. `top` is the car's top edge on the screen; `give` is how far
+ * past it the page can sit and still be on the car (a phone's toolbar
+ * collapsing makes the screen taller than the car).
+ */
+export const dockRooms = ({
+  top,
+  give,
+  first,
+  last,
+}: {
+  top: number;
+  give: number;
+  first: boolean;
+  last: boolean;
+}): { above: boolean; below: boolean } => {
+  if (top > 1) return { above: true, below: false };
+  if (top < -give - 1) return { above: false, below: true };
+  return { above: first, below: last };
 };

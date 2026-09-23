@@ -34,6 +34,8 @@ import {
 } from "./carScrubber";
 import {
   CAR_SNAP,
+  dockRooms,
+  easeStep,
   glideStep,
   keyTravel,
   leaveStill,
@@ -123,6 +125,24 @@ const ownsKey = (target: EventTarget | null, key: string) =>
     target.closest("input, textarea, select, [contenteditable]") ||
       (key === " " && target.closest("button, [role='button'], summary")),
   );
+// A wheel over a box that scrolls on its own - a panel, a menu - and still has
+// room to go that way, which scrolls the box rather than the page.
+const scrollsOwnBox = (target: EventTarget | null, pixels: number) => {
+  for (
+    let node = target instanceof Element ? target : null;
+    node && node !== document.body && node !== document.documentElement;
+    node = node.parentElement
+  ) {
+    const { overflowY } = getComputedStyle(node);
+    if (overflowY !== "auto" && overflowY !== "scroll") continue;
+    const room =
+      pixels > 0
+        ? node.scrollHeight - node.clientHeight - node.scrollTop
+        : node.scrollTop;
+    if (room > 1) return true;
+  }
+  return false;
+};
 type ResponsiveMode = "desktop" | "mobile";
 // A label's name is revealed from the knee outward, so it grows out of its line.
 // Shown, the clip stands a little clear of the name: a clip also cuts pointer
@@ -241,6 +261,12 @@ export default function CarSequence() {
   // timeline's closure that takes the page there. Null until there are stops.
   const [steps, setSteps] = useState<{ back: boolean; on: boolean } | null>(null);
   const stepRef = useRef<((direction: Direction) => void) | null>(null);
+  // Where a touch screen's buttons left the timeline, so turning the phone -
+  // which lays the timeline down again - doesn't send the car back to the start.
+  const touchTimeRef = useRef(0);
+  // On a touch screen, the room under the car for a phone's toolbar to fold
+  // away into (see globals.css).
+  const spacerRef = useRef<HTMLDivElement>(null);
   const [eggArmed, setEggArmed] = useState(false);
   // Mounting Pong renders the section again and starts its own ~250 KB - the
   // press crops, the dash plate, the colour table - and each of the 80 crops is
@@ -622,12 +648,15 @@ export default function CarSequence() {
           desktop: "(min-width: 1024px)",
           mobile: "(max-width: 1023px)",
           reduceMotion: "(prefers-reduced-motion: reduce)",
+          // Touch first: phones either way up, and tablets.
+          touch: "(hover: none) and (pointer: coarse)",
         },
         (context) => {
           const conditions = context.conditions as {
             desktop: boolean;
             mobile: boolean;
             reduceMotion: boolean;
+            touch: boolean;
           };
 
           if (conditions.reduceMotion) {
@@ -1486,6 +1515,212 @@ export default function CarSequence() {
             rail.setAttribute("aria-valuetext", `${percent}%`);
           };
 
+          // On a touch screen scrolling never plays the car: the previous and
+          // next buttons are the only way through it. The sequence is one screen
+          // tall rather than pinned over a long scroll, and the page only holds
+          // what a swipe may reach from where it is (dockRooms, globals.css): a
+          // fling from above or below stops on the car, and leaves it only past
+          // an end - up the page from the first view, down it from the last. The
+          // buttons play the timeline itself, at the pace a flick of the wheel
+          // plays it on the desktop: the same glide, in pixels of a viewport,
+          // with the camera following it the way the desktop's scrub follows
+          // the page.
+          if (conditions.touch) {
+            const stage = stageRef.current;
+            const root = document.documentElement;
+            const page = window.innerHeight;
+            const duration = master.duration();
+            const stops = snapStops(poseWindows, duration).map((time) => time * page);
+            const stills = poseWindows.map(({ from, to }) => ({
+              from: from * page,
+              to: to * page,
+            }));
+
+            // `goal` is where the glide has the timeline, in pixels; `shown` is
+            // the camera easing after it.
+            const start = Math.min(Math.max(touchTimeRef.current, 0), duration) * page;
+            let goal = start;
+            let shown = start;
+            let play: (Glide & { target: number }) | null = null;
+            let frameAt: number | null = null;
+            let tickFrame = 0;
+            let travel: Direction = 1;
+
+            const show = (position: number) => {
+              shown = position;
+              const time = position / page;
+              touchTimeRef.current = time;
+              master.time(time);
+              stream?.seek(time, travel);
+            };
+
+            let stepsNow: { back: boolean; on: boolean } | null = null;
+            const syncSteps = () => {
+              const at = play ? play.target : goal;
+              const next = {
+                back: nextStop(stops, at, -1) !== null,
+                on: nextStop(stops, at, 1) !== null,
+              };
+              if (stepsNow?.back === next.back && stepsNow.on === next.on) return;
+              stepsNow = next;
+              setSteps(next);
+            };
+
+            const tick = (now: number) => {
+              const seconds =
+                frameAt === null ? 1 / 60 : Math.min((now - frameAt) / 1000, 0.05);
+              frameAt = now;
+              if (play) {
+                const step = glideStep(play, play.target, seconds, page);
+                play.position = step.position;
+                play.velocity = step.velocity;
+                goal = step.position;
+                if (step.done) {
+                  play = null;
+                  syncSteps();
+                }
+              }
+              const follow = easeStep(shown, goal, seconds, CAR_SNAP.follow);
+              show(follow.position);
+              if (play || !follow.done) {
+                tickFrame = window.requestAnimationFrame(tick);
+              } else {
+                tickFrame = 0;
+                frameAt = null;
+                syncRooms();
+              }
+            };
+            const run = () => {
+              if (tickFrame) return;
+              tickFrame = window.requestAnimationFrame(tick);
+              syncRooms();
+            };
+            const halt = () => {
+              window.cancelAnimationFrame(tickFrame);
+              tickFrame = 0;
+              frameAt = null;
+              play = null;
+              goal = shown;
+              syncRooms();
+            };
+
+            // A press with the car part-way off the screen brings it on first.
+            const dock = () => {
+              if (!stage) return;
+              const top = stage.getBoundingClientRect().top;
+              if (Math.abs(top) > 1) {
+                window.scrollTo({ top: window.scrollY + top, behavior: "smooth" });
+              }
+            };
+
+            // From rest, a press answers at once, as on the desktop: nothing
+            // moves across the rest of the still the car is sitting in, so the
+            // timeline jumps to its edge and sets off from there (leaveStill).
+            // Mid-glide, a second press the same way goes one stop further.
+            stepRef.current = (direction) => {
+              releaseHold?.();
+              dock();
+              const from =
+                play && (play.target - play.position) * direction > 0
+                  ? play.target
+                  : goal;
+              const target = nextStop(stops, from, direction);
+              if (target === null) return;
+              travel = direction;
+              if (play) {
+                play.target = target;
+              } else {
+                const edge = leaveStill(stills, goal, direction);
+                let position = goal;
+                if (edge !== null) {
+                  position = direction > 0 ? Math.ceil(edge) + 1 : Math.floor(edge) - 1;
+                  show(position);
+                }
+                goal = position;
+                play = {
+                  position,
+                  velocity: direction * CAR_SNAP.launch * page,
+                  target,
+                };
+              }
+              syncSteps();
+              run();
+            };
+
+            // Pong holds the car on the cockpit until a button is pressed.
+            freezeRef.current = (onRelease) => {
+              halt();
+              const release = () => {
+                if (releaseHold !== release) return;
+                releaseHold = null;
+                onRelease();
+              };
+              releaseHold = release;
+              return release;
+            };
+
+            // Taking the page above out of it moves everything below up by its
+            // height, so the page is scrolled by the same amount in the same
+            // step, and nothing on the screen moves.
+            let rooms: { above: boolean; below: boolean } | null = null;
+            const spacer = spacerRef.current;
+            const syncRooms = () => {
+              if (!stage) return;
+              const settled = !tickFrame;
+              const next = dockRooms({
+                top: stage.getBoundingClientRect().top,
+                give: spacer?.offsetHeight ?? 0,
+                first: settled && nextStop(stops, goal, -1) === null,
+                last: settled && nextStop(stops, goal, 1) === null,
+              });
+              if (rooms?.above === next.above && rooms.below === next.below) return;
+              rooms = next;
+              const before = stage.getBoundingClientRect().top;
+              root.dataset.carDock = [next.above && "above", next.below && "below"]
+                .filter(Boolean)
+                .join(" ");
+              const moved = stage.getBoundingClientRect().top - before;
+              if (Math.abs(moved) >= 0.5) window.scrollBy(0, moved);
+            };
+            window.addEventListener("scroll", syncRooms, { passive: true });
+            window.addEventListener("resize", syncRooms);
+
+            if (stream && schedule) stream.setSchedule(schedule.build());
+            if (decoder && schedule) decoder.setSchedule(schedule.build());
+            show(start);
+            decoder?.seek(master.time(), 1);
+            syncBand();
+            syncSteps();
+            syncRooms();
+            // No pin any more, so everything measured below the car moves up.
+            const refreshFrame = window.requestAnimationFrame(() =>
+              ScrollTrigger.refresh(),
+            );
+
+            return () => {
+              window.cancelAnimationFrame(refreshFrame);
+              window.cancelAnimationFrame(tickFrame);
+              releaseHold?.();
+              freezeRef.current = null;
+              window.removeEventListener("scroll", syncRooms);
+              window.removeEventListener("resize", syncRooms);
+              // Put the page back whole, keeping the car where it is on screen.
+              const before = stage?.getBoundingClientRect().top ?? 0;
+              delete root.dataset.carDock;
+              const moved = (stage?.getBoundingClientRect().top ?? 0) - before;
+              if (Math.abs(moved) >= 0.5) window.scrollBy(0, moved);
+              stepRef.current = null;
+              setSteps(null);
+              master.kill();
+              labelBeats.forEach((beat) => {
+                beat.arriving?.kill();
+                beat.timeline.kill();
+              });
+              decoder?.dispose();
+              if (decodeAheadRef.current === decoder) decodeAheadRef.current = null;
+            };
+          }
+
           const trigger = ScrollTrigger.create({
             id: "car-sequence",
             trigger: sectionRef.current,
@@ -1495,7 +1730,6 @@ export default function CarSequence() {
             end: () => `+=${Math.round(master.duration() * window.innerHeight)}`,
             scrub: 0.3,
             pinSpacing: true,
-            anticipatePin: 1,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               paintRail(self.progress);
@@ -1605,6 +1839,7 @@ export default function CarSequence() {
           // and a page the wheel already has moving (`velocity`, pixels a second)
           // carries that into the glide instead of stopping dead first.
           const glideTo = (target: number, velocity = 0) => {
+            stopEase();
             const from = glide ? glide.position : window.scrollY;
             const direction: Direction = target > from ? 1 : -1;
             if (glide) {
@@ -1623,15 +1858,63 @@ export default function CarSequence() {
             glideFrame = window.requestAnimationFrame(glideTick);
           };
 
-          // Where a gesture going `direction` takes the page, or null to leave it
-          // to the browser. Another key press or swipe the same way mid-glide
-          // goes one stop past the one the page is already headed for; the wheel
-          // never does (see readWheel).
+          // Above and below the sequence the wheel scrolls the page by its own
+          // amounts, as the browser would have - by our hand, so that the gesture
+          // stays ours to stop at the sequence's edge (see carSnap). A click of a
+          // mouse wheel (`eased`) is eased in, as the browser eases it, and what
+          // follows it joins in; a trackpad's stream moves the page at once.
+          let ease: { position: number; target: number; written: number; frameAt: number | null } | null =
+            null;
+          let easeFrame = 0;
+          const stopEase = () => {
+            if (!ease) return;
+            ease = null;
+            window.cancelAnimationFrame(easeFrame);
+          };
+          const easeTick = (now: number) => {
+            if (!ease) return;
+            // The scrollbar or a jump has taken the page.
+            if (Math.abs(window.scrollY - ease.written) > CAR_SNAP.yield) {
+              stopEase();
+              return;
+            }
+            const seconds =
+              ease.frameAt === null ? 1 / 60 : Math.min((now - ease.frameAt) / 1000, 0.05);
+            ease.frameAt = now;
+            const step = easeStep(ease.position, ease.target, seconds);
+            ease.position = step.position;
+            window.scrollTo(0, step.position);
+            ease.written = window.scrollY;
+            if (step.done) stopEase();
+            else easeFrame = window.requestAnimationFrame(easeTick);
+          };
+          const scrollBy = (pixels: number, eased: boolean) => {
+            const bottom =
+              document.documentElement.scrollHeight - window.innerHeight;
+            const from = ease ? ease.target : window.scrollY;
+            const target = Math.min(Math.max(from + pixels, 0), bottom);
+            if (ease) {
+              ease.target = target;
+            } else if (!eased) {
+              window.scrollTo(0, target);
+            } else {
+              const at = window.scrollY;
+              ease = { position: at, target, written: at, frameAt: null };
+              easeFrame = window.requestAnimationFrame(easeTick);
+            }
+          };
+
+          // Where a gesture going `direction` takes the page, or null for no
+          // stop. Another key press or swipe the same way mid-glide goes one
+          // stop past the one the page is already headed for; the wheel never
+          // does (see readWheel).
           const targetFor = (direction: Direction, travel: number) => {
             const from =
               glide && (glide.target - glide.position) * direction > 0
                 ? glide.target
-                : window.scrollY;
+                : ease
+                  ? ease.target
+                  : window.scrollY;
             return snapTarget(stops(), from, direction, travel);
           };
 
@@ -1662,30 +1945,43 @@ export default function CarSequence() {
               window.innerHeight,
             );
             if (!pixels) return;
+            if (scrollsOwnBox(event.target, pixels)) return;
             // Pong holds the page until a scroll up leaves the game, and that
             // scroll goes on to the stop above like any other.
             if (releaseHold) {
               if (pixels > 0) return;
               releaseHold();
             }
+            const eased =
+              Math.abs(pixels) >= CAR_SNAP.notch &&
+              (!wheel || at - wheel.at > CAR_SNAP.quiet);
             const read = readWheel(wheel, pixels, at, {
               moving: glide?.direction ?? null,
               moved: landed.moved,
               restedAt: landed.at,
             });
             wheel = read.gesture;
+            // Every event is ours, from the gesture's first: a browser won't let
+            // one it has started scrolling be cancelled later (see carSnap).
+            event.preventDefault();
             if (!read.move) {
-              if (glide || inSequence()) event.preventDefault();
+              // Spent: the rest of a scroll that has had its stop is swallowed -
+              // unless something has since taken the page out of the sequence.
+              if (!glide && !inSequence()) scrollBy(pixels, eased);
               return;
             }
             const target = targetFor(wheel.direction, Math.abs(pixels));
             if (target === null) {
-              if (glide) event.preventDefault();
+              if (!glide) scrollBy(pixels, eased);
               return;
             }
-            event.preventDefault();
             wheel = { ...wheel, used: true };
-            glideTo(target);
+            // Coming in from the page above or below, the page is already on
+            // the move at the wheel's pace, and keeps it into the dock.
+            glideTo(
+              target,
+              inSequence() ? 0 : wheel.direction * wheel.speed,
+            );
           };
 
           const onKey = (event: KeyboardEvent) => {
@@ -1858,6 +2154,7 @@ export default function CarSequence() {
 
           const letGo = () => {
             stopGlide();
+            stopEase();
             releaseHold?.();
           };
 
@@ -2446,6 +2743,8 @@ export default function CarSequence() {
           />
         )}
       </div>
+
+      <div ref={spacerRef} data-car-dock-spacer aria-hidden="true" />
 
       {/* How far through the sequence you are, and the rail that pans it. It is
           drawn ON the navbar's lower edge rather than under it: the track is left

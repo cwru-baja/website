@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   CAR_SNAP,
+  easeStep,
   glideStep,
+  dockRooms,
   keyTravel,
   leaveStill,
   nextStop,
@@ -101,6 +103,17 @@ describe("snapTarget", () => {
     expect(snapTarget(stops, 950, 1, 100)).toBe(1000);
     expect(snapTarget(stops, 5600, -1, 100)).toBeNull();
     expect(snapTarget(stops, 5060, -1, 100)).toBe(5000);
+  });
+
+  it("docks a move that would land on an end rather than just reaching it", () => {
+    // Scrolled onto the stop by itself, the page would be in the sequence with
+    // the rest of the scroll still to come, and that would carry it on.
+    expect(snapTarget(stops, 959, 1, 41)).toBe(1000);
+    expect(snapTarget(stops, 959, 1, 40)).toBe(1000);
+    expect(snapTarget(stops, 959, 1, 38)).toBeNull();
+    expect(snapTarget(stops, 5041, -1, 41)).toBe(5000);
+    expect(snapTarget(stops, 5041, -1, 39)).toBe(5000);
+    expect(snapTarget(stops, 5041, -1, 38)).toBeNull();
   });
 
   it("has nothing to do without stops", () => {
@@ -347,5 +360,61 @@ describe("glideStep", () => {
     expect(ticks[0].velocity).toBeGreaterThan(0);
     expect(Math.max(...ticks.map((tick) => tick.position))).toBeGreaterThan(1000);
     expect(ticks[ticks.length - 1].position).toBe(0);
+  });
+});
+
+describe("easeStep", () => {
+  it("closes most of the distance in one time constant, then lands exactly", () => {
+    const first = easeStep(0, 100, CAR_SNAP.ease);
+    expect(first.position).toBeCloseTo(100 * (1 - Math.exp(-1)), 6);
+    expect(first.done).toBe(false);
+    let step = first;
+    let ticks = 1;
+    while (!step.done) {
+      step = easeStep(step.position, 100, 1 / 60);
+      ticks += 1;
+    }
+    expect(step.position).toBe(100);
+    // A mouse wheel's click is in within a third of a second.
+    expect(ticks / 60).toBeLessThan(0.35);
+  });
+
+  it("never passes its target, either way", () => {
+    for (const target of [-240, 240]) {
+      let step = { position: 0, done: false };
+      while (!step.done) {
+        step = easeStep(step.position, target, 0.05);
+        expect(Math.abs(step.position)).toBeLessThanOrEqual(Math.abs(target));
+      }
+    }
+  });
+});
+
+describe("dockRooms", () => {
+  const on = { top: 0, give: 0 };
+
+  it("keeps only the page it came from while the car is off the top", () => {
+    expect(dockRooms({ top: 300, give: 0, first: false, last: false })).toEqual({
+      above: true,
+      below: false,
+    });
+    expect(dockRooms({ top: -300, give: 0, first: true, last: false })).toEqual({
+      above: false,
+      below: true,
+    });
+  });
+
+  it("opens the way out only past the end the car is on", () => {
+    expect(dockRooms({ ...on, first: true, last: false })).toEqual({ above: true, below: false });
+    expect(dockRooms({ ...on, first: false, last: true })).toEqual({ above: false, below: true });
+    expect(dockRooms({ ...on, first: false, last: false })).toEqual({ above: false, below: false });
+  });
+
+  it("counts the toolbar's give as still on the car", () => {
+    expect(dockRooms({ top: -80, give: 80, first: false, last: false })).toEqual({
+      above: false,
+      below: false,
+    });
+    expect(dockRooms({ top: -82, give: 80, first: false, last: false }).below).toBe(true);
   });
 });

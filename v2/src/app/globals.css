@@ -212,6 +212,37 @@
   );
 }
 
+/* /car on a touch screen (CarSequence): the car is one screen tall and played
+   by its previous and next buttons, never by scrolling. The page only holds
+   what a swipe may reach from where it is (dockRooms): data-car-dock names
+   which of the page above the car and the page below it are there, and the
+   other is taken out, so the page ends at the car and a fling stops on it.
+   Only while /car is up: the attribute comes and goes with the sequence. */
+html[data-car-dock] {
+  /* The car is kept in place by hand when the page above comes and goes. */
+  overflow-anchor: none;
+  /* With the page above gone the car is the top of the page, and a pull down
+     there would reload it (pull to refresh). */
+  overscroll-behavior-y: none;
+}
+html[data-car-dock]:not([data-car-dock~="above"]) [data-car-page-top] {
+  display: none;
+}
+html[data-car-dock]:not([data-car-dock~="below"]) footer {
+  display: none;
+}
+/* The car is 100svh, the screen with a phone's toolbar out; scrolling down
+   folds the toolbar away and the screen grows to 100lvh. With nothing below
+   the car, the page would end short of it and hold the car below the top of the
+   screen, so this stands in for the difference. */
+[data-car-dock-spacer] {
+  display: none;
+}
+html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
+  display: block;
+  height: calc(100lvh - 100svh);
+}
+
 /* /car on the portrait frame set (CarSequence). The 4:5 frame runs full width
    under the navbar and the caption band takes the rest of the stage, never less
    than --car-band-min: on a short screen the frame shrinks, still 4:5, before
