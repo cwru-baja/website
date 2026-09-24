@@ -221,6 +221,10 @@ export function createDotMapCanvas(
     const dpr = window.devicePixelRatio || 1;
     const w = Math.round(width * dpr);
     const h = Math.round(height * dpr);
+    // Leaving the page detaches the canvas before React runs dispose(), and the
+    // observer reports that as 0x0. Keep the last good size: a zero-size cache
+    // makes drawImage throw, and there is nothing to see anyway.
+    if (w === 0 || h === 0) return;
     if (w === canvas.width && h === canvas.height && cache.width === w) return;
     canvas.width = w;
     canvas.height = h;
@@ -253,6 +257,7 @@ export function createDotMapCanvas(
       if (phase === "shown") drawBulge();
     },
     dispose() {
+      phase = "hidden";
       cancelAnimationFrame(rafId);
       observer.disconnect();
       window.removeEventListener("resize", resize);
