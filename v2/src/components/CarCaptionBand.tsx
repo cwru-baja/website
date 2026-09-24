@@ -11,9 +11,9 @@ import { useScrollFade } from "./useScrollFade";
 
 /**
  * The phone's stand-in for the desktop labels, under the 4:5 frame: which
- * chapter this is, and one chip per label on its pause. A chip whose label names
- * a part lights that part on the still when tapped, the way hovering the label
- * does on a desktop; the rest are plain text.
+ * chapter this is, and one pill-shaped chip per label on its pause. A chip whose
+ * label names a part lights that part on the still when tapped, the way hovering
+ * the label does on a desktop; the rest look the same but do nothing.
  *
  * The band has a fixed height, so nothing in it - or under it - moves when the
  * chapter changes. The chips go on as many rows as that height holds, balanced
@@ -164,6 +164,13 @@ const CHIP_GAP = 8;
 
 const NO_LABELS: CarLabel[] = [];
 
+/**
+ * Every chip is this pill, whether or not it lights a part, so a chapter with
+ * no parts (the frame) reads the same as the rest; only the ones that do press.
+ */
+const CHIP_PILL =
+  "inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-white/20 px-4 font-clash text-[0.6875rem] font-medium uppercase leading-none tracking-[0.16em] whitespace-nowrap text-white/85";
+
 interface ChipRowsLayout {
   /** Indices into the chapter's labels, row by row. */
   rows: number[][];
@@ -241,7 +248,7 @@ function ChipRow({
         aria-pressed={lit === label.id}
         disabled={!live}
         onClick={() => onToggle(label.id)}
-        className="inline-flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full border border-white/20 px-4 font-clash text-[0.6875rem] font-medium uppercase leading-none tracking-[0.16em] whitespace-nowrap text-white/85 transition-[background-color,border-color,color,opacity] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-livery/60 disabled:opacity-40 aria-pressed:border-livery aria-pressed:bg-livery/15 aria-pressed:text-white"
+        className={`${CHIP_PILL} transition-[background-color,border-color,color,opacity] duration-200 outline-none focus-visible:ring-2 focus-visible:ring-livery/60 disabled:opacity-40 aria-pressed:border-livery aria-pressed:bg-livery/15 aria-pressed:text-white`}
       >
         {label.text}
       </button>
@@ -249,9 +256,8 @@ function ChipRow({
       <span
         key={label.id}
         data-car-chip={label.id}
-        className="inline-flex h-11 shrink-0 items-center gap-2 px-1 font-clash text-[0.6875rem] font-medium uppercase leading-none tracking-[0.16em] whitespace-nowrap text-white/60"
+        className={CHIP_PILL}
       >
-        <span aria-hidden="true" className="size-1.5 rounded-full bg-livery" />
         {label.text}
       </span>
     );
