@@ -1,0 +1,2 @@
+# Copy to .dev.vars for `wrangler dev`. The fake publisher uses the same value.
+LIVE_PUBLISH_TOKEN=dev-token
