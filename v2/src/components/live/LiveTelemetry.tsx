@@ -43,20 +43,29 @@ export default function LiveTelemetry() {
   return <LiveFeed key={password} password={password} onDenied={onDenied} />;
 }
 
+/**
+ * The height the password box and every waiting message share, so entering the
+ * password and waiting for the car never moves the footer. Tall enough for the
+ * longest waiting message, "No race in progress" (277px on a 320px phone, 225px
+ * from sm up, where it wraps less). Only real data grows the page.
+ */
+const PRE_DATA_HEIGHT = "min-h-[18rem] sm:min-h-[15rem]";
+
 function LiveFeed({ password, onDenied }: { password: string; onDenied: (reason: Denied) => void }) {
   const state = useLiveTelemetry(LIVE_WS_URL, password, onDenied);
   const now = useNow();
   const status = liveStatus(state, now);
   const signal = latestSignal(state.latest);
+  const hasData = hasTelemetry(state);
 
   return (
-    <div className="mt-8 border-t border-white/8">
+    <div className={`mt-8 border-t border-white/8 ${hasData ? "" : PRE_DATA_HEIGHT}`}>
       <div className="flex min-h-16 flex-wrap items-center justify-between gap-x-8 gap-y-3 py-5">
         <StatusBanner status={status} now={now} />
         {signal && <Signal rssi={signal.rssi} snr={signal.snr} />}
       </div>
 
-      {hasTelemetry(state) ? (
+      {hasData ? (
         // Last known values stay up while the car is away, dimmed.
         <TelemetryDashboard latest={state.latest} trail={state.trail} stale={status.kind !== "live"} />
       ) : (
@@ -82,7 +91,7 @@ function PasswordGate({ denied, onSubmit }: { denied: Denied | null; onSubmit: (
   return (
     <form
       onSubmit={submit}
-      className="mt-8 flex flex-col items-start gap-4 border-t border-white/8 pt-8"
+      className={`mt-8 flex flex-col items-start gap-4 border-t border-white/8 pt-8 ${PRE_DATA_HEIGHT}`}
     >
       <div className="flex w-full max-w-md flex-wrap gap-3">
         <label className="sr-only" htmlFor="watch-password">
@@ -155,7 +164,7 @@ function StatusBanner({ status, now }: { status: LiveStatus; now: number }) {
 
 function Waiting({ status, unreachable }: { status: LiveStatus; unreachable: boolean }) {
   return (
-    <div className="flex min-h-[22rem] flex-col items-start justify-center gap-5 border-t border-white/8 py-16">
+    <div className="flex flex-col items-start gap-4 border-t border-white/8 pt-6">
       {unreachable ? (
         <>
           <p className="font-clash text-2xl font-medium text-white">Can&rsquo;t reach the live feed.</p>
@@ -167,7 +176,7 @@ function Waiting({ status, unreachable }: { status: LiveStatus; unreachable: boo
         <p className="font-clash text-2xl font-medium text-white/45">Connecting to the live feed…</p>
       ) : (
         <>
-          <p className="font-clash text-3xl font-medium text-white sm:text-4xl">No race in progress.</p>
+          <p className="font-clash text-2xl font-medium text-white">No race in progress.</p>
           <p className="max-w-xl text-base leading-relaxed text-white/60">
             Check back on race day. While the car is on track, its speed, position and health stream
             here live, straight from the pit.
