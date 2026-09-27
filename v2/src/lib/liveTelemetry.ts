@@ -1,9 +1,8 @@
-// Live car telemetry for /live: the wire contract, and the pure state the page
-// renders from.
+// Live car telemetry: the wire contract, and the pure state /live renders from.
+// /host (the pit laptop) publishes with the same types.
 //
 // The types mirror live-relay/src/protocol.ts at the repo root (the relay
-// Worker), which the pit laptop's publisher in lora-dashboard is built against
-// too. Change all three together.
+// Worker). Change the two together.
 
 // ---- Wire contract (mirror of live-relay/src/protocol.ts) -------------------
 
@@ -71,9 +70,30 @@ export type ViewerMessage =
   | { t: "frames"; frames: LiveFrame[] }
   | { t: "publisher"; connected: boolean; lastSeenAt: string | null };
 
+export type PublisherMessage =
+  | { t: "hello"; token: string; v: 1 }
+  // session: random id per publisher page load; seq: increments per message.
+  // After a reconnect the publisher may backfill older batches, in order.
+  | { t: "frames"; session: string; seq: number; frames: LiveFrame[] };
+
+// Sent once the hello's token matched: from here on the publisher is live.
+export type RelayToPublisherMessage = { t: "ready" };
+
 /** Sent as a keepalive; the relay answers "pong" without waking up. */
 export const PING = "ping";
 export const PONG = "pong";
+
+/** Messages larger than this (UTF-8 bytes) are dropped by the relay. */
+export const MAX_MESSAGE_BYTES = 16 * 1024;
+
+/** Wrong or missing token, or no hello in time. */
+export const CLOSE_UNAUTHORIZED = 4001;
+/** A newer publisher authenticated and took over. */
+export const CLOSE_REPLACED = 4002;
+/** Too many wrong tokens from this address lately. */
+export const CLOSE_LOCKED_OUT = 4003;
+/** The page asking to publish isn't one of the site's own. */
+export const CLOSE_BAD_ORIGIN = 4004;
 
 // ---- Page state -------------------------------------------------------------
 
@@ -82,6 +102,11 @@ export const LIVE_WS_URL =
   (process.env.NODE_ENV === "development"
     ? "ws://localhost:8787/watch"
     : "wss://live.cwrumotorsports.com/watch");
+
+/** The pit laptop's end of the relay. */
+export const LIVE_PUBLISH_URL = LIVE_WS_URL.replace(/\/watch$/, "/publish");
+/** JSON { viewers, publisher } over plain HTTP(S). */
+export const LIVE_HEALTH_URL = LIVE_WS_URL.replace(/^ws/, "http").replace(/\/watch$/, "/health");
 
 /** The car counts as live while frames keep arriving at least this often. */
 export const LIVE_WINDOW_MS = 5_000;
