@@ -1,6 +1,7 @@
 # live-relay
 
-Carries car telemetry from the pit laptop to [cwrumotorsports.com/live](https://cwrumotorsports.com/live).
+Carries car telemetry from the pit laptop (`/host`) to the team's private live view (`/live`). Neither page
+is linked from the site, and the relay gives nothing to anyone without a password.
 
 ```
 receiver board --USB--> cwrumotorsports.com/host (pit laptop, Chrome)
@@ -15,11 +16,17 @@ and the site depends on its branch previews.
 
 | Route | |
 | --- | --- |
-| `GET /publish` | WebSocket for the pit laptop. The first message must be `{"t":"hello","token":"…","v":1}` within 5 s; the relay answers `{"t":"ready"}`, or closes with 4001. A newer publisher replaces an older one (4002). Five wrong tokens from one address in 10 minutes lock it out (4003). Browser pages outside `PUBLISH_ORIGINS` are refused (4004). |
-| `GET /watch` | WebSocket for anyone. Receive-only: a `snapshot` on connect, then `frames` and `publisher` messages. Sending `ping` gets `pong`. |
-| `GET /health` | `{ viewers, publisher: { connected, lastSeenAt } }` |
+| `GET /publish` | WebSocket for the pit laptop. The first message must be `{"t":"hello","token":"<team password>","v":1}` within 5 s; the relay answers `{"t":"ready"}`, or closes with 4001. A newer publisher replaces an older one (4002). |
+| `GET /watch` | WebSocket for `/live`. The first message must be the same hello with the watch password (or the team password); the relay answers with a `snapshot`, then `frames` and `publisher` messages, or closes with 4001. After the hello it is receive-only. |
+| `GET /health` | `{ viewers, publisher: { connected, lastSeenAt } }`, no telemetry. |
 
-The token is the team password typed into `/host`; generate one with `npm run new-passphrase`. The wire
+On both doors: five wrong passwords from one address in 10 minutes lock it out (4003), and browser pages
+outside `SITE_ORIGINS` are refused (4004). Sending `ping` gets `pong`.
+
+Two secrets: `LIVE_PUBLISH_TOKEN`, the team password for `/host`, which also works to watch, and
+`LIVE_WATCH_TOKEN`, the watch password for `/live`, safe to hand to anyone who should see the data.
+
+Generate either password with `npm run new-passphrase`. The wire
 contract is [`src/protocol.ts`](src/protocol.ts), mirrored in `v2/src/lib/liveTelemetry.ts`, which both
 `/host` and `/live` use. Messages over 16 KB, non-JSON messages and frames of an
 unknown kind are dropped. `latest` only takes a frame newer than the one it holds (by `receivedAt`), and is
@@ -30,12 +37,12 @@ marks where batches could be written to R2.
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars    # LIVE_PUBLISH_TOKEN=dev-token, localhost PUBLISH_ORIGINS
+cp .dev.vars.example .dev.vars    # passwords dev-token / dev-watch, localhost SITE_ORIGINS
 npm run dev                       # wrangler dev on http://localhost:8787
 ```
 
 Then run `npm run dev` in `v2/`, open http://localhost:3000/host in Chrome, connect the board and stream
-with the password `dev-token`, and watch http://localhost:3000/live. In development both pages use
+with the password `dev-token`, and watch http://localhost:3000/live with `dev-watch`. In development both pages use
 `ws://localhost:8787`; set `NEXT_PUBLIC_LIVE_WS_URL` to point them elsewhere. With no board, `/host` can
 replay a recording, or `npm run fake-publisher` stands in for the whole pit laptop.
 
@@ -58,18 +65,22 @@ First time, from this folder, logged in to the team's Cloudflare account (`npx w
 
 ```bash
 npm ci
-printf 'LIVE_PUBLISH_TOKEN=%s\n' "$(npm run -s new-passphrase)" > .dev.vars.production
+printf 'LIVE_PUBLISH_TOKEN=%s\nLIVE_WATCH_TOKEN=%s\n' "$(npm run -s new-passphrase)" "$(npm run -s new-passphrase)" > .dev.vars.production
+cat .dev.vars.production    # save both in the team's password manager
 npx wrangler deploy --secrets-file .dev.vars.production
 curl https://live.cwrumotorsports.com/health
 ```
 
-Share the password with the people who will host (it is what they type into `/host`), then delete
-`.dev.vars.production` (git ignores it either way). Change it each season, or when someone leaves the team.
-To change the token later, run `npx wrangler secret put LIVE_PUBLISH_TOKEN`.
+Give the team password to whoever hosts and the watch password to whoever should watch, then delete
+`.dev.vars.production` (git ignores it either way). Change them each season, or when someone leaves:
+`npx wrangler secret put LIVE_PUBLISH_TOKEN` or `LIVE_WATCH_TOKEN`. That deploys a new version at once,
+which restarts the relay: everyone is disconnected, and only the new password gets back in. Don't do it
+mid-race.
 
-For deploys on push instead, add a second Workers Builds project for this repo. Set its root
-directory to `live-relay`, its deploy command to `npx wrangler deploy`, and its build watch path to
-`live-relay/*`, so site pushes don't restart the relay.
+For deploys on push afterwards, connect this Worker to the repo (Worker > Settings > Build > Connect):
+root directory `live-relay`, deploy command `npx wrangler deploy`, branch `master`, and build watch
+path `live-relay/*` so site pushes don't restart the relay. Do the first deploy from the command line
+as above: a Git build has no way to supply the passwords the first deploy needs.
 
 Redeploying restarts the Durable Object, which drops every socket. The page and the publisher both
 reconnect by themselves, and the latest frames come back from storage.

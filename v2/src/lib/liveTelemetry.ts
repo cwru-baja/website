@@ -64,8 +64,12 @@ export type FrameKind = LiveFrame["kind"];
 export type Latest = Partial<Record<FrameKind, LiveFrame>>;
 export type PublisherStatus = { connected: boolean; lastSeenAt: string | null };
 
+// The first message on /watch, with the watch password (or the team password).
+// Nothing is sent to a viewer until it matches.
+export type ViewerHello = { t: "hello"; token: string; v: 1 };
+
 export type ViewerMessage =
-  // Sent once, as soon as a viewer connects.
+  // Sent once, as soon as a viewer's password matches.
   | { t: "snapshot"; latest: Latest; publisher: PublisherStatus }
   | { t: "frames"; frames: LiveFrame[] }
   | { t: "publisher"; connected: boolean; lastSeenAt: string | null };
@@ -86,13 +90,13 @@ export const PONG = "pong";
 /** Messages larger than this (UTF-8 bytes) are dropped by the relay. */
 export const MAX_MESSAGE_BYTES = 16 * 1024;
 
-/** Wrong or missing token, or no hello in time. */
+/** Wrong or missing password, or no hello in time. */
 export const CLOSE_UNAUTHORIZED = 4001;
 /** A newer publisher authenticated and took over. */
 export const CLOSE_REPLACED = 4002;
-/** Too many wrong tokens from this address lately. */
+/** Too many wrong passwords from this address lately. */
 export const CLOSE_LOCKED_OUT = 4003;
-/** The page asking to publish isn't one of the site's own. */
+/** The page connecting isn't one of the site's own. */
 export const CLOSE_BAD_ORIGIN = 4004;
 
 // ---- Page state -------------------------------------------------------------

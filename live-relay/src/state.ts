@@ -136,9 +136,9 @@ export async function tokensMatch(given: string, expected: string | undefined): 
 // ---- Who may try ------------------------------------------------------------
 
 /**
- * Whether a page on `origin` may publish. Browsers always send Origin on a
+ * Whether a page on `origin` may connect. Browsers always send Origin on a
  * WebSocket upgrade, so this stops some other site's script from using a
- * visitor's browser to guess tokens. Tools with no Origin (the fake publisher,
+ * visitor's browser to guess passwords. Tools with no Origin (the fake publisher,
  * curl) are let through: they are held to the token and the lockout like
  * anyone else.
  */

@@ -17,7 +17,7 @@ import {
 } from "@/lib/liveTelemetry";
 import { chunkLine } from "@/lib/recording";
 import { FrameReader } from "@/lib/telemetryDecoder";
-import { setHostSession, useHostSession } from "./hostSession";
+import { setSessionValue, useSessionValue } from "@/components/sessionPasswords";
 import { useRecorder, type RecorderStatus } from "./useRecorder";
 import { useRelayPublisher, type StreamStatus } from "./useRelayPublisher";
 import { useSerialBoard, type BoardStatus } from "./useSerialBoard";
@@ -77,8 +77,8 @@ const emptyStats = (): Stats => ({
  * with no internet the crew still has the dashboard and the recording.
  */
 export default function HostConsole() {
-  const password = useHostSession("password");
-  const streaming = useHostSession("streaming") === "1";
+  const password = useSessionValue("password");
+  const streaming = useSessionValue("streaming") === "1";
   const [baud, setBaud] = useState(DEFAULT_BAUD);
 
   const [outbox] = useState(() => new Outbox(crypto.randomUUID()));
@@ -155,7 +155,7 @@ export default function HostConsole() {
 
   // A wrong password is forgotten, so the form asks again.
   useEffect(() => {
-    if (stream.status.kind === "rejected") setHostSession("password", null);
+    if (stream.status.kind === "rejected") setSessionValue("password", null);
   }, [stream.status.kind]);
 
   // The counters, rates and queue refresh once a second, not per packet.
@@ -363,8 +363,8 @@ function StreamPanel({
     event.preventDefault();
     const value = draft.trim();
     if (!value) return;
-    setHostSession("password", value);
-    setHostSession("streaming", "1");
+    setSessionValue("password", value);
+    setSessionValue("streaming", "1");
     setDraft("");
   };
 
@@ -392,7 +392,7 @@ function StreamPanel({
       ) : (
         <div className="flex flex-wrap items-center gap-3">
           {streaming && status.kind !== "replaced" && status.kind !== "locked" ? (
-            <button type="button" className={secondary} onClick={() => setHostSession("streaming", null)}>
+            <button type="button" className={secondary} onClick={() => setSessionValue("streaming", null)}>
               Stop streaming
             </button>
           ) : (
@@ -401,8 +401,8 @@ function StreamPanel({
               className={primary}
               onClick={() => {
                 // Toggled off and on, so a stopped stream (taken over, locked out) starts afresh.
-                setHostSession("streaming", null);
-                setTimeout(() => setHostSession("streaming", "1"), 0);
+                setSessionValue("streaming", null);
+                setTimeout(() => setSessionValue("streaming", "1"), 0);
               }}
             >
               {status.kind === "replaced" ? "Take over" : "Start streaming"}
@@ -412,8 +412,8 @@ function StreamPanel({
             type="button"
             className={`${button} text-white/45 hover:text-white`}
             onClick={() => {
-              setHostSession("streaming", null);
-              setHostSession("password", null);
+              setSessionValue("streaming", null);
+              setSessionValue("password", null);
             }}
           >
             Forget password

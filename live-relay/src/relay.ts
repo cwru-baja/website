@@ -23,11 +23,10 @@ import {
 } from "./state";
 
 // What each socket carries through hibernation. Tags are fixed when a socket
-// is accepted, so a publisher is tagged "publisher" from the start and its
-// attachment says whether it has authenticated yet.
-type Attachment =
-  | { role: "publisher"; id: string; ip: string; authed: boolean; openedAt: number }
-  | { role: "viewer" };
+// is accepted, so it is tagged with its role from the start and its attachment
+// says whether its password has matched yet. Until then it gets nothing.
+type Role = "publisher" | "viewer";
+type Attachment = { role: Role; id: string; ip: string; authed: boolean; openedAt: number };
 
 type Stored = { latest: Latest; lastSeenAt: string | null };
 
@@ -46,6 +45,11 @@ export type Health = { viewers: number; publisher: PublisherStatus };
  * The one relay instance (the Worker always asks for "car"). The publisher's
  * frames go straight out to every viewer, and the newest frame of each kind is
  * kept so a viewer who joins mid-race gets a snapshot at once.
+ *
+ * Both doors are password-protected. A publisher's first message must carry
+ * LIVE_PUBLISH_TOKEN (the team password typed into /host); a viewer's must
+ * carry LIVE_WATCH_TOKEN (the watch password typed into /live), or the team
+ * password, so the pit crew needs only one.
  *
  * Every socket goes through the Hibernation API, so an idle relay with viewers
  * attached costs nothing: it sleeps, and the constructor runs again on the next
@@ -69,47 +73,35 @@ export class LiveRelay extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const { pathname } = new URL(request.url);
     const [client, server] = Object.values(new WebSocketPair());
-
-    if (pathname === "/publish") {
-      const attachment: Attachment = {
-        role: "publisher",
-        id: crypto.randomUUID(),
-        ip: request.headers.get("CF-Connecting-IP") ?? "unknown",
-        authed: false,
-        openedAt: Date.now(),
-      };
-      this.ctx.acceptWebSocket(server, ["publisher"]);
-      server.serializeAttachment(attachment);
-      // Accepted and then closed, rather than refused, so the page can tell
-      // "locked out" from "no internet".
-      if (isLockedOut(this.ctx.storage.kv.get<Failures>(failuresKey(attachment.ip)), attachment.openedAt)) {
-        close(server, CLOSE_LOCKED_OUT, "Too many wrong passwords. Try again in a few minutes.");
-      } else {
-        await this.armHelloDeadline(attachment.openedAt + HELLO_TIMEOUT_MS);
-      }
+    const role: Role = pathname === "/publish" ? "publisher" : "viewer";
+    const attachment: Attachment = {
+      role,
+      id: crypto.randomUUID(),
+      ip: request.headers.get("CF-Connecting-IP") ?? "unknown",
+      authed: false,
+      openedAt: Date.now(),
+    };
+    this.ctx.acceptWebSocket(server, [role]);
+    server.serializeAttachment(attachment);
+    // Accepted and then closed, rather than refused, so the page can tell
+    // "locked out" from "no internet".
+    if (isLockedOut(this.ctx.storage.kv.get<Failures>(failuresKey(attachment.ip)), attachment.openedAt)) {
+      close(server, CLOSE_LOCKED_OUT, "Too many wrong passwords. Try again in a few minutes.");
     } else {
-      this.ctx.acceptWebSocket(server, ["viewer"]);
-      server.serializeAttachment({ role: "viewer" } satisfies Attachment);
-      send(server, { t: "snapshot", latest: this.latest, publisher: this.publisherStatus() });
+      await this.armHelloDeadline(attachment.openedAt + HELLO_TIMEOUT_MS);
     }
-
     return new Response(null, { status: 101, webSocket: client });
   }
 
   async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
     const attachment = ws.deserializeAttachment() as Attachment | null;
-    // Viewers are receive-only: whatever they send (bar the auto-answered
-    // ping) is ignored, so no viewer can reach another.
-    if (attachment?.role !== "publisher") return;
-
+    if (!attachment) return;
     const message = parsePublisherMessage(raw);
 
     if (!attachment.authed) {
       const inTime = Date.now() - attachment.openedAt <= HELLO_TIMEOUT_MS;
       const authed =
-        message?.t === "hello" &&
-        inTime &&
-        (await tokensMatch(message.token, this.env.LIVE_PUBLISH_TOKEN));
+        message?.t === "hello" && inTime && (await this.passwordFits(attachment.role, message.token));
       if (!authed) {
         // Only a wrong token counts toward the lockout; a slow hello doesn't.
         if (message?.t === "hello" && inTime) {
@@ -120,13 +112,17 @@ export class LiveRelay extends DurableObject<Env> {
         return;
       }
       this.ctx.storage.kv.delete(failuresKey(attachment.ip));
+      ws.serializeAttachment({ ...attachment, authed: true } satisfies Attachment);
+      if (attachment.role === "viewer") {
+        send(ws, { t: "snapshot", latest: this.latest, publisher: this.publisherStatus() });
+        return;
+      }
       // One publisher at a time: the newest one wins.
       for (const other of this.authedPublishers()) {
         if (other.attachment.id === attachment.id) continue;
         other.ws.serializeAttachment({ ...other.attachment, authed: false });
         close(other.ws, CLOSE_REPLACED, "Replaced by a newer publisher");
       }
-      ws.serializeAttachment({ ...attachment, authed: true } satisfies Attachment);
       try {
         ws.send(JSON.stringify({ t: "ready" } satisfies RelayToPublisherMessage));
       } catch {
@@ -136,6 +132,9 @@ export class LiveRelay extends DurableObject<Env> {
       return;
     }
 
+    // Viewers are receive-only: whatever they send after the hello (bar the
+    // auto-answered ping) is ignored, so no viewer can reach another.
+    if (attachment.role !== "publisher") return;
     if (message?.t !== "frames" || message.frames.length === 0) return;
     this.acceptFrames(message.frames);
   }
@@ -151,7 +150,7 @@ export class LiveRelay extends DurableObject<Env> {
   }
 
   /**
-   * Closes publishers that haven't said hello in time. An alarm rather than a
+   * Closes sockets that haven't given a password in time. An alarm rather than a
    * setTimeout, so a silent socket doesn't keep the relay from hibernating.
    * (Under `wrangler dev` the client gets the 4001 close frame on time, but its
    * close event only fires ~10 s later, when the connection is torn down.)
@@ -159,9 +158,9 @@ export class LiveRelay extends DurableObject<Env> {
   async alarm(): Promise<void> {
     const now = Date.now();
     let next = Infinity;
-    for (const ws of this.ctx.getWebSockets("publisher")) {
+    for (const ws of this.ctx.getWebSockets()) {
       const attachment = ws.deserializeAttachment() as Attachment | null;
-      if (attachment?.role !== "publisher" || attachment.authed) continue;
+      if (!attachment || attachment.authed) continue;
       const deadline = attachment.openedAt + HELLO_TIMEOUT_MS;
       if (deadline <= now) close(ws, CLOSE_UNAUTHORIZED, "No hello");
       else next = Math.min(next, deadline);
@@ -172,7 +171,7 @@ export class LiveRelay extends DurableObject<Env> {
   /** For GET /health. */
   health(): Health {
     return {
-      viewers: this.ctx.getWebSockets("viewer").length,
+      viewers: this.authed("viewer").length,
       publisher: this.publisherStatus(),
     };
   }
@@ -206,10 +205,20 @@ export class LiveRelay extends DurableObject<Env> {
   }
 
   private authedPublishers() {
-    return this.ctx.getWebSockets("publisher").flatMap((ws) => {
+    return this.authed("publisher");
+  }
+
+  private authed(role: Role) {
+    return this.ctx.getWebSockets(role).flatMap((ws) => {
       const attachment = ws.deserializeAttachment() as Attachment | null;
-      return attachment?.role === "publisher" && attachment.authed ? [{ ws, attachment }] : [];
+      return attachment?.authed ? [{ ws, attachment }] : [];
     });
+  }
+
+  /** The watch password lets you watch; the team password lets you do either. */
+  private async passwordFits(role: Role, token: string): Promise<boolean> {
+    if (await tokensMatch(token, this.env.LIVE_PUBLISH_TOKEN)) return true;
+    return role === "viewer" && (await tokensMatch(token, this.env.LIVE_WATCH_TOKEN));
   }
 
   private publisherStatus(): PublisherStatus {
@@ -218,7 +227,7 @@ export class LiveRelay extends DurableObject<Env> {
 
   private broadcast(message: ViewerMessage): void {
     const text = JSON.stringify(message);
-    for (const ws of this.ctx.getWebSockets("viewer")) {
+    for (const { ws } of this.authed("viewer")) {
       try {
         ws.send(text);
       } catch {

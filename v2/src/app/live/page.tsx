@@ -4,14 +4,15 @@ import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 import LiveTelemetry from "@/components/live/LiveTelemetry";
 
+// The team's private live view. Not in the nav or the sitemap, and kept out of
+// search results. The page itself is public and holds no data: the telemetry
+// arrives over a WebSocket that LiveTelemetry opens in the browser, and the
+// relay sends nothing until it has the watch password.
 export const metadata = {
   title: "Live — CWRU Motorsports",
-  description: "Follow the CWRU Motorsports Baja car live on race day: speed, engine, fuel, position and electronics, straight from the pit.",
-  alternates: { canonical: "/live" },
+  description: "The team's live view of the car on race day.",
+  robots: { index: false, follow: false },
 };
-
-// Static like every other page: the telemetry itself arrives over a WebSocket
-// that LiveTelemetry opens in the browser.
 export default function LivePage() {
   return (
     <>

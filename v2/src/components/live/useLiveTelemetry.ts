@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
+  CLOSE_BAD_ORIGIN,
+  CLOSE_LOCKED_OUT,
+  CLOSE_UNAUTHORIZED,
   INITIAL_STATE,
   PING,
   parseViewerMessage,
@@ -10,7 +13,17 @@ import {
   reduceLive,
   type LiveEvent,
   type LiveState,
+  type ViewerHello,
 } from "@/lib/liveTelemetry";
+
+/** Why the relay turned this page away. Retrying wouldn't help, so it stops. */
+export type Denied = "rejected" | "locked" | "forbidden";
+
+const DENIED_BY_CODE: Record<number, Denied> = {
+  [CLOSE_UNAUTHORIZED]: "rejected",
+  [CLOSE_LOCKED_OUT]: "locked",
+  [CLOSE_BAD_ORIGIN]: "forbidden",
+};
 
 // A keepalive every 25 s stops idle proxies and phone networks from dropping
 // the socket. Anything heard, pong included, proves it is alive; a socket that
@@ -20,14 +33,21 @@ const SILENT_LIMIT_MS = 60_000;
 
 /**
  * Keeps a receive-only socket to the relay open for as long as the page is,
- * reconnecting with backoff, and returns the reduced telemetry state.
+ * reconnecting with backoff, and returns the reduced telemetry state. Each
+ * connection starts with the watch password; if the relay refuses it,
+ * `onDenied` is told why and no more attempts are made. Mount it afresh (a
+ * new key) for a new password.
  *
  * Messages are folded into a plain variable as they arrive and React sees the
  * result at most once per animation frame, whatever the packet rate. A hidden
  * tab gets no frames, so it doesn't render at all until it is looked at.
  */
-export function useLiveTelemetry(url: string): LiveState {
+export function useLiveTelemetry(url: string, password: string, onDenied: (reason: Denied) => void): LiveState {
   const [view, setView] = useState<LiveState>(INITIAL_STATE);
+  const deniedRef = useRef(onDenied);
+  useEffect(() => {
+    deniedRef.current = onDenied;
+  }, [onDenied]);
 
   useEffect(() => {
     let state = INITIAL_STATE;
@@ -65,6 +85,7 @@ export function useLiveTelemetry(url: string): LiveState {
       socket = ws;
 
       ws.onopen = () => {
+        ws.send(JSON.stringify({ t: "hello", token: password, v: 1 } satisfies ViewerHello));
         attempt = 0;
         lastHeardAt = Date.now();
         dispatch({ type: "socket", status: "open" });
@@ -80,11 +101,17 @@ export function useLiveTelemetry(url: string): LiveState {
         if (message) dispatch({ type: "message", message, now: lastHeardAt });
       };
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         clearInterval(pingTimer);
         if (socket !== ws) return;
         socket = null;
         dispatch({ type: "socket", status: "closed" });
+        const denied = DENIED_BY_CODE[event.code];
+        if (denied) {
+          stopped = true;
+          deniedRef.current(denied);
+          return;
+        }
         scheduleRetry();
       };
     };
@@ -116,7 +143,7 @@ export function useLiveTelemetry(url: string): LiveState {
       socket = null;
       ws?.close();
     };
-  }, [url]);
+  }, [url, password]);
 
   return view;
 }

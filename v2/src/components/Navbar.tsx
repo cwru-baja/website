@@ -10,7 +10,6 @@ const links = [
   { label: "Team", href: "/team" },
   { label: "Competition", href: "/competition" },
   { label: "Car", href: "/car" },
-  { label: "Live", href: "/live" },
   { label: "Sponsors", href: "/sponsors" },
   { label: "Support", href: "/support" },
   { label: "Contact", href: "/contact" },
@@ -79,9 +78,8 @@ export default function Navbar() {
           <MLogo role="img" aria-label="CWRU Motorsports" className="h-6 w-auto text-livery" />
         </Link>
 
-        {/* Nav links. Seven of them overflow a 768px tablet at gap-8, so the
-            gap closes up until lg; lg and wider are unchanged. */}
-        <ul className="hidden items-center gap-5 md:flex lg:gap-8">
+        {/* Nav links */}
+        <ul className="hidden items-center gap-8 md:flex">
           {links.map(({ label, href }) => (
             <li key={label}>
               <Link

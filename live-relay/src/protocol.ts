@@ -81,12 +81,19 @@ export type PublisherMessage =
 // Sent once the hello's token matched: from here on the publisher is live.
 export type RelayToPublisherMessage = { t: "ready" };
 
+// ---- viewer -> relay --------------------------------------------------------
+
+// The first message on /watch, with the watch password (or the team password).
+// Nothing is sent to a viewer until it matches. After it, viewers are
+// receive-only.
+export type ViewerHello = { t: "hello"; token: string; v: 1 };
+
 // ---- relay -> viewer --------------------------------------------------------
 
 export type PublisherStatus = { connected: boolean; lastSeenAt: string | null };
 
 export type ViewerMessage =
-  // Sent once, as soon as a viewer connects.
+  // Sent once, as soon as a viewer's password matches.
   | { t: "snapshot"; latest: Latest; publisher: PublisherStatus }
   | { t: "frames"; frames: LiveFrame[] }
   | { t: "publisher"; connected: boolean; lastSeenAt: string | null };
@@ -96,19 +103,19 @@ export type ViewerMessage =
 /** Messages larger than this (UTF-8 bytes) are dropped. Publishers batch under it. */
 export const MAX_MESSAGE_BYTES = 16 * 1024;
 
-/** A publisher has this long after connecting to send its hello. */
+/** Any socket has this long after connecting to send its hello. */
 export const HELLO_TIMEOUT_MS = 5_000;
 
-/** Wrong or missing token, or no hello in time. */
+/** Wrong or missing password, or no hello in time. */
 export const CLOSE_UNAUTHORIZED = 4001;
 /** A newer publisher authenticated and took over. */
 export const CLOSE_REPLACED = 4002;
-/** Too many wrong tokens from this address lately; try again later. */
+/** Too many wrong passwords from this address lately; try again later. */
 export const CLOSE_LOCKED_OUT = 4003;
-/** The page asking to publish isn't one of the site's own (PUBLISH_ORIGINS). */
+/** The page connecting isn't one of the site's own (SITE_ORIGINS). */
 export const CLOSE_BAD_ORIGIN = 4004;
 
-/** Wrong tokens allowed per address within LOCKOUT_WINDOW_MS. */
+/** Wrong passwords allowed per address within LOCKOUT_WINDOW_MS, on either door. */
 export const LOCKOUT_ATTEMPTS = 5;
 export const LOCKOUT_WINDOW_MS = 10 * 60_000;
 

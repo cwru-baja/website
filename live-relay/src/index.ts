@@ -1,7 +1,7 @@
 // live-relay: carries car telemetry from the pit laptop to cwrumotorsports.com/live.
 //
-//   GET /publish  WebSocket, the pit laptop. Authenticates with its first message.
-//   GET /watch    WebSocket, anyone. Receive-only.
+//   GET /publish  WebSocket, the pit laptop (/host). Team password in its first message.
+//   GET /watch    WebSocket, /live. Watch password in its first message; then receive-only.
 //   GET /health   JSON: { viewers, publisher: { connected, lastSeenAt } }
 //
 // Every route goes to one Durable Object, so there is exactly one relay and
@@ -26,12 +26,12 @@ export default {
           headers: { Upgrade: "websocket" },
         });
       }
-      if (pathname === "/publish" && !originAllowed(request.headers.get("Origin"), env.PUBLISH_ORIGINS)) {
+      if (!originAllowed(request.headers.get("Origin"), env.SITE_ORIGINS)) {
         // Answered here, without waking the relay, and closed with a code the
         // page can show rather than refused outright.
         const [client, server] = Object.values(new WebSocketPair());
         server.accept();
-        server.close(CLOSE_BAD_ORIGIN, "This page may not publish");
+        server.close(CLOSE_BAD_ORIGIN, "This page may not connect");
         return new Response(null, { status: 101, webSocket: client });
       }
       return relay.fetch(request);

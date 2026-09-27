@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback, useState, type FormEvent } from "react";
 
+import { setSessionValue, useSessionValue } from "@/components/sessionPasswords";
 import {
   LIVE_WS_URL,
   formatAgo,
@@ -10,11 +12,39 @@ import {
   liveStatus,
   type LiveStatus,
 } from "@/lib/liveTelemetry";
-import { Signal, TelemetryDashboard } from "./TelemetryDashboard";
-import { useLiveTelemetry, useNow } from "./useLiveTelemetry";
+import { Signal, TelemetryDashboard, label } from "./TelemetryDashboard";
+import { useLiveTelemetry, useNow, type Denied } from "./useLiveTelemetry";
 
+/**
+ * The team's live view. Nothing is fetched until someone gives the watch
+ * password (or the team password); the relay checks it and sends no data
+ * without it. A wrong one is forgotten and asked for again.
+ */
 export default function LiveTelemetry() {
-  const state = useLiveTelemetry(LIVE_WS_URL);
+  const password = useSessionValue("watchPassword");
+  const [denied, setDenied] = useState<Denied | null>(null);
+  const onDenied = useCallback((reason: Denied) => {
+    setDenied(reason);
+    setSessionValue("watchPassword", null);
+  }, []);
+
+  if (!password) {
+    return (
+      <PasswordGate
+        denied={denied}
+        onSubmit={(value) => {
+          setDenied(null);
+          setSessionValue("watchPassword", value);
+        }}
+      />
+    );
+  }
+  // Keyed by password, so a new one starts a fresh connection and fresh state.
+  return <LiveFeed key={password} password={password} onDenied={onDenied} />;
+}
+
+function LiveFeed({ password, onDenied }: { password: string; onDenied: (reason: Denied) => void }) {
+  const state = useLiveTelemetry(LIVE_WS_URL, password, onDenied);
   const now = useNow();
   const status = liveStatus(state, now);
   const signal = latestSignal(state.latest);
@@ -33,6 +63,58 @@ export default function LiveTelemetry() {
         <Waiting status={status} unreachable={state.unreachable} />
       )}
     </div>
+  );
+}
+
+const DENIED_TEXT: Record<Denied, string> = {
+  rejected: "That password didn\u2019t work.",
+  locked: "Too many wrong passwords from this network. Try again in 10 minutes.",
+  forbidden: "The live feed doesn\u2019t accept connections from this address.",
+};
+
+function PasswordGate({ denied, onSubmit }: { denied: Denied | null; onSubmit: (password: string) => void }) {
+  const [draft, setDraft] = useState("");
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const value = draft.trim();
+    if (value) onSubmit(value);
+  };
+  return (
+    <form
+      onSubmit={submit}
+      className="mt-8 flex min-h-[22rem] flex-col items-start justify-center gap-5 border-t border-white/8 py-16"
+    >
+      <h2 className={label}>Team only</h2>
+      <p className="max-w-xl text-base leading-relaxed text-white/60">
+        The live view is for the team. Enter the watch password to see the car.
+      </p>
+      <div className="flex w-full max-w-md flex-wrap gap-3">
+        <label className="sr-only" htmlFor="watch-password">
+          Watch password
+        </label>
+        <input
+          id="watch-password"
+          type="password"
+          autoComplete="current-password"
+          placeholder="Watch password"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          className="min-h-11 min-w-48 flex-1 border border-white/15 bg-transparent px-3 text-white placeholder:text-white/30"
+        />
+        <button
+          type="submit"
+          disabled={!draft.trim()}
+          className="inline-flex min-h-11 items-center justify-center bg-livery px-5 font-clash text-xs font-medium uppercase tracking-[0.16em] text-on-livery hover:bg-livery-hover disabled:opacity-40"
+        >
+          Watch
+        </button>
+      </div>
+      {denied && (
+        <p role="alert" className="text-sm text-livery-pop">
+          {DENIED_TEXT[denied]}
+        </p>
+      )}
+    </form>
   );
 }
 
