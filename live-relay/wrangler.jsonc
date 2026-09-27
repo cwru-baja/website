@@ -20,6 +20,11 @@
   "workers_dev": false,
   "preview_urls": false,
   "observability": { "enabled": true },
+  // Pages allowed to open /publish (the Origin header, comma-separated). Local
+  // development overrides this in .dev.vars.
+  "vars": {
+    "PUBLISH_ORIGINS": "https://cwrumotorsports.com,https://www.cwrumotorsports.com"
+  },
   // The publisher's shared token. Never in this file: .dev.vars locally, and
   // `wrangler secret put` (or --secrets-file on the first deploy) in production.
   // Listing it makes a deploy without it fail instead of shipping a relay that

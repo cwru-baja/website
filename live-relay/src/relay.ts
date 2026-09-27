@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 
 import {
+  CLOSE_LOCKED_OUT,
   CLOSE_REPLACED,
   CLOSE_UNAUTHORIZED,
   HELLO_TIMEOUT_MS,
@@ -9,20 +10,30 @@ import {
   type Latest,
   type LiveFrame,
   type PublisherStatus,
+  type RelayToPublisherMessage,
   type ViewerMessage,
 } from "./protocol";
-import { mergeLatest, parsePublisherMessage, tokensMatch } from "./state";
+import {
+  addFailure,
+  isLockedOut,
+  mergeLatest,
+  parsePublisherMessage,
+  tokensMatch,
+  type Failures,
+} from "./state";
 
 // What each socket carries through hibernation. Tags are fixed when a socket
 // is accepted, so a publisher is tagged "publisher" from the start and its
 // attachment says whether it has authenticated yet.
 type Attachment =
-  | { role: "publisher"; id: string; authed: boolean; openedAt: number }
+  | { role: "publisher"; id: string; ip: string; authed: boolean; openedAt: number }
   | { role: "viewer" };
 
 type Stored = { latest: Latest; lastSeenAt: string | null };
 
 const STATE_KEY = "state";
+/** Wrong tokens per address live under fail:<ip>. Written only on a failure. */
+const failuresKey = (ip: string) => `fail:${ip}`;
 
 // Storage is written at most this often. Workers Free allows 100,000 row
 // writes a day; one write per frame at 10 Hz would spend that in under three
@@ -63,12 +74,19 @@ export class LiveRelay extends DurableObject<Env> {
       const attachment: Attachment = {
         role: "publisher",
         id: crypto.randomUUID(),
+        ip: request.headers.get("CF-Connecting-IP") ?? "unknown",
         authed: false,
         openedAt: Date.now(),
       };
       this.ctx.acceptWebSocket(server, ["publisher"]);
       server.serializeAttachment(attachment);
-      await this.armHelloDeadline(attachment.openedAt + HELLO_TIMEOUT_MS);
+      // Accepted and then closed, rather than refused, so the page can tell
+      // "locked out" from "no internet".
+      if (isLockedOut(this.ctx.storage.kv.get<Failures>(failuresKey(attachment.ip)), attachment.openedAt)) {
+        close(server, CLOSE_LOCKED_OUT, "Too many wrong passwords. Try again in a few minutes.");
+      } else {
+        await this.armHelloDeadline(attachment.openedAt + HELLO_TIMEOUT_MS);
+      }
     } else {
       this.ctx.acceptWebSocket(server, ["viewer"]);
       server.serializeAttachment({ role: "viewer" } satisfies Attachment);
@@ -93,9 +111,15 @@ export class LiveRelay extends DurableObject<Env> {
         inTime &&
         (await tokensMatch(message.token, this.env.LIVE_PUBLISH_TOKEN));
       if (!authed) {
+        // Only a wrong token counts toward the lockout; a slow hello doesn't.
+        if (message?.t === "hello" && inTime) {
+          const key = failuresKey(attachment.ip);
+          this.ctx.storage.kv.put(key, addFailure(this.ctx.storage.kv.get<Failures>(key), Date.now()));
+        }
         close(ws, CLOSE_UNAUTHORIZED, "Unauthorized");
         return;
       }
+      this.ctx.storage.kv.delete(failuresKey(attachment.ip));
       // One publisher at a time: the newest one wins.
       for (const other of this.authedPublishers()) {
         if (other.attachment.id === attachment.id) continue;
@@ -103,6 +127,11 @@ export class LiveRelay extends DurableObject<Env> {
         close(other.ws, CLOSE_REPLACED, "Replaced by a newer publisher");
       }
       ws.serializeAttachment({ ...attachment, authed: true } satisfies Attachment);
+      try {
+        ws.send(JSON.stringify({ t: "ready" } satisfies RelayToPublisherMessage));
+      } catch {
+        // Gone already; its close handler tidies up.
+      }
       this.broadcast({ t: "publisher", ...this.publisherStatus() });
       return;
     }

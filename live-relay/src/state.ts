@@ -1,9 +1,11 @@
 // The relay's decisions, kept free of Workers APIs so they run under plain
-// vitest: what counts as a valid message, which frame is the newest, and
-// whether a token matches.
+// vitest: what counts as a valid message, which frame is the newest, whether a
+// token matches, and who is allowed to try.
 
 import {
   FRAME_KINDS,
+  LOCKOUT_ATTEMPTS,
+  LOCKOUT_WINDOW_MS,
   MAX_MESSAGE_BYTES,
   type FrameKind,
   type Latest,
@@ -129,4 +131,33 @@ export async function tokensMatch(given: string, expected: string | undefined): 
   let difference = 0;
   for (let i = 0; i < x.length; i++) difference |= x[i] ^ y[i];
   return difference === 0;
+}
+
+// ---- Who may try ------------------------------------------------------------
+
+/**
+ * Whether a page on `origin` may publish. Browsers always send Origin on a
+ * WebSocket upgrade, so this stops some other site's script from using a
+ * visitor's browser to guess tokens. Tools with no Origin (the fake publisher,
+ * curl) are let through: they are held to the token and the lockout like
+ * anyone else.
+ */
+export function originAllowed(origin: string | null, allowed: string | undefined): boolean {
+  if (origin === null) return true;
+  const list = (allowed ?? "").split(",").map((entry) => entry.trim()).filter(Boolean);
+  return list.includes(origin);
+}
+
+/** Wrong tokens from one address: how many, since when. */
+export type Failures = { count: number; since: number };
+
+/** Whether an address has used up its wrong tokens for the current window. */
+export function isLockedOut(failures: Failures | undefined, now: number): boolean {
+  return !!failures && now - failures.since < LOCKOUT_WINDOW_MS && failures.count >= LOCKOUT_ATTEMPTS;
+}
+
+/** Counts one more wrong token. A window that has run out starts again. */
+export function addFailure(failures: Failures | undefined, now: number): Failures {
+  if (!failures || now - failures.since >= LOCKOUT_WINDOW_MS) return { count: 1, since: now };
+  return { count: failures.count + 1, since: failures.since };
 }

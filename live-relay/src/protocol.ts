@@ -1,8 +1,8 @@
-// The wire contract between the pit laptop (publisher), this relay and the
-// /live page (viewers).
+// The wire contract between the pit laptop (publisher: cwrumotorsports.com/host),
+// this relay and the /live page (viewers).
 //
-// Mirrored in v2/src/lib/liveTelemetry.ts, and the publisher in lora-dashboard
-// is built against the same shapes. Change all three together.
+// Mirrored in v2/src/lib/liveTelemetry.ts, which both of those pages use.
+// Change the two together.
 
 // ---- Decoded packets --------------------------------------------------------
 // Copied from lora-dashboard/src/lib/telemetry-decoder.ts.
@@ -76,6 +76,11 @@ export type PublisherMessage =
   // After a reconnect the publisher may backfill older batches, in order.
   | { t: "frames"; session: string; seq: number; frames: LiveFrame[] };
 
+// ---- relay -> publisher -----------------------------------------------------
+
+// Sent once the hello's token matched: from here on the publisher is live.
+export type RelayToPublisherMessage = { t: "ready" };
+
 // ---- relay -> viewer --------------------------------------------------------
 
 export type PublisherStatus = { connected: boolean; lastSeenAt: string | null };
@@ -98,6 +103,14 @@ export const HELLO_TIMEOUT_MS = 5_000;
 export const CLOSE_UNAUTHORIZED = 4001;
 /** A newer publisher authenticated and took over. */
 export const CLOSE_REPLACED = 4002;
+/** Too many wrong tokens from this address lately; try again later. */
+export const CLOSE_LOCKED_OUT = 4003;
+/** The page asking to publish isn't one of the site's own (PUBLISH_ORIGINS). */
+export const CLOSE_BAD_ORIGIN = 4004;
+
+/** Wrong tokens allowed per address within LOCKOUT_WINDOW_MS. */
+export const LOCKOUT_ATTEMPTS = 5;
+export const LOCKOUT_WINDOW_MS = 10 * 60_000;
 
 /** Any socket may send this text and gets "pong" back without waking the relay. */
 export const PING = "ping";

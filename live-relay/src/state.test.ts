@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_MESSAGE_BYTES, type LiveFrame } from "./protocol";
-import { mergeLatest, parseFrame, parsePublisherMessage, tokensMatch } from "./state";
+import { LOCKOUT_ATTEMPTS, LOCKOUT_WINDOW_MS, MAX_MESSAGE_BYTES, type LiveFrame } from "./protocol";
+import {
+  addFailure,
+  isLockedOut,
+  mergeLatest,
+  originAllowed,
+  parseFrame,
+  parsePublisherMessage,
+  tokensMatch,
+  type Failures,
+} from "./state";
 
 function fast(receivedAt: string, speed = 20): LiveFrame {
   return {
@@ -170,5 +179,45 @@ describe("tokensMatch", () => {
   it("rejects everything when no token is configured", async () => {
     expect(await tokensMatch("", undefined)).toBe(false);
     expect(await tokensMatch("", "")).toBe(false);
+  });
+});
+
+describe("originAllowed", () => {
+  const list = "https://cwrumotorsports.com, https://www.cwrumotorsports.com";
+
+  it("allows the site's own pages", () => {
+    expect(originAllowed("https://cwrumotorsports.com", list)).toBe(true);
+    expect(originAllowed("https://www.cwrumotorsports.com", list)).toBe(true);
+  });
+
+  it("refuses other sites, near misses included", () => {
+    expect(originAllowed("https://evil.example", list)).toBe(false);
+    expect(originAllowed("http://cwrumotorsports.com", list)).toBe(false);
+    expect(originAllowed("https://cwrumotorsports.com.evil.example", list)).toBe(false);
+    expect(originAllowed("https://cwrumotorsports.com", undefined)).toBe(false);
+  });
+
+  it("lets tools without an Origin through to the token check", () => {
+    expect(originAllowed(null, list)).toBe(true);
+  });
+});
+
+describe("lockout", () => {
+  const T = 1_000_000;
+
+  it("locks an address out after the allowed number of wrong tokens", () => {
+    let failures: Failures | undefined;
+    for (let i = 0; i < LOCKOUT_ATTEMPTS; i++) {
+      expect(isLockedOut(failures, T + i)).toBe(false);
+      failures = addFailure(failures, T + i);
+    }
+    expect(isLockedOut(failures, T + LOCKOUT_ATTEMPTS)).toBe(true);
+  });
+
+  it("lets the address try again once the window has passed", () => {
+    const failures: Failures = { count: LOCKOUT_ATTEMPTS, since: T };
+    expect(isLockedOut(failures, T + LOCKOUT_WINDOW_MS - 1)).toBe(true);
+    expect(isLockedOut(failures, T + LOCKOUT_WINDOW_MS)).toBe(false);
+    expect(addFailure(failures, T + LOCKOUT_WINDOW_MS)).toEqual({ count: 1, since: T + LOCKOUT_WINDOW_MS });
   });
 });

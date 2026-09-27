@@ -7,6 +7,9 @@
 // Every route goes to one Durable Object, so there is exactly one relay and
 // one copy of the latest state. The wire contract is in ./protocol.ts.
 
+import { CLOSE_BAD_ORIGIN } from "./protocol";
+import { originAllowed } from "./state";
+
 export { LiveRelay } from "./relay";
 
 const NO_STORE = { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" };
@@ -22,6 +25,14 @@ export default {
           status: 426,
           headers: { Upgrade: "websocket" },
         });
+      }
+      if (pathname === "/publish" && !originAllowed(request.headers.get("Origin"), env.PUBLISH_ORIGINS)) {
+        // Answered here, without waking the relay, and closed with a code the
+        // page can show rather than refused outright.
+        const [client, server] = Object.values(new WebSocketPair());
+        server.accept();
+        server.close(CLOSE_BAD_ORIGIN, "This page may not publish");
+        return new Response(null, { status: 101, webSocket: client });
       }
       return relay.fetch(request);
     }

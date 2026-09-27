@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "fake-publisher": "node scripts/fake-publisher.mjs",
+    "new-passphrase": "node scripts/new-passphrase.mjs",
     "types": "wrangler types",
     "typecheck": "wrangler types && tsc --noEmit",
     "test": "vitest run"
