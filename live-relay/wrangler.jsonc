@@ -1,0 +1,34 @@
+{
+  // The live telemetry relay. Separate from the site Worker (v2/wrangler.jsonc)
+  // on purpose: that one is assets-only, and Cloudflare generates no version
+  // (preview) URLs for a Worker that implements a Durable Object, so folding
+  // this in would cost the site its branch previews.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "live-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-26",
+  "durable_objects": {
+    "bindings": [{ "name": "LIVE_RELAY", "class_name": "LiveRelay" }]
+  },
+  // SQLite-backed, the only kind the Workers Free plan allows. A migration tag
+  // is applied once per class change and must never be edited after deploy.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveRelay"] }],
+  // Served only from its own domain. The zone is already on Cloudflare, so a
+  // deploy creates the DNS record and certificate. It fails if a record for
+  // `live` already exists.
+  "routes": [{ "pattern": "live.cwrumotorsports.com", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": true },
+  // Pages allowed to open /publish and /watch (the Origin header,
+  // comma-separated). Local development overrides this in .dev.vars.
+  "vars": {
+    "SITE_ORIGINS": "https://cwrumotorsports.com,https://www.cwrumotorsports.com"
+  },
+  // The two passwords: LIVE_PUBLISH_TOKEN streams (and watches), typed into
+  // /host; LIVE_WATCH_TOKEN only watches, typed into /live. Never in this file:
+  // .dev.vars locally, and `wrangler secret put` (or --secrets-file on the
+  // first deploy) in production. Listing them makes a deploy without them fail
+  // instead of shipping a relay that refuses everyone.
+  "secrets": { "required": ["LIVE_PUBLISH_TOKEN", "LIVE_WATCH_TOKEN"] }
+}

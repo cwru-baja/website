@@ -1,0 +1,19 @@
+{
+  "name": "live-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "fake-publisher": "node scripts/fake-publisher.mjs",
+    "new-passphrase": "node scripts/new-passphrase.mjs",
+    "types": "wrangler types",
+    "typecheck": "wrangler types && tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.6",
+    "wrangler": "^4.141.0"
+  }
+}

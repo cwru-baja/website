@@ -1,0 +1,49 @@
+/* Leaflet's own stylesheet is imported by LiveMap.tsx, so it and these rules
+   load with the map and nowhere else. */
+
+/* OpenStreetMap only draws light tiles. Inverting them and turning the hue back
+   gives a dark map whose water is still blue and whose roads are still light
+   against the ground, muted so the livery trail is the brightest thing on it. */
+.map :global(.leaflet-tile-pane) {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.35);
+}
+
+.map:global(.leaflet-container) {
+  background: #111111;
+  font-family: var(--font-sans);
+}
+
+/* 44px zoom buttons, the site's minimum tap target. */
+.map :global(.leaflet-bar) {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 0;
+  box-shadow: none;
+}
+.map :global(.leaflet-bar a),
+.map :global(.leaflet-touch .leaflet-bar a) {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  border-radius: 0 !important;
+  border-bottom-color: rgb(255 255 255 / 0.1);
+  background: #0a0a0a;
+  color: #ffffff;
+  font-weight: 400;
+}
+.map :global(.leaflet-bar a:hover) {
+  background: var(--livery);
+  color: var(--on-livery);
+}
+.map :global(.leaflet-bar a.leaflet-disabled) {
+  background: #0a0a0a;
+  color: rgb(255 255 255 / 0.25);
+}
+
+.map :global(.leaflet-control-attribution) {
+  background: rgb(10 10 10 / 0.75);
+  color: rgb(255 255 255 / 0.45);
+  font-size: 10px;
+}
+.map :global(.leaflet-control-attribution a) {
+  color: rgb(255 255 255 / 0.7);
+}
