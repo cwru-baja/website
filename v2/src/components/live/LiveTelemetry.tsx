@@ -12,7 +12,7 @@ import {
   liveStatus,
   type LiveStatus,
 } from "@/lib/liveTelemetry";
-import { Signal, TelemetryDashboard, label } from "./TelemetryDashboard";
+import { Signal, TelemetryDashboard } from "./TelemetryDashboard";
 import { useLiveTelemetry, useNow, type Denied } from "./useLiveTelemetry";
 
 /**
@@ -82,12 +82,8 @@ function PasswordGate({ denied, onSubmit }: { denied: Denied | null; onSubmit: (
   return (
     <form
       onSubmit={submit}
-      className="mt-8 flex min-h-[22rem] flex-col items-start justify-center gap-5 border-t border-white/8 py-16"
+      className="mt-8 flex flex-col items-start gap-4 border-t border-white/8 pt-8"
     >
-      <h2 className={label}>Team only</h2>
-      <p className="max-w-xl text-base leading-relaxed text-white/60">
-        The live view is for the team. Enter the watch password to see the car.
-      </p>
       <div className="flex w-full max-w-md flex-wrap gap-3">
         <label className="sr-only" htmlFor="watch-password">
           Watch password

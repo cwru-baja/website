@@ -56,9 +56,8 @@ npm run typecheck    # regenerates worker-configuration.d.ts (git-ignored), then
 
 ## Deploying
 
-Nothing here deploys on its own. A deploy needs `LIVE_PUBLISH_TOKEN`: it is listed under
-`secrets.required`, so a deploy without it fails instead of shipping a relay that refuses every
-publisher. The first deploy also creates the `live.cwrumotorsports.com` custom domain from
+Nothing here deploys on its own. A deploy needs both passwords: they are listed under
+`secrets.required`, so a deploy without them fails instead of shipping a relay that refuses everyone. The first deploy also creates the `live.cwrumotorsports.com` custom domain from
 `wrangler.jsonc`. That needs no existing DNS record for `live`.
 
 First time, from this folder, logged in to the team's Cloudflare account (`npx wrangler login`):
