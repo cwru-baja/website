@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import RaceCountdown from "@/components/RaceCountdown";
 import { EVENTS, eventStatus, type BajaEvent, type EventStatus } from "@/lib/events";
 
@@ -13,55 +13,91 @@ function subscribeClock(onTick: () => void) {
 const readClock = () => Math.floor(Date.now() / 1000) * 1000;
 const readServerClock = () => null;
 
-function EventName({ event, className }: { event: BajaEvent; className: string }) {
+function EventName({
+  event,
+  className,
+  placeClassName = "",
+}: {
+  event: BajaEvent;
+  className: string;
+  placeClassName?: string;
+}) {
   return (
     <h3
       className={`font-coolvetica font-bold leading-tight ${className}`}
       style={{ fontSize: "clamp(1.4rem, 2vw, 2rem)" }}
     >
       <span className="font-coolvetica font-semibold">Baja SAE </span>
-      <span className="font-brier">{event.name.replace(/^Baja SAE /, "")}</span>
+      <span className={`font-brier ${placeClassName}`}>{event.name.replace(/^Baja SAE /, "")}</span>
     </h3>
   );
 }
 
-function StatusCard({ event, status }: { event: BajaEvent; status: EventStatus }) {
-  const raced = status === "raced";
+function RacedCard({ event }: { event: BajaEvent }) {
   return (
-    <div
-      className={`flex items-center justify-between gap-6 border px-6 py-6 lg:px-10 lg:py-8 ${
-        raced ? "border-white/8 bg-white/[0.02]" : "border-white/15"
-      }`}
-    >
+    <div className="flex items-center justify-between gap-6 border border-white/8 bg-white/[0.02] px-6 py-6 lg:px-10 lg:py-8">
       <div className="min-w-0">
-        <EventName
-          event={event}
-          className={raced ? "text-white/45" : "text-white"}
-        />
-        <p
-          className={`mt-2 text-[0.72rem] tracking-[0.16em] uppercase ${raced ? "text-white/30" : "text-white/45"}`}
-        >
+        <EventName event={event} className="text-white/45" />
+        <p className="mt-2 text-[0.72rem] tracking-[0.16em] uppercase text-white/30">
           {event.displayDate} · {event.location}
         </p>
       </div>
-      <span
-        className={`shrink-0 border px-3 py-1.5 text-[0.62rem] font-semibold tracking-[0.28em] uppercase ${
-          raced ? "border-white/20 text-white/45" : "border-white/25 text-white/60"
-        }`}
-      >
-        {raced ? "Done" : "Later"}
+      <span className="shrink-0 border border-white/20 px-3 py-1.5 text-[0.62rem] font-semibold tracking-[0.28em] uppercase text-white/45">
+        Done
       </span>
     </div>
   );
 }
 
+// A later race. Hovering it swaps its countdown into the big card at once (no
+// transition); a click holds it there, and a second click lets go.
+function UpcomingCard({
+  event,
+  shown,
+  pinned,
+  onHover,
+  onPick,
+}: {
+  event: BajaEvent;
+  shown: boolean;
+  pinned: boolean;
+  onHover: () => void;
+  onPick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={pinned}
+      onPointerEnter={(e) => {
+        if (e.pointerType === "mouse") onHover();
+      }}
+      onClick={onPick}
+      className={`block w-full cursor-pointer border px-6 py-6 text-left lg:px-10 lg:py-8 ${
+        shown ? "border-livery" : "border-white/15"
+      }`}
+    >
+      <EventName
+        event={event}
+        className="text-white"
+        placeClassName={shown ? "text-livery-ink" : ""}
+      />
+      <p className={`mt-2 text-[0.72rem] tracking-[0.16em] uppercase ${shown ? "text-livery-ink" : "text-white/45"}`}>
+        {event.displayDate} · {event.location}
+      </p>
+    </button>
+  );
+}
+
 function NextCard({
   event,
+  options,
   status,
   raceNumber,
   now,
 }: {
   event: BajaEvent;
+  /** Every race this card can be swapped to, including the one shown. */
+  options: BajaEvent[];
   status: EventStatus;
   raceNumber: number;
   now: number;
@@ -78,16 +114,35 @@ function NextCard({
       </div>
 
       <div className="px-6 py-8 lg:px-10 lg:py-10">
+        {/* Every race the card can swap to is laid in the same cell and only the
+            shown one is visible, so a longer name that wraps on a phone doesn't
+            make the card grow when it swaps in. */}
         <h3
-          className="font-coolvetica font-bold leading-tight text-white"
+          className="grid font-coolvetica font-bold leading-tight text-white"
           style={{ fontSize: "clamp(1.9rem, 3.4vw, 3.5rem)" }}
         >
-          <span className="font-coolvetica font-semibold">Baja SAE </span>
-          <span className="font-brier text-livery-ink">{event.name.replace(/^Baja SAE /, "")}</span>
+          {options.map((ev) => (
+            <span
+              key={ev.name}
+              aria-hidden={ev !== event}
+              style={{ gridArea: "1 / 1", visibility: ev === event ? "visible" : "hidden" }}
+            >
+              <span className="font-coolvetica font-semibold">Baja SAE </span>
+              <span className="font-brier text-livery-ink">{ev.name.replace(/^Baja SAE /, "")}</span>
+            </span>
+          ))}
         </h3>
         {/* Below md the bar only fits the race label, so date and place drop in here */}
-        <p className="mt-2 text-[0.8rem] tracking-[0.16em] uppercase text-livery-ink md:hidden">
-          {event.displayDate} · {event.location}
+        <p className="mt-2 grid text-[0.8rem] tracking-[0.16em] uppercase text-livery-ink md:hidden">
+          {options.map((ev) => (
+            <span
+              key={ev.name}
+              aria-hidden={ev !== event}
+              style={{ gridArea: "1 / 1", visibility: ev === event ? "visible" : "hidden" }}
+            >
+              {ev.displayDate} · {ev.location}
+            </span>
+          ))}
         </p>
 
         <div className="mt-8 lg:mt-10">
@@ -109,6 +164,8 @@ function NextCard({
 
 export default function SeasonSection() {
   const now = useSyncExternalStore(subscribeClock, readClock, readServerClock);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [pinned, setPinned] = useState<string | null>(null);
 
   const statuses = now === null ? null : EVENTS.map((ev) => eventStatus(ev, now));
   // The first event that hasn't finished owns the clock.
@@ -116,6 +173,11 @@ export default function SeasonSection() {
 
   const before = statuses ? EVENTS.slice(0, nextIndex === -1 ? EVENTS.length : nextIndex) : [];
   const after = statuses && nextIndex !== -1 ? EVENTS.slice(nextIndex + 1) : [];
+
+  // The big card shows a hovered race, else a clicked one, else the next one.
+  const pick = hovered ?? pinned;
+  const pickIndex = pick === null ? -1 : EVENTS.findIndex((ev) => ev.name === pick);
+  const shownIndex = pickIndex > nextIndex ? pickIndex : nextIndex;
 
   return (
     <>
@@ -139,17 +201,18 @@ export default function SeasonSection() {
           <>
             {before.length > 0 && (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {before.map((ev, i) => (
-                  <StatusCard key={ev.name} event={ev} status={statuses[i]} />
+                {before.map((ev) => (
+                  <RacedCard key={ev.name} event={ev} />
                 ))}
               </div>
             )}
 
             {now !== null && nextIndex !== -1 ? (
               <NextCard
-                event={EVENTS[nextIndex]}
-                status={statuses[nextIndex]}
-                raceNumber={nextIndex + 1}
+                event={EVENTS[shownIndex]}
+                options={EVENTS.slice(nextIndex)}
+                status={statuses[shownIndex]}
+                raceNumber={shownIndex + 1}
                 now={now}
               />
             ) : (
@@ -164,12 +227,23 @@ export default function SeasonSection() {
             )}
 
             {after.length > 0 && (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              // Leaving is watched on the whole row, so crossing the gap between
+              // two cards doesn't flash the next race back in.
+              <div
+                className="grid grid-cols-1 gap-6 md:grid-cols-2"
+                onPointerLeave={() => setHovered(null)}
+              >
                 {after.map((ev, i) => (
-                  <StatusCard
+                  <UpcomingCard
                     key={ev.name}
                     event={ev}
-                    status={statuses[nextIndex + 1 + i]}
+                    shown={nextIndex + 1 + i === shownIndex}
+                    pinned={pinned === ev.name}
+                    onHover={() => setHovered(ev.name)}
+                    onPick={() => {
+                      setPinned((p) => (p === ev.name ? null : ev.name));
+                      setHovered(null);
+                    }}
                   />
                 ))}
               </div>
