@@ -43,6 +43,28 @@ const FINISH_YEAR = "clamp(1.8rem,3vw,3rem)";
 const FINISH_EVENT = "clamp(1.25rem,2vw,1.75rem)";
 const FINISH_PODIUM = "clamp(1.5rem,2.4vw,2.125rem)";
 const EVENT_NAME = "clamp(1rem,1.9vw,1.625rem)";
+// One line of the ledger's number columns: the event name's height, with the
+// baseline Clash at the event place size gives it.
+const EVENT_LINE = `calc(${EVENT_NAME} * 1.1)`;
+const LEDGER_LINE = "font-clash whitespace-nowrap text-right";
+const LEDGER_LINE_STYLE = { fontSize: FINISH_EVENT, height: EVENT_LINE, lineHeight: EVENT_LINE };
+
+// The ledger's place, laid out as plain inlines with no leading so it can't
+// change the height of the line it sits on (FinishDisplay's inline-flex box
+// would). The suffix is raised to where FinishDisplay puts it.
+function InlineFinish({ finish, fontSize }: { finish: string; fontSize: string }) {
+  const match = finish.match(/^(\d+)(st|nd|rd|th)$/i);
+  return (
+    <span className="font-clash font-bold" style={{ fontSize, lineHeight: 0 }}>
+      {match ? match[1] : finish}
+      {match && (
+        <span className="uppercase" style={{ fontSize: "0.45em", verticalAlign: "0.83em" }}>
+          {match[2]}
+        </span>
+      )}
+    </span>
+  );
+}
 
 const placeLabel = (award?: Award) =>
   award?.place === undefined ? "—" : ordinal(award.place);
@@ -190,21 +212,18 @@ function LedgerRow({
             place columns left 88px for names like MANEUVERABILITY (129px). */}
         <span className={`mt-1.5 block sm:hidden ${scoreStyle}`}>{score}</span>
       </span>
-      {/* Held to the event name's line height so a podium's larger numeral
-          overflows into the padding instead of making its row taller. */}
-      <div
-        className="flex items-center justify-end"
-        style={{ fontSize: EVENT_NAME, height: "1.1em" }}
-      >
-        {/* Score and place share a baseline, so the score sits level with the
-            bottom of the place digits. */}
-        <div className="flex items-baseline gap-3 sm:gap-4">
-          <span className={`w-[5.5rem] sm:w-[7rem] text-right max-sm:hidden ${scoreStyle}`}>
+      {/* Score and place sit on one fixed text line and are zero-leading
+          inlines, so neither can move its baseline: a podium's larger numeral
+          grows up from the same baseline as every other row's, instead of
+          re-centring the pair 1.8px lower. */}
+      <div className="flex justify-end gap-3 sm:gap-4">
+        <div className={`w-[5.5rem] sm:w-[7rem] max-sm:hidden ${LEDGER_LINE}`} style={LEDGER_LINE_STYLE}>
+          <span className={scoreStyle} style={{ lineHeight: 0 }}>
             {score}
           </span>
-          <div className="flex w-14 sm:w-[5.5rem] justify-end">
-            <FinishDisplay finish={finish} fontSize={podium ? FINISH_PODIUM : FINISH_EVENT} />
-          </div>
+        </div>
+        <div className={`w-14 sm:w-[5.5rem] ${LEDGER_LINE}`} style={LEDGER_LINE_STYLE}>
+          <InlineFinish finish={finish} fontSize={podium ? FINISH_PODIUM : FINISH_EVENT} />
         </div>
       </div>
     </div>
