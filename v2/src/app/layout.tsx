@@ -32,7 +32,7 @@ export const metadata: Metadata = {
         url: "/og.jpg",
         width: 1200,
         height: 630,
-        alt: `${CARS[CURRENT_CAR].name}, the team's Baja SAE car`,
+        alt: `CWRU Motorsports: Built to win. ${CARS[CURRENT_CAR].name}, the team's Baja SAE car`,
       },
     ],
   },
