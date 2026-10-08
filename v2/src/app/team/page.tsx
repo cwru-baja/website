@@ -48,8 +48,8 @@ export default function TeamPage() {
             </div>
 
             <p className="max-w-xl text-base leading-relaxed text-white/60 lg:text-right lg:text-lg">
-              Students run every subteam — brakes, frame, systems, finance — and
-              build the car themselves.
+              Students run every subteam, from brakes and frame to systems and
+              finance, and build the car themselves.
             </p>
           </div>
 
