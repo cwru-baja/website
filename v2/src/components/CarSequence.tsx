@@ -69,6 +69,7 @@ import {
   CAR_CHAPTERS,
   CAR_REVEALS,
   CHAPTER_TIMING,
+  FRAME_SETS,
   LABEL_MOTION,
   SEQUENCE_CONFIG,
   beatHold,
@@ -1721,15 +1722,34 @@ export default function CarSequence() {
             };
           }
 
+          // The stage holds the screen with position: sticky, not a ScrollTrigger
+          // pin. A pin switches the stage to position: fixed on the way in and
+          // back on the way out, and Chrome scores each switch as a layout shift
+          // though nothing moves on screen: 0.32 in, a whole 1.0 out, which rated
+          // about half of all /car visits poor CLS in the field. Sticky is placed
+          // by the scroll itself and is never scored. The section is the stage
+          // plus the run (pinSpacing's job before), so the stage lets go exactly
+          // where the scrub ends.
+          const holdRun = () => {
+            const section = sectionRef.current;
+            const stage = stageRef.current;
+            if (!section || !stage) return;
+            stage.style.position = "sticky";
+            stage.style.top = "0px";
+            section.style.height = `${
+              stage.offsetHeight + Math.round(master.duration() * window.innerHeight)
+            }px`;
+          };
+          holdRun();
+          ScrollTrigger.addEventListener("refreshInit", holdRun);
+
           const trigger = ScrollTrigger.create({
             id: "car-sequence",
             trigger: sectionRef.current,
             animation: master,
-            pin: stageRef.current,
             start: "top top",
             end: () => `+=${Math.round(master.duration() * window.innerHeight)}`,
             scrub: 0.3,
-            pinSpacing: true,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               paintRail(self.progress);
@@ -2342,10 +2362,14 @@ export default function CarSequence() {
             window.removeEventListener("touchcancel", onTouchEnd);
             window.removeEventListener("scroll", onScroll);
             ScrollTrigger.removeEventListener("refreshInit", letGo);
+            ScrollTrigger.removeEventListener("refreshInit", holdRun);
             ScrollTrigger.removeEventListener("refresh", syncSteps);
             stepRef.current = null;
             setSteps(null);
             trigger.kill();
+            sectionRef.current?.style.removeProperty("height");
+            stageRef.current?.style.removeProperty("position");
+            stageRef.current?.style.removeProperty("top");
             master.kill();
             labelBeats.forEach((beat) => {
               beat.arriving?.kill();
@@ -2567,10 +2591,17 @@ export default function CarSequence() {
             ) : null,
           )}
 
+          {/* Born at the landscape frame's size, so the frame box is laid out
+              whole from the first paint instead of growing from a canvas's
+              default 300x150 when frame 0 arrives, which Chrome scores as a
+              layout shift. The portrait set's box is sized in globals.css, and
+              the loader sets the real size either way. */}
           <canvas
             ref={canvasRef}
             role="img"
             aria-label="Rotating view of the SR26 Baja SAE vehicle"
+            width={FRAME_SETS.landscape.pixels[0]}
+            height={FRAME_SETS.landscape.pixels[1]}
             className="relative z-10 block max-h-[calc(100svh-4rem)] max-w-[100vw]"
           />
 
@@ -2749,10 +2780,10 @@ export default function CarSequence() {
       {/* How far through the sequence you are, and the rail that pans it. It is
           drawn ON the navbar's lower edge rather than under it: the track is left
           transparent so the navbar's own border is what the line rides, and only
-          the filled part is painted. That means living outside the pinned stage -
-          GSAP pins by setting a transform, which opens a stacking context the
-          rail could never have escaped to reach over the navbar - so it is fixed
-          to the viewport instead, and the pin only decides whether it is up. */}
+          the filled part is painted. That means living outside the held stage -
+          a sticky box opens a stacking context the rail could never have
+          escaped to reach over the navbar - so it is fixed to the viewport
+          instead, and the run only decides whether it is up. */}
       <div
         ref={railRef}
         role="slider"

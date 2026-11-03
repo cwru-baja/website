@@ -31,9 +31,9 @@ import type { Direction } from "./carSnap";
  * (CarCaptionBand) - there, next to the round part chips, a square would argue
  * with them.
  *
- * No backdrop-filter: inside the pinned stage - GSAP pins with a transform -
- * Chromium dropped the blurred button from the paint at most stops while it
- * still took clicks. The corners it sits in are near black, so a plain
+ * No backdrop-filter: inside the held stage - back when GSAP pinned it with a
+ * transform - Chromium dropped the blurred button from the paint at most stops
+ * while it still took clicks. The corners it sits in are near black, so a plain
  * translucent fill reads the same.
  */
 

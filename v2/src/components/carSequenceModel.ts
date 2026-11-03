@@ -43,12 +43,31 @@ export type FrameSourceLike = FrameSet | FrameSource;
 const sourceOf = (source: FrameSourceLike): FrameSource =>
   typeof source === "string" ? { set: source, format: SEQUENCE_CONFIG.extension } : source;
 
+/** width:height is the frame's shape; pixels is the size every file is rendered at. */
 export const FRAME_SETS = {
-  landscape: { root: "/renders-sr26", width: 16, height: 9, formats: ["avif", "webp"] },
-  portrait: { root: "/renders-sr26/portrait", width: 4, height: 5, formats: ["webp"] },
+  landscape: {
+    root: "/renders-sr26",
+    width: 16,
+    height: 9,
+    pixels: [1920, 1080],
+    formats: ["avif", "webp"],
+  },
+  portrait: {
+    root: "/renders-sr26/portrait",
+    width: 4,
+    height: 5,
+    pixels: [1080, 1350],
+    formats: ["webp"],
+  },
 } as const satisfies Record<
   FrameSet,
-  { root: string; width: number; height: number; formats: readonly FrameFormat[] }
+  {
+    root: string;
+    width: number;
+    height: number;
+    pixels: readonly [number, number];
+    formats: readonly FrameFormat[];
+  }
 >;
 
 /** The screens the portrait set is for: phones, and small tablets, held upright. */
