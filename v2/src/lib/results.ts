@@ -64,6 +64,7 @@ const EVENT_ORDER = [
   "Hill Climb",
   "Sled Pull",
   "Pilot Pull",
+  "Passport Pull",
   "Rock Crawl",
   "Suspension & Traction",
   "Endurance",
