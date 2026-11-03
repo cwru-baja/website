@@ -482,13 +482,15 @@ export default function CarLabelsLayer({
                 data-label-dot={label.id}
                 style={initial}
               >
-                <circle
-                  r={LABEL_STYLE.haloRadius}
-                  fill="var(--livery)"
-                  fillOpacity={0.3}
-                  pointerEvents={highlights[label.id] ? "visiblePainted" : undefined}
-                  {...hover(label.id)}
-                />
+                <circle r={LABEL_STYLE.haloRadius} fill="var(--livery)" fillOpacity={0.3} />
+                {highlights[label.id] && (
+                  <circle
+                    r={LABEL_STYLE.hitRadius}
+                    fill="transparent"
+                    pointerEvents="visibleFill"
+                    {...hover(label.id)}
+                  />
+                )}
                 <circle
                   r={LABEL_STYLE.dotRadius}
                   fill="var(--livery)"

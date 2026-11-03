@@ -34,9 +34,11 @@ export type LabelSide = "left" | "right";
 
 export const LABEL_STYLE = {
   stroke: 3,
-  dotRadius: 6.5,
-  dotRing: 2.5,
-  haloRadius: 12,
+  dotRadius: 4.5,
+  dotRing: 2,
+  haloRadius: 8,
+  /** The dot's hover target, kept larger than the dot it surrounds. */
+  hitRadius: 12,
   /** Gap between the run and the name sitting on top of it. */
   textLift: 7,
   /** How far the run carries on past the name, on the knee side. */
