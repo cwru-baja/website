@@ -80,14 +80,14 @@
     },
     {
       "id": "frame-dp900",
-      "text": "Formtube DP 900",
+      "text": "Cliffs Formtube 1000",
       "dot": {
         "x": 80.78,
         "y": 50.46
       },
       "end": {
-        "x": 88,
-        "y": 47.2
+        "x": 75,
+        "y": 45.55
       }
     }
   ],
@@ -292,7 +292,7 @@
     },
     {
       "id": "suspension-dp1200",
-      "text": "Formtube DP 1200",
+      "text": "Cliffs Formtube 1200",
       "part": "wishbones",
       "dot": {
         "x": 56.25,
