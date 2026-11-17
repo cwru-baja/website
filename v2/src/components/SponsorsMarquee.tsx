@@ -261,7 +261,7 @@ export default function SponsorsMarquee() {
           }}
         >
           {/* Removed animate-marquee from className */}
-          <div className="flex w-max" ref={marqueeRef}>
+          <div className="logo-wall flex w-max" ref={marqueeRef}>
             {repeatedSponsors.map(({ sponsor, copy }) => {
               const box = logoBox(sponsor.file, "marquee");
               return (
@@ -270,7 +270,8 @@ export default function SponsorsMarquee() {
                 href={sponsor.url || undefined}
                 target={sponsor.url ? "_blank" : undefined}
                 rel={sponsor.url ? "noopener noreferrer" : undefined}
-                className="flex items-center justify-center px-6 shrink-0 opacity-100 transition-opacity duration-300 sm:px-12"
+                className="flex items-center justify-center px-6 shrink-0 sm:px-12"
+                style={{ "--logo-url": `url("${logoSrc(sponsor.file, sponsor.png)}")` } as React.CSSProperties}
               >
                 <Image
                   src={logoSrc(sponsor.file, sponsor.png)}

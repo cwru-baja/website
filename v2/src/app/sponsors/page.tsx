@@ -198,7 +198,7 @@ export default function SponsorsPage() {
                 {/* Logo row. On phones the column gap scales with the row
                     like the logos do (28px on a 390px phone), see
                     phoneLogoHeight. */}
-                <div className={`flex flex-wrap items-center gap-x-[min(8.6cqi,2.5rem)] gap-y-9 sm:gap-x-20 sm:gap-y-12 ${right ? "justify-end" : ""}`}>
+                <div className={`logo-wall flex flex-wrap items-center gap-x-[min(8.6cqi,2.5rem)] gap-y-9 sm:gap-x-20 sm:gap-y-12 ${right ? "justify-end" : ""}`}>
                   {tier.sponsors.map((sponsor) => {
                     const box = logoBox(sponsor.file, tier.key);
                     return (
@@ -211,6 +211,7 @@ export default function SponsorsPage() {
                         // 12px tall; the padding makes every link at least a
                         // 44px target without moving anything.
                         className="group -mx-2.5 -my-4 px-2.5 py-4"
+                        style={{ "--logo-url": `url("${logoSrc(sponsor.file, sponsor.png)}")` } as React.CSSProperties}
                       >
                         <Image
                           src={logoSrc(sponsor.file, sponsor.png)}
