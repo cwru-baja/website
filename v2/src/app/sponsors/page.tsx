@@ -28,6 +28,7 @@ const tiers: {
       { name: "Enterline Foundation", file: "enterline-foundation", url: "https://enterlinefoundation.org/" },
       { name: "Case Alumni Association", file: "case-alumni-association", url: "https://casealumni.org/" },
       { name: "Cleveland Cliffs", file: "cleveland-cliffs-logo", url: "https://www.clevelandcliffs.com/", png: true },
+      { name: "Relativity", file: "relativity", url: "https://www.relativityspace.com/" },
     ],
   },
   {

@@ -26,6 +26,7 @@ const sponsors: Sponsor[] = [
     file: "case-alumni-association",
     url: "https://casealumni.org/",
   },
+  { name: "Relativity", file: "relativity", url: "https://www.relativityspace.com/" },
   {
     name: "Spee-D Metals",
     file: "spee-d-metals",
