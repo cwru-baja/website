@@ -5,7 +5,7 @@ import type { HeadshotFraming } from "@/components/headshotFraming";
 // replaced photo can't be served stale from Next's image cache at some widths.
 import joshuaStout from "../../public/images/headshots/DSC00448.jpg";
 import shelleyWei from "../../public/images/headshots/DSC00447.jpg";
-import ciaranNimick from "../../public/images/headshots/DSC00467.jpg";
+import amyBudzichowski from "../../public/images/headshots/amy-budzichowski.jpg";
 import zaneSandelin from "../../public/images/headshots/DSC00455.jpg";
 import bramLoren from "../../public/images/headshots/DSC00525.jpg";
 import maureenManning from "../../public/images/headshots/DSC00518.jpg";
@@ -44,7 +44,7 @@ export type Leader = {
 const executiveBoard: Leader[] = [
   { name: "Joshua Stout",       role: "Team Captain",                         image: joshuaStout, graduationYear: "2027", linkedin: "https://www.linkedin.com/in/joshua-martin-stout/", framing: { zoom: 1.34, x: 3.61, y: 14.17 } },
   { name: "Shelley Wei",        role: "Technical Director",                   image: shelleyWei, graduationYear: "2027", linkedin: "https://www.linkedin.com/in/shelleyywei/", framing: { zoom: 1.33, x: 0.04, y: -13.85 } },
-  { name: "Ciaran Nimick",      role: "Finance Lead",                         image: ciaranNimick, graduationYear: "2028", linkedin: "https://www.linkedin.com/in/ciaran-nimick/", framing: { zoom: 1.45, x: 4.32, y: 20.27 } },
+  { name: "Amy Budzichowski",   role: "Finance Lead",                         image: amyBudzichowski, graduationYear: "2027", linkedin: "https://www.linkedin.com/in/amy-budzichowski/" },
   { name: "Zane Sandelin",      role: "Logistics Lead",                       image: zaneSandelin, graduationYear: "2028", linkedin: "https://www.linkedin.com/in/zane-sandelin-010b1b274/", framing: { zoom: 1.51, x: 1.84, y: -3.42 } },
   { name: "Veronica Talan",     role: "Frame & Membership Lead",              image: veronicaTalan, graduationYear: "2028", linkedin: "https://www.linkedin.com/in/veronica-talan-66506733b/", framing: { zoom: 1.36, x: 6.71, y: -15.35 } },
 ];
