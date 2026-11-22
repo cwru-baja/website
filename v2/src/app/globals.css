@@ -371,35 +371,33 @@ html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
 
 /* Sponsor logos: the hovered (or keyboard-focused) logo turns the livery
    colour. The logos are drawn white by a filter that keeps only their alpha,
-   so the colour is a ::after painted in --livery and masked by the same file
-   (--logo-url, set on each link). padding: inherit lines its content box up
-   with the image. Only on devices with a real pointer, so a tap on a phone
-   can't leave a logo stuck coloured. */
-.logo-wall a {
-  position: relative;
-}
-.logo-wall a::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  box-sizing: border-box;
-  padding: inherit;
-  background: var(--livery);
-  mask: var(--logo-url) center / contain no-repeat content-box;
-  opacity: 0;
-  pointer-events: none;
-}
+   so the colour is a ::after painted in --livery and masked by the same image
+   (--logo-url, set on each link; see lib/logoMask.ts). padding: inherit lines
+   its content box up with the image. Only on devices with a real pointer, so a
+   tap on a phone can't leave a logo stuck coloured - and the whole ::after is
+   inside the query, because a mask downloads its image as soon as the element
+   renders, hovered or not. */
 @media (hover: hover) {
-  .logo-wall a:hover::after {
+  .logo-wall a {
+    position: relative;
+  }
+  .logo-wall a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    padding: inherit;
+    background: var(--livery);
+    mask: var(--logo-url) center / contain no-repeat content-box;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .logo-wall a:hover::after,
+  .logo-wall a:focus-visible::after {
     opacity: 1;
   }
-  .logo-wall a:hover img {
+  .logo-wall a:hover img,
+  .logo-wall a:focus-visible img {
     opacity: 0;
   }
-}
-.logo-wall a:focus-visible::after {
-  opacity: 1;
-}
-.logo-wall a:focus-visible img {
-  opacity: 0;
 }

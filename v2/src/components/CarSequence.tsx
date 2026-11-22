@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import {
   Fragment,
   useCallback,
@@ -23,9 +24,7 @@ import CarStepButtons from "./CarStepButtons";
 import CarSubteamTag from "./CarSubteamTag";
 import { subteamFor } from "./carSubteams";
 import CockpitEgg, { COCKPIT_STILL, type Freeze } from "./dashPong/CockpitEgg";
-import CarSequenceCalibration, {
-  type SaveState,
-} from "./CarSequenceCalibration";
+import type { SaveState } from "./CarSequenceCalibration";
 import {
   progressForKey,
   progressFromPointer,
@@ -100,6 +99,12 @@ import {
 } from "./carSequenceModel";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+// The label placement tool. It only opens under next dev (?calibrateCar=1), so
+// it is fetched on demand instead of riding along in every visitor's bundle.
+const CarSequenceCalibration = dynamic(() => import("./CarSequenceCalibration"), {
+  ssr: false,
+});
 
 /**
  * How many frames the desktop loader has in flight. Few enough that they arrive

@@ -4,13 +4,27 @@ import Script from "next/script";
 import type { CSSProperties } from "react";
 import "./globals.css";
 import ScrollToTop from "@/components/ScrollToTop";
+import { preloadFont } from "@/lib/preloadFont";
 import { CARS, CURRENT_CAR, CURRENT_THEME, liveryVariables } from "@/lib/livery";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
+// Not preloaded: only a competition hover card and the calibration panels set
+// type in it, and next/font would otherwise preload it on every page ahead of
+// the faces each page's first paint actually uses (preloaded below).
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  preload: false,
 });
+
+// The faces every page paints first: Coolvetica Bold sets each page title and
+// the hero's BUILT, Satoshi is the body. A @font-face is only discovered once
+// the stylesheet has been parsed and a matching element laid out; preloading
+// starts them with the CSS instead.
+const FIRST_PAINT_FONTS = [
+  "/fonts/coolvetica/Coolvetica-Bold.woff2",
+  "/fonts/satoshi/Satoshi-Variable.woff2",
+];
 
 // openGraph deliberately carries no title or description: a child page that
 // does not declare its own openGraph inherits this whole object, and Next
@@ -77,6 +91,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  FIRST_PAINT_FONTS.forEach(preloadFont);
+
   return (
     // suppressHydrationWarning: introGate rewrites data-intro before React
     // hydrates, so the DOM wins over the rendered "play". It is shallow, so

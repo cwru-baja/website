@@ -8,6 +8,8 @@ import {
 } from "react";
 import {
   DEFAULT_FRAMING,
+  NUDGE_FINE_STEP,
+  NUDGE_STEP,
   ZOOM_RANGE,
   isDefaultFraming,
   panLimit,
@@ -29,9 +31,6 @@ const controlClass =
   "h-9 rounded-md border border-white/15 bg-black/45 px-2 text-xs text-white outline-none focus:border-livery-ink disabled:opacity-35";
 
 const panelMargin = 8;
-
-export const NUDGE_STEP = 1;
-export const NUDGE_FINE_STEP = 0.25;
 
 export default function HeadshotCalibration({
   names,

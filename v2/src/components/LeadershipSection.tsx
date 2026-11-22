@@ -9,12 +9,11 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import HeadshotCalibration, {
-  NUDGE_FINE_STEP,
-  NUDGE_STEP,
-} from "./HeadshotCalibration";
+import dynamic from "next/dynamic";
 import {
   DEFAULT_FRAMING,
+  NUDGE_FINE_STEP,
+  NUDGE_STEP,
   ZOOM_RANGE,
   clampFraming,
   dragToPan,
@@ -24,6 +23,16 @@ import {
   type HeadshotFraming,
 } from "./headshotFraming";
 import { LEADERSHIP_TIERS as tiers, type Leader as Member } from "@/lib/team";
+
+// The framing tool. It only opens under next dev (?calibrateHeadshots=1), so it
+// is fetched on demand instead of riding along in every visitor's bundle.
+const HeadshotCalibration = dynamic(() => import("./HeadshotCalibration"), { ssr: false });
+
+// The page's largest paint is the first headshot. Left lazy, the browser held
+// it back until layout proved it near the viewport, 1.2 s after the HTML on a
+// phone. Only a phone's first row (two columns) loads eagerly and first: making
+// the whole first tier eager put five downloads in the LCP image's way.
+const FIRST_ROW = new Set(tiers[0].members.slice(0, 2).map((member) => member.name));
 
 // Members wearing the team logo have nothing to reframe.
 const photoMembers = tiers
@@ -62,6 +71,7 @@ function MemberCard({
   framingOverride,
   calibration,
 }: MemberCardProps) {
+  const firstRow = FIRST_ROW.has(name);
   const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
   const active = framingOverride ?? framing;
   const resolved = resolveFraming(active);
@@ -122,6 +132,8 @@ function MemberCard({
             : framedSizes(resolved, image.width / image.height)
         }
         style={framed ? { transform: framingTransform(resolved) } : undefined}
+        loading={firstRow ? "eager" : "lazy"}
+        fetchPriority={firstRow ? "high" : undefined}
       />
     </div>
   );

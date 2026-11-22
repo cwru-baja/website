@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 import { logoBox, logoSrc } from "@/lib/logoSizing";
+import { logoMaskStyle } from "@/lib/logoMask";
 import PageContainer from "@/components/PageContainer";
 
 type Sponsor = { name: string; file: string; url: string; png?: boolean };
@@ -271,7 +272,7 @@ export default function SponsorsMarquee() {
                 target={sponsor.url ? "_blank" : undefined}
                 rel={sponsor.url ? "noopener noreferrer" : undefined}
                 className="flex items-center justify-center px-6 shrink-0 sm:px-12"
-                style={{ "--logo-url": `url("${logoSrc(sponsor.file, sponsor.png)}")` } as React.CSSProperties}
+                style={logoMaskStyle(logoSrc(sponsor.file, sponsor.png), box)}
               >
                 <Image
                   src={logoSrc(sponsor.file, sponsor.png)}

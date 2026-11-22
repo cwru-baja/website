@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import gsap from "gsap";
 
 import MLogo, { M_LOGO_ASPECT } from "@/components/MLogo";
 
@@ -10,6 +9,11 @@ import MLogo, { M_LOGO_ASPECT } from "@/components/MLogo";
 const INITIAL_SIZE = 320;
 // Terminal size — large enough to clear any viewport diagonal
 const FINAL_SIZE = 16000;
+// Timeline, in seconds from mount. Hold the M, fade it out, and start the
+// fly-out 0.25 s before the fade ends so the hole opens as the M disappears.
+const HOLD = 0.35;
+const FADE_DURATION = 0.45;
+const FLY_OUT_START = HOLD + FADE_DURATION - 0.25;
 // Keep the reveal readable, then clear the screen quickly once the fly-out starts.
 const FLY_OUT_DURATION = 0.9;
 // SVG aspect ratio (width / height)
@@ -33,7 +37,7 @@ const SKIP = "skip";
 // the direct checks cover the case where that script did not run.
 function shouldSkipIntro() {
   if (document.documentElement.getAttribute(INTRO_ATTR) === SKIP) return true;
-  // GSAP writes inline styles, so the prefers-reduced-motion block in
+  // The animation writes inline styles, so the prefers-reduced-motion block in
   // globals.css cannot tame this animation — skip it outright instead.
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return true;
   try {
@@ -84,13 +88,9 @@ export default function LogoIntro() {
     logoImage.style.willChange = "transform";
 
     // Scale the visible M around the same fixed point as the mask cutout.
-    // A shared size state keeps both versions of the logo perfectly aligned
-    // during the overlap between the fade and the fly-through.
-    gsap.set(logoImage, {
-      transformOrigin: `${ZOOM_FX * 100}% ${ZOOM_FY * 100}%`,
-    });
-    const setLogoScaleX = gsap.quickSetter(logoImage, "scaleX");
-    const setLogoScaleY = gsap.quickSetter(logoImage, "scaleY");
+    // A shared size keeps both versions of the logo perfectly aligned during
+    // the overlap between the fade and the fly-through.
+    logoImage.style.transformOrigin = `${ZOOM_FX * 100}% ${ZOOM_FY * 100}%`;
 
     // Update mask-size AND mask-position together so the zoom appears to
     // originate from (ZOOM_FX, ZOOM_FY) within the logo, not from its center.
@@ -117,53 +117,50 @@ export default function LogoIntro() {
       overlay.style.setProperty("-webkit-mask-size", sizeStr);
       overlay.style.setProperty("mask-position", posStr);
       overlay.style.setProperty("-webkit-mask-position", posStr);
-      const logoScale = size / INITIAL_SIZE;
-      setLogoScaleX(logoScale);
-      setLogoScaleY(logoScale);
+      logoImage.style.transform = `scale(${size / INITIAL_SIZE})`;
     };
 
     // Set initial mask before animation starts
     setMask(INITIAL_SIZE);
 
-    const state = { size: INITIAL_SIZE };
-
-    const tl = gsap.timeline({ delay: 0.35 });
-
-    // Phase 1 → Phase 2: fade out the solid M logo
-    tl.to(logo, {
-      opacity: 0,
-      duration: 0.45,
-      ease: "power2.in",
-    });
-
-    // Phase 2 → Phase 3: scale the transparent hole with increasing acceleration.
-    // Cubing progress keeps the beginning restrained, then ramps the mask's
-    // speed sharply toward the end of the fly-out.
-    // Overlaps with the fade so the expansion begins slightly before M fully disappears
-    tl.to(
-      state,
-      {
-        size: FINAL_SIZE,
-        duration: FLY_OUT_DURATION,
-        ease: (progress: number) => progress * progress * progress,
-        onUpdate() {
-          setMask(state.size);
-        },
-        onComplete() {
-          overlay.style.willChange = "auto";
-          logo.style.willChange = "auto";
-          logoImage.style.willChange = "auto";
-          container.style.display = "none";
-        },
-      },
-      "-=0.25"
-    );
-
-    return () => {
-      tl.kill();
+    const releaseLayers = () => {
       overlay.style.willChange = "auto";
       logo.style.willChange = "auto";
       logoImage.style.willChange = "auto";
+    };
+
+    // A hand-rolled timeline rather than GSAP: this component is in the root
+    // layout, and importing GSAP here put ~28 KB of script on every page for
+    // two tweens that play once per session.
+    const clamp01 = (value: number) => Math.min(1, Math.max(0, value));
+    let frame = 0;
+    let start: number | null = null;
+    const tick = (now: number) => {
+      start ??= now;
+      const elapsed = (now - start) / 1000;
+
+      // Fade out the solid M (GSAP's power2.in: progress squared).
+      const fade = clamp01((elapsed - HOLD) / FADE_DURATION);
+      logo.style.opacity = String(1 - fade * fade);
+
+      // Scale the transparent hole with increasing acceleration. Cubing
+      // progress keeps the beginning restrained, then ramps the mask's speed
+      // sharply toward the end of the fly-out.
+      const fly = clamp01((elapsed - FLY_OUT_START) / FLY_OUT_DURATION);
+      if (fly > 0) setMask(INITIAL_SIZE + (FINAL_SIZE - INITIAL_SIZE) * fly * fly * fly);
+
+      if (fly < 1) {
+        frame = window.requestAnimationFrame(tick);
+        return;
+      }
+      releaseLayers();
+      container.style.display = "none";
+    };
+    frame = window.requestAnimationFrame(tick);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      releaseLayers();
     };
   }, [show]);
 
@@ -178,7 +175,7 @@ export default function LogoIntro() {
         Dark overlay — the "fly-through" layer.
         mask-composite: exclude inverts the M logo mask so that the M shape
         becomes a transparent hole while everything else stays opaque.
-        Both mask-size and mask-position are animated by GSAP so the hole
+        Both mask-size and mask-position are animated per frame so the hole
         grows from the configured zoom-origin point on the logo.
       */}
       <div

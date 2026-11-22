@@ -54,6 +54,9 @@ export default function Footer() {
             alt="CWRU Motorsports"
             width={1547}
             height={299}
+            // Without sizes a fixed-width image offers 1x/2x of its 1547px
+            // intrinsic width, so every screen fetched the 3840px rendition.
+            sizes="(min-width: 1000px) 900px, 100vw"
             className="w-full max-w-[900px] translate-y-[16%] opacity-90 select-none pointer-events-none sm:w-[90vw] md:translate-y-[22%]"
             priority={false}
             draggable={false}

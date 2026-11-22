@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { preloadFont } from "@/lib/preloadFont";
+import AfterLoadPrefetchLink from "./AfterLoadPrefetchLink";
 // Imported rather than referenced by path on purpose. A string src keeps the same
 // /_next/image?url=/<file>&w=... URL when the file is replaced, so every layer that
 // keys on that URL - Next's own image cache and the browser's - can hand back the
@@ -89,6 +91,10 @@ function ShowroomFloor() {
 // so its children and the car share one flex column and `order` can put the car
 // between them; the desktop markup is untouched.
 export default function Hero() {
+  // TO WIN. is the only Brier on the site, so its face is preloaded here rather
+  // than with the layout's fonts.
+  preloadFont("/fonts/brier/Brier-Bold.woff2");
+
   return (
     <section className="relative min-h-svh overflow-hidden bg-bg lg:h-dvh">
       <ShowroomFloor />
@@ -127,12 +133,14 @@ export default function Hero() {
           >
             Meet the Team
           </Link>
-          <Link
+          {/* /car's prefetch carries its frame preloads, which competed with
+              the car below for a phone's bandwidth: warmed after load instead. */}
+          <AfterLoadPrefetchLink
             href="/car"
             className="inline-flex items-center gap-2 border border-white/15 px-7 py-3 text-[0.7rem] font-semibold tracking-[0.2em] uppercase text-white/55 hover:border-white/30 hover:text-white max-lg:min-h-11 max-lg:justify-center max-lg:whitespace-nowrap max-sm:grow max-sm:basis-36 max-sm:px-4"
           >
             View the Car
-          </Link>
+          </AfterLoadPrefetchLink>
         </div>
       </div>
 

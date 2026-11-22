@@ -85,3 +85,7 @@ export function roundFraming(framing: HeadshotFraming): HeadshotFraming {
 export function dragToPan(deltaPx: number, frameSize = FRAME_SIZE): number {
   return (deltaPx / frameSize) * 100;
 }
+
+/** Arrow-key steps for the calibration panel, in frame-relative percent. */
+export const NUDGE_STEP = 1;
+export const NUDGE_FINE_STEP = 0.25;

@@ -5,6 +5,7 @@ import PageTitle from "@/components/PageTitle";
 import Image from "next/image";
 import { SEASON } from "@/lib/events";
 import { logoBox, logoSrc, phoneLogoHeight, type TierKey } from "@/lib/logoSizing";
+import { logoMaskStyle } from "@/lib/logoMask";
 
 export const metadata = {
   title: "Sponsors — CWRU Motorsports",
@@ -211,7 +212,7 @@ export default function SponsorsPage() {
                         // 12px tall; the padding makes every link at least a
                         // 44px target without moving anything.
                         className="group -mx-2.5 -my-4 px-2.5 py-4"
-                        style={{ "--logo-url": `url("${logoSrc(sponsor.file, sponsor.png)}")` } as React.CSSProperties}
+                        style={logoMaskStyle(logoSrc(sponsor.file, sponsor.png), box)}
                       >
                         <Image
                           src={logoSrc(sponsor.file, sponsor.png)}
