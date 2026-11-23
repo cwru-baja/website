@@ -48,7 +48,10 @@ function publish(value: Raised) {
 
 async function load() {
   try {
-    const response = await fetch(ENDPOINT);
+    // Never from the browser's cache: the relay used to be served with a
+    // 4-hour browser lifetime (Cloudflare's Browser Cache TTL), and browsers
+    // that kept an old total must ask again. The edge still caches for 30 s.
+    const response = await fetch(ENDPOINT, { cache: "no-store" });
     const value = response.ok ? parseRaised(await response.json()) : null;
     if (value) publish(value);
   } catch {

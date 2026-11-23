@@ -32,6 +32,16 @@ const failuresKey = (ip: string) => `fail:${ip}`;
 // at most twice a minute per data centre. An update clears it.
 const MAX_AGE_S = 30;
 
+// Browsers never keep it. Only the edge copy above caches, and what goes to
+// the browser is always rebuilt with these headers: a response served from
+// the edge cache comes back with the zone's Browser Cache TTL (4 hours) in
+// place of our max-age, which left browsers showing an old total for hours.
+const TO_BROWSER = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
+  "Access-Control-Allow-Origin": "*",
+};
+
 export class DaresTotal extends DurableObject<Env> {
   get(): Raised {
     return this.ctx.storage.kv.get<Raised>(RAISED_KEY) ?? { raised: 0, updatedAt: null };
@@ -59,12 +69,13 @@ export async function handleDares(request: Request, env: Env, ctx: ExecutionCont
 
   if (request.method === "GET") {
     const cached = await caches.default.match(cacheKey);
-    if (cached) return cached;
-    const response = Response.json(await store.get(), {
-      headers: { "Cache-Control": `public, max-age=${MAX_AGE_S}`, "Access-Control-Allow-Origin": "*" },
+    if (cached) return new Response(cached.body, { headers: TO_BROWSER });
+    const body = JSON.stringify(await store.get());
+    const edgeCopy = new Response(body, {
+      headers: { "Content-Type": "application/json", "Cache-Control": `public, max-age=${MAX_AGE_S}` },
     });
-    ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
-    return response;
+    ctx.waitUntil(caches.default.put(cacheKey, edgeCopy));
+    return new Response(body, { headers: TO_BROWSER });
   }
 
   // Writes only from the site's own pages (or tools with no Origin, which
