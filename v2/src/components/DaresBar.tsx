@@ -70,9 +70,18 @@ export default function DaresBar() {
         aria-hidden="true"
         className="relative flex w-full items-center justify-between gap-3 px-12 sm:gap-4 sm:px-36 lg:px-52"
       >
-        <span className="flex items-center gap-2 font-coolvetica text-sm leading-none whitespace-nowrap tracking-[0.14em] uppercase sm:text-base">
-          Dare us
-          <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+        {/* "Giving Tuesday" names the event: stacked over "Dare us" on phones,
+            where the countdown leaves no room for it alongside; one line,
+            split by a slash, from sm. */}
+        <span className="flex flex-col gap-1 font-satoshi text-sm leading-none font-bold whitespace-nowrap sm:flex-row sm:items-center sm:gap-2.5">
+          <span>Giving Tuesday</span>
+          <span aria-hidden="true" className="hidden sm:inline">
+            /
+          </span>
+          <span className="flex items-center gap-2">
+            Dare us
+            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
+          </span>
         </span>
         <span className="flex items-center gap-4 font-satoshi text-sm font-bold whitespace-nowrap tabular-nums sm:gap-6">
           {raised !== null && (
