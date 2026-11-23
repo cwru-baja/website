@@ -4,6 +4,8 @@
 // The types mirror live-relay/src/protocol.ts at the repo root (the relay
 // Worker). Change the two together.
 
+import { relayHttpUrl, relayWsUrl } from "@/lib/relay";
+
 // ---- Wire contract (mirror of live-relay/src/protocol.ts) -------------------
 
 export const BOARD_STATUS_FLAGS = [
@@ -101,16 +103,12 @@ export const CLOSE_BAD_ORIGIN = 4004;
 
 // ---- Page state -------------------------------------------------------------
 
-export const LIVE_WS_URL =
-  process.env.NEXT_PUBLIC_LIVE_WS_URL ||
-  (process.env.NODE_ENV === "development"
-    ? "ws://localhost:8787/watch"
-    : "wss://live.cwrumotorsports.com/watch");
-
+/** The viewers' end of the relay (lib/relay.ts says where it is). */
+export const LIVE_WS_URL = relayWsUrl("/watch");
 /** The pit laptop's end of the relay. */
-export const LIVE_PUBLISH_URL = LIVE_WS_URL.replace(/\/watch$/, "/publish");
+export const LIVE_PUBLISH_URL = relayWsUrl("/publish");
 /** JSON { viewers, publisher } over plain HTTP(S). */
-export const LIVE_HEALTH_URL = LIVE_WS_URL.replace(/^ws/, "http").replace(/\/watch$/, "/health");
+export const LIVE_HEALTH_URL = relayHttpUrl("/health");
 
 /** The car counts as live while frames keep arriving at least this often. */
 export const LIVE_WINDOW_MS = 5_000;

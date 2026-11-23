@@ -2532,7 +2532,7 @@ export default function CarSequence() {
         // "pending" is the server render, before the set is known.
         data-car-stage={frameSet ?? "pending"}
         data-car-dim={lit || hoverLit ? "" : undefined}
-        className="relative flex h-[100svh] items-center justify-center overflow-hidden bg-bg pt-16"
+        className="relative flex h-[100svh] items-center justify-center overflow-hidden bg-bg pt-(--nav-h)"
         // While a part is lit the whole stage dims with the frame, so the dim
         // has no edge (see STAGE_DIM).
         style={{
@@ -2607,7 +2607,7 @@ export default function CarSequence() {
             aria-label="Rotating view of the SR26 Baja SAE vehicle"
             width={FRAME_SETS.landscape.pixels[0]}
             height={FRAME_SETS.landscape.pixels[1]}
-            className="relative z-10 block max-h-[calc(100svh-4rem)] max-w-[100vw]"
+            className="relative z-10 block max-h-[calc(100svh-var(--nav-h))] max-w-[100vw]"
           />
 
           {excursionSteps.map((step) =>
@@ -2803,7 +2803,7 @@ export default function CarSequence() {
         // dragging down it has to still scroll the page. The browser takes those
         // over and hands us a pointercancel, which ends the pan; sideways drags
         // never reach it and stay ours.
-        className="group fixed inset-x-0 top-[calc(4rem-1px)] z-[60] h-6 cursor-ew-resize touch-pan-y select-none outline-none motion-reduce:hidden"
+        className="group fixed inset-x-0 top-[calc(var(--nav-h)-1px)] z-[60] h-6 cursor-ew-resize touch-pan-y select-none outline-none motion-reduce:hidden"
         style={{ opacity: 0, visibility: "hidden" }}
       >
         {/* There is no track: the navbar's border is what the unfilled part of

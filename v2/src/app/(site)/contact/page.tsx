@@ -1,5 +1,4 @@
 import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 import EmailRow from "./EmailRow";
@@ -25,8 +24,6 @@ const numbered = (index: number) => String(index + 1).padStart(2, "0");
 export default function ContactPage() {
   return (
     <>
-      <Navbar />
-
       <main className="bg-bg pt-36 pb-24 sm:pt-40">
         <PageContainer>
           <PageTitle lead="GET IN" accent="TOUCH." />

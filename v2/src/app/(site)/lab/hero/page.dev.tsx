@@ -5,7 +5,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import Navbar from "@/components/Navbar";
 import StatsSection from "@/components/StatsSection";
 import SponsorsMarquee from "@/components/SponsorsMarquee";
 import Footer from "@/components/Footer";
@@ -20,7 +19,6 @@ export default function HeroLabPage() {
   if (process.env.NODE_ENV === "production") notFound();
   return (
     <>
-      <Navbar />
       <Suspense>
         <LabHero />
       </Suspense>

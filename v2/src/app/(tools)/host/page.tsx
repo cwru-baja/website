@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
 import HostConsole from "@/components/host/HostConsole";
 
@@ -14,8 +13,6 @@ export const metadata = {
 export default function HostPage() {
   return (
     <>
-      <Navbar />
-
       {/* A working screen, not a page to read: no big title, the controls start
           just under the navbar. */}
       <main className="bg-bg pt-24 pb-24">

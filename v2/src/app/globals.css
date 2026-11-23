@@ -256,7 +256,7 @@ html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
 
 [data-car-stage="portrait"] {
   --car-band-min: 8rem;
-  --car-frame-w: min(100vw, calc((100svh - 4rem - var(--car-band-min)) * 0.8));
+  --car-frame-w: min(100vw, calc((100svh - var(--nav-h) - var(--car-band-min)) * 0.8));
   flex-direction: column;
   justify-content: flex-start;
 }
@@ -280,13 +280,13 @@ html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
 }
 /* "Loading vehicle", centred on the frame rather than the stage. */
 [data-car-stage="portrait"] > p {
-  top: calc(4rem + var(--car-frame-w) * 0.625);
+  top: calc(var(--nav-h) + var(--car-frame-w) * 0.625);
   translate: 0 -50%;
 }
 
 @media (orientation: landscape) {
   [data-car-stage="portrait"] {
-    --car-frame-w: calc((100svh - 5rem) * 0.8);
+    --car-frame-w: calc((100svh - var(--nav-h) - 1rem) * 0.8);
     flex-direction: row;
     justify-content: center;
     align-items: center;
@@ -309,7 +309,7 @@ html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
 @media (orientation: portrait) and (max-width: 1023px) {
   [data-car-stage="pending"] {
     --car-band-min: 8rem;
-    --car-frame-w: min(100vw, calc((100svh - 4rem - var(--car-band-min)) * 0.8));
+    --car-frame-w: min(100vw, calc((100svh - var(--nav-h) - var(--car-band-min)) * 0.8));
     flex-direction: column;
     justify-content: flex-start;
   }
@@ -326,7 +326,7 @@ html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
     min-height: var(--car-band-min);
   }
   [data-car-stage="pending"] > p {
-    top: calc(4rem + var(--car-frame-w) * 0.625);
+    top: calc(var(--nav-h) + var(--car-frame-w) * 0.625);
     translate: 0 -50%;
   }
 }
@@ -400,4 +400,49 @@ html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
   .logo-wall a:focus-visible img {
     opacity: 0;
   }
+}
+
+/* Blackbaud's donation form loader sets min-width: 320px and max-width: 600px
+   inline on its iframe. The floor runs past the 16px gutters on a 320px
+   phone, and /donate wants the form wider than 600px. The form inside is
+   fluid, so both go. */
+.bb-form iframe {
+  display: block;
+  min-width: 0 !important;
+  max-width: none !important;
+}
+
+/* DaresBar's stripe ends crawl like tape being pulled; off for reduced motion. */
+@keyframes dares-tape-crawl {
+  to { transform: translateX(var(--tape-period)); }
+}
+.dares-tape-crawl {
+  animation: dares-tape-crawl 1.4s linear infinite;
+  /* Its own compositor layer, so a busy main thread (a page loading) can't
+     stall it. */
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dares-tape-crawl { animation: none; }
+}
+
+/* /donate: PasteArrow draws itself in once, then the head appears. */
+@keyframes paste-arrow-draw { to { stroke-dashoffset: 0; } }
+@keyframes paste-arrow-head { to { opacity: 1; } }
+.paste-arrow-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: paste-arrow-draw 0.9s ease-out 0.3s forwards; }
+.paste-arrow-head { opacity: 0; animation: paste-arrow-head 0.2s ease-out 1.15s forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .paste-arrow-draw { stroke-dashoffset: 0; animation: none; }
+  .paste-arrow-head { opacity: 1; animation: none; }
+}
+
+/* The fixed header's height: the 4rem navbar, plus the 2.5rem dares bar while
+   it shows. :has() so the first paint already knows (the bar is in the static
+   HTML), with no script and no shift on hydration. /car sizes its stage, frame
+   and progress rail from this. */
+:root {
+  --nav-h: 4rem;
+}
+:root:has([data-dares-bar]) {
+  --nav-h: 6.5rem;
 }

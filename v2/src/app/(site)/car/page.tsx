@@ -1,5 +1,4 @@
 import { preload } from "react-dom";
-import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 import CarSequence from "@/components/CarSequence";
@@ -33,8 +32,6 @@ export default function CarPage() {
 
   return (
     <>
-      <Navbar />
-
       {/* Page header. On a touch screen it is taken out of the page while the
           car is part-way through (see globals.css). */}
       <section data-car-page-top className="bg-bg pt-40 pb-16">

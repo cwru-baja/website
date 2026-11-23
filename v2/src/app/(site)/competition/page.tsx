@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
@@ -25,8 +24,6 @@ function loadResults() {
 export default function CompetitionPage() {
   return (
     <>
-      <Navbar />
-
       {/* Page header */}
       <section className="bg-bg pt-40 pb-24">
         <PageContainer>

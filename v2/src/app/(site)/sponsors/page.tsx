@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
@@ -141,8 +140,6 @@ const totalSponsors = tiers.reduce((acc, t) => acc + t.sponsors.length, 0);
 export default function SponsorsPage() {
   return (
     <>
-      <Navbar />
-
       {/* Page header */}
       <section className="bg-bg pt-40 pb-0">
         <PageContainer>

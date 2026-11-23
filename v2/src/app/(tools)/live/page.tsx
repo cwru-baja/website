@@ -1,5 +1,4 @@
 import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 import LiveTelemetry from "@/components/live/LiveTelemetry";
@@ -19,8 +18,6 @@ export default function LivePage() {
     // the window, and the footer's logo, which is cut off by the page's end on
     // purpose, would otherwise stop mid-screen with empty background below it.
     <div className="flex min-h-svh flex-col">
-      <Navbar />
-
       <main className="flex-1 bg-bg pt-36 pb-24 sm:pt-40">
         <PageContainer>
           <PageTitle lead="LIVE" accent="TELEMETRY." />

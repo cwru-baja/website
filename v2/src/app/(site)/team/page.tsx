@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 import LeadershipSection from "@/components/LeadershipSection";
@@ -16,8 +15,6 @@ export const metadata = {
 export default function TeamPage() {
   return (
     <>
-      <Navbar />
-
       {/* Page header */}
       <section className="bg-bg pt-40 pb-16">
         <PageContainer>

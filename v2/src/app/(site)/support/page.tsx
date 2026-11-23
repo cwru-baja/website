@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Footer from "@/components/Footer";
 import FinanceDonutChart from "@/components/FinanceDonutChart";
-import Navbar from "@/components/Navbar";
 import PageContainer from "@/components/PageContainer";
 import PageTitle from "@/components/PageTitle";
 
@@ -14,8 +13,6 @@ export const metadata = {
 export default function SupportPage() {
   return (
     <>
-      <Navbar />
-
       <main className="bg-bg">
         <header className="pt-36 pb-14 sm:pt-40 sm:pb-16 lg:pb-20">
           <PageContainer>
@@ -67,20 +64,25 @@ export default function SupportPage() {
                   travel that move our season forward.
                 </p>
 
-                <div className="mt-12">
-                  <p className="border-l-2 border-livery-ink pl-4 text-sm leading-relaxed text-white/45">
-                    The link opens our Case Alumni Association campaign page. Scroll down to the
-                    &ldquo;Give Now&rdquo; form to make your gift.
-                  </p>
-                  <a
-                    href="https://casealumni.org/campaigns/baja-team/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-8 inline-flex min-h-12 items-center justify-center bg-livery px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-on-livery hover:bg-livery-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                <a
+                  href="/donate"
+                  target="_blank"
+                  rel="noopener"
+                  className="mt-12 inline-flex min-h-12 items-center justify-center gap-3 bg-livery px-8 py-3 font-coolvetica text-sm uppercase tracking-[0.12em] text-on-livery hover:bg-livery-hover focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                >
+                  Donate Now
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
                   >
-                    Donate Now
-                  </a>
-                </div>
+                    <path d="M6 3H3v10h10v-3M9 2h5v5M14 2 7.5 8.5" />
+                  </svg>
+                  <span className="sr-only">(opens in a new tab)</span>
+                </a>
               </div>
 
               <FinanceDonutChart />
