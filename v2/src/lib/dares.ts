@@ -49,7 +49,7 @@ const BOARD = [
   "Zane Sandelin", "Arka Nath", "Amy Budzichowski", "Joshua Stout", "Shelley Wei",
   "Audrey Weaver", "Kurt Rehm", "Veronica Talan", "Matthew Alcantara", "Andrew Shen",
   "Bram Loren", "Ben Roy", "Zhansar Zhaparov", "Maureen Manning", "Lauren Metzler",
-  "Sofia Acevedo",
+  "Sofia Acevedo", "Anthony Retelewski",
   // Everyone else
   "Phoebe Streiffer", "Davis Clarke", "Evelyn Sanchez", "Annelise Reilman", "Jake Meltzer",
   "Anjay Singla", "Aliya Nasim", "Kaavya Dhand-Kalluri", "Lev Edelson", "Ciaran Nimick",
