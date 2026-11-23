@@ -58,7 +58,11 @@ export default function DaresBar() {
         raised === null ? "" : ` ${formatUsd(raised)} raised.`
       } Open until ${DARES_END_LABEL}.`}
       className="group relative flex h-10 items-center overflow-hidden text-white hover:brightness-110 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-white"
-      style={{ background: PINK }}
+      // An image, not a background-color: iOS 26 Safari tints the status bar
+      // with the background-color of whatever is fixed at the top, ignoring
+      // themeColor. As an image the pink stays out of it and Safari falls back
+      // to the nav's black.
+      style={{ backgroundImage: `linear-gradient(${PINK}, ${PINK})` }}
     >
       <TapeEnd side="left" />
       <TapeEnd side="right" />
