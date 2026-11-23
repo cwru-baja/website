@@ -4,10 +4,12 @@ import { LOCKOUT_ATTEMPTS, LOCKOUT_WINDOW_MS, MAX_MESSAGE_BYTES, type LiveFrame 
 import {
   addFailure,
   isLockedOut,
+  MAX_RAISED,
   mergeLatest,
   originAllowed,
   parseFrame,
   parsePublisherMessage,
+  parseRaisedUpdate,
   tokensMatch,
   type Failures,
 } from "./state";
@@ -219,5 +221,28 @@ describe("lockout", () => {
     expect(isLockedOut(failures, T + LOCKOUT_WINDOW_MS - 1)).toBe(true);
     expect(isLockedOut(failures, T + LOCKOUT_WINDOW_MS)).toBe(false);
     expect(addFailure(failures, T + LOCKOUT_WINDOW_MS)).toEqual({ count: 1, since: T + LOCKOUT_WINDOW_MS });
+  });
+});
+
+describe("parseRaisedUpdate", () => {
+  it("takes a password and a whole-dollar total", () => {
+    expect(parseRaisedUpdate({ password: "pw", raised: 1240 })).toEqual({ password: "pw", raised: 1240 });
+    expect(parseRaisedUpdate({ password: "pw", raised: 0 })).toEqual({ password: "pw", raised: 0 });
+    expect(parseRaisedUpdate({ password: "pw", raised: MAX_RAISED })).not.toBeNull();
+  });
+
+  it("refuses cents, negatives, huge numbers, strings and a missing password", () => {
+    for (const bad of [
+      { password: "pw", raised: 12.5 },
+      { password: "pw", raised: -1 },
+      { password: "pw", raised: MAX_RAISED + 1 },
+      { password: "pw", raised: "1240" },
+      { password: "", raised: 10 },
+      { raised: 10 },
+      null,
+      [],
+    ]) {
+      expect(parseRaisedUpdate(bad)).toBeNull();
+    }
   });
 });

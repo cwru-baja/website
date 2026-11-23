@@ -19,6 +19,8 @@ and the site depends on its branch previews.
 | `GET /publish` | WebSocket for the pit laptop. The first message must be `{"t":"hello","token":"<team password>","v":1}` within 5 s; the relay answers `{"t":"ready"}`, or closes with 4001. A newer publisher replaces an older one (4002). |
 | `GET /watch` | WebSocket for `/live`. The first message must be the same hello with the watch password (or the team password); the relay answers with a `snapshot`, then `frames` and `publisher` messages, or closes with 4001. After the hello it is receive-only. |
 | `GET /health` | `{ viewers, publisher: { connected, lastSeenAt } }`, no telemetry. |
+| `GET /dares` | `{ raised, updatedAt }`: the Giving Tuesday total shown on `/dares`. Public; the edge caches it for 30 s. Kept in its own Durable Object, `DaresTotal` (`src/dares.ts`). |
+| `POST /dares` | `{ "password": "<team password>", "raised": 1240 }` from `cwrumotorsports.com/dares/update`. Whole dollars, 0 to 10,000,000. Same lockout as the sockets (429), same `SITE_ORIGINS` check (403). Clears the cached total. |
 
 On both doors: five wrong passwords from one address in 10 minutes lock it out (4003), and browser pages
 outside `SITE_ORIGINS` are refused (4004). Sending `ping` gets `pong`.

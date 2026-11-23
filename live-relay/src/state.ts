@@ -161,3 +161,23 @@ export function addFailure(failures: Failures | undefined, now: number): Failure
   if (!failures || now - failures.since >= LOCKOUT_WINDOW_MS) return { count: 1, since: now };
   return { count: failures.count + 1, since: failures.since };
 }
+
+// ---- Giving Tuesday total ---------------------------------------------------
+
+/** The most a team member can type in as the amount raised, in whole dollars. */
+export const MAX_RAISED = 10_000_000;
+
+/** What POST /dares carries: the team password and the new total. */
+export type RaisedUpdate = { password: string; raised: number };
+
+/**
+ * A valid update has a string password and a whole-dollar total from 0 to
+ * MAX_RAISED. Anything else is null, so a typo can't store "12.5k" or -40.
+ */
+export function parseRaisedUpdate(value: unknown): RaisedUpdate | null {
+  if (!isRecord(value)) return null;
+  const { password, raised } = value;
+  if (typeof password !== "string" || password.length === 0 || password.length > 256) return null;
+  if (typeof raised !== "number" || !Number.isInteger(raised) || raised < 0 || raised > MAX_RAISED) return null;
+  return { password, raised };
+}

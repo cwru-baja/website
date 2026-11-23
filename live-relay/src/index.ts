@@ -3,20 +3,28 @@
 //   GET /publish  WebSocket, the pit laptop (/host). Team password in its first message.
 //   GET /watch    WebSocket, /live. Watch password in its first message; then receive-only.
 //   GET /health   JSON: { viewers, publisher: { connected, lastSeenAt } }
+//   GET /dares    JSON: { raised, updatedAt }, the Giving Tuesday total. Public.
+//   POST /dares   { password, raised }: a team member sets the total (/dares/update).
 //
-// Every route goes to one Durable Object, so there is exactly one relay and
-// one copy of the latest state. The wire contract is in ./protocol.ts.
+// The telemetry routes go to one Durable Object, so there is exactly one relay
+// and one copy of the latest state. The wire contract is in ./protocol.ts.
+// /dares is the Giving Tuesday total, its own Durable Object (./dares.ts).
 
+import { handleDares } from "./dares";
 import { CLOSE_BAD_ORIGIN } from "./protocol";
 import { originAllowed } from "./state";
 
+export { DaresTotal } from "./dares";
 export { LiveRelay } from "./relay";
 
 const NO_STORE = { "Cache-Control": "no-store", "Access-Control-Allow-Origin": "*" };
 
 export default {
-  async fetch(request, env): Promise<Response> {
+  async fetch(request, env, ctx): Promise<Response> {
     const { pathname } = new URL(request.url);
+
+    if (pathname === "/dares") return handleDares(request, env, ctx);
+
     const relay = env.LIVE_RELAY.get(env.LIVE_RELAY.idFromName("car"));
 
     if (pathname === "/publish" || pathname === "/watch") {
