@@ -62,30 +62,30 @@ export default function DaresBar() {
     >
       <TapeEnd side="left" />
       <TapeEnd side="right" />
-      {/* "Dare us →" hugs the left tape and the numbers the right (picked
-          from eight layouts), at every width. Phones show only the countdown
-          and leave the amount to /dares. The amount appears once loaded; the
+      {/* The words hug the left tape and the numbers the right (picked
+          from eight layouts), at every width. Below md only the countdown shows
+          and the amount is left to /dares. The amount appears once loaded; the
           bar's height never changes. */}
       <span
         aria-hidden="true"
         className="relative flex w-full items-center justify-between gap-3 px-12 sm:gap-4 sm:px-36 lg:px-52"
       >
-        {/* "Giving Tuesday" names the event: stacked over "Dare us" on phones,
-            where the countdown leaves no room for it alongside; one line,
-            split by a slash, from sm. */}
-        <span className="flex flex-col gap-1 font-satoshi text-sm leading-none font-bold whitespace-nowrap sm:flex-row sm:items-center sm:gap-2.5">
+        {/* One line at every width, in the countdown's font. Phones have room
+            for "Giving Tuesday →" beside the clock; "/ Dare us" waits for lg
+            and the amount for md, or the clock slides under the right tape
+            (stacking two lines in the 40px bar read as cramped). Under 360 the
+            arrow goes and the type drops to 13px; the whole bar is still a link. */}
+        <span className="flex items-center gap-2 font-satoshi text-sm leading-none font-bold whitespace-nowrap max-[359px]:text-[0.8125rem] sm:gap-2.5">
           <span>Giving Tuesday</span>
-          <span aria-hidden="true" className="hidden sm:inline">
+          <span aria-hidden="true" className="hidden lg:inline">
             /
           </span>
-          <span className="flex items-center gap-2">
-            Dare us
-            <span className="transition-transform group-hover:translate-x-0.5">&rarr;</span>
-          </span>
+          <span className="hidden lg:inline">Dare us</span>
+          <span className="transition-transform group-hover:translate-x-0.5 max-[359px]:hidden">&rarr;</span>
         </span>
-        <span className="flex items-center gap-4 font-satoshi text-sm font-bold whitespace-nowrap tabular-nums sm:gap-6">
+        <span className="flex items-center gap-4 font-satoshi text-sm font-bold whitespace-nowrap tabular-nums max-[359px]:text-[0.8125rem] sm:gap-6">
           {raised !== null && (
-            <span className="hidden sm:inline">
+            <span className="hidden md:inline">
               {formatUsd(raised)}
               <span className="ml-1 text-[0.85em] font-medium text-white/55">raised</span>
             </span>
