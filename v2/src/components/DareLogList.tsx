@@ -3,21 +3,9 @@
 import { useState } from "react";
 
 import { formatUsd } from "@/lib/money";
-import { describeDareLine, listDares, type DareEntry } from "@/lib/dareLog";
-
-type Status =
-  | { kind: "idle" }
-  | { kind: "loading" }
-  | { kind: "loaded"; entries: DareEntry[]; at: Date }
-  | { kind: "error"; message: string };
-
-const when = (iso: string) =>
-  new Date(iso).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+import { describeDareLine, type DareEntry } from "@/lib/dareLog";
+import { formatWhen } from "@/lib/formatWhen";
+import type { DareLog } from "@/lib/useDareLog";
 
 /** Each dare with its price: "Pie to the face! ×2 ($7 each) + …" */
 const dareText = (e: DareEntry) =>
@@ -54,30 +42,30 @@ function toCsv(entries: DareEntry[]) {
 }
 
 /**
- * Every dare logged from /dares, newest first, behind the team password.
+ * Every dare logged from /dares, newest first, as useDareLog last loaded it.
  * "Finished form" means Blackbaud's form showed its thank-you on the donor's
  * page: a strong hint they paid, not proof. Check against the total.
  */
-export default function DareLogList({ password }: { password: string }) {
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const [copied, setCopied] = useState(false);
-
-  const load = async () => {
-    setStatus({ kind: "loading" });
-    const result = await listDares(password);
-    setStatus(
-      result.ok
-        ? { kind: "loaded", entries: result.entries, at: new Date() }
-        : { kind: "error", message: result.message },
-    );
-  };
-
-  const entries = status.kind === "loaded" ? status.entries : [];
+export default function DareLogList({
+  log,
+  loading,
+  error,
+  onRefresh,
+}: {
+  log: DareLog;
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+}) {
+  // "Copied" holds until the log reloads.
+  const [copiedAt, setCopiedAt] = useState<Date | null>(null);
+  const copied = copiedAt === log.at;
+  const { entries, at } = log;
   const finished = entries.filter((e) => e.completedAt).length;
 
   return (
-    <section className="mt-16 border-t border-white/10 pt-10" aria-labelledby="dare-log-heading">
-      <h2 id="dare-log-heading" className="font-coolvetica text-2xl tracking-wide text-white uppercase">
+    <section className="min-w-0" aria-labelledby="dare-log-heading">
+      <h2 id="dare-log-heading" className="font-coolvetica text-xl tracking-wide text-white uppercase">
         Dare log
       </h2>
       <p className="mt-2 max-w-xl text-sm text-white/55">
@@ -88,21 +76,21 @@ export default function DareLogList({ password }: { password: string }) {
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={load}
-          disabled={!password || status.kind === "loading"}
+          onClick={onRefresh}
+          disabled={loading}
           className="min-h-12 border border-white/20 px-6 font-coolvetica text-sm tracking-[0.12em] text-white uppercase hover:border-white/50 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
         >
-          {status.kind === "loading" ? "Loading…" : status.kind === "loaded" ? "Refresh" : "Show dares"}
+          {loading ? "Loading…" : "Refresh"}
         </button>
-        {status.kind === "loaded" && entries.length > 0 && (
+        {entries.length > 0 && (
           <button
             type="button"
             onClick={async () => {
               try {
                 await navigator.clipboard.writeText(toCsv(entries));
-                setCopied(true);
+                setCopiedAt(at);
               } catch {
-                setCopied(false);
+                setCopiedAt(null);
               }
             }}
             className="min-h-12 px-4 text-sm text-white/60 underline underline-offset-4 hover:text-white"
@@ -110,18 +98,15 @@ export default function DareLogList({ password }: { password: string }) {
             {copied ? "Copied" : "Copy as CSV"}
           </button>
         )}
-        {!password && <span className="text-sm text-white/45">Enter the team password above first.</span>}
       </div>
 
       <p role="status" className="mt-4 min-h-5 text-sm">
-        {status.kind === "error" && <span className="text-livery-pop">{status.message}</span>}
-        {status.kind === "loaded" && (
+        {error ? (
+          <span className="text-livery-pop">{error}</span>
+        ) : (
           <span className="text-white/55">
             {entries.length} {entries.length === 1 ? "dare" : "dares"} · {finished} finished the form · as of{" "}
-            {status.at.toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            })}
+            {at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
           </span>
         )}
       </p>
@@ -130,7 +115,7 @@ export default function DareLogList({ password }: { password: string }) {
         <ul className="mt-4 divide-y divide-white/10 border-y border-white/10">
           {entries.map((e) => (
             <li key={e.id} className="grid gap-1 py-4 sm:grid-cols-[9rem_1fr_auto] sm:gap-6">
-              <span className="text-sm text-white/45 tabular-nums">{when(e.createdAt)}</span>
+              <span className="text-sm text-white/45 tabular-nums">{formatWhen(e.createdAt)}</span>
               <div className="min-w-0">
                 <p className="break-words text-white">{dareText(e)}</p>
                 <p className="mt-0.5 break-words text-sm text-white/55">
