@@ -52,6 +52,7 @@ type DareRow = {
   dares: string;
   total: number | null;
   message: string | null;
+  email: string | null;
 };
 
 const RAISED_KEY = "raised";
@@ -85,8 +86,12 @@ export class DaresTotal extends DurableObject<Env> {
       members TEXT NOT NULL,
       dares TEXT NOT NULL,
       total INTEGER,
-      message TEXT
+      message TEXT,
+      email TEXT
     )`);
+    // Tables made before the email column existed get it added once.
+    const columns = ctx.storage.sql.exec<{ name: string }>("PRAGMA table_info(dare_log)").toArray();
+    if (!columns.some((c) => c.name === "email")) ctx.storage.sql.exec("ALTER TABLE dare_log ADD COLUMN email TEXT");
   }
 
   get(): Raised {
@@ -138,12 +143,13 @@ export class DaresTotal extends DurableObject<Env> {
     if (isFull(tally, now.getTime(), DARE_LOG_RATE)) return false;
     kv.put(rateKey, bump(tally, now.getTime(), DARE_LOG_RATE));
     sql.exec(
-      "INSERT INTO dare_log (id, key, created_at, completed_at, from_name, members, dares, total, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO dare_log (id, key, created_at, completed_at, from_name, email, members, dares, total, message) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       record.id,
       record.key,
       now.toISOString(),
       finishedAt,
       record.from,
+      record.email,
       JSON.stringify(record.members),
       JSON.stringify(record.dares),
       record.total,
@@ -157,7 +163,7 @@ export class DaresTotal extends DurableObject<Env> {
     if (refusal) return refusal;
     return this.ctx.storage.sql
       .exec<DareRow>(
-        "SELECT id, created_at, completed_at, from_name, members, dares, total, message FROM dare_log ORDER BY created_at DESC",
+        "SELECT id, created_at, completed_at, from_name, email, members, dares, total, message FROM dare_log ORDER BY created_at DESC",
       )
       .toArray()
       .map((r) => ({
@@ -165,6 +171,7 @@ export class DaresTotal extends DurableObject<Env> {
         createdAt: r.created_at,
         completedAt: r.completed_at,
         from: r.from_name,
+        email: r.email,
         members: JSON.parse(r.members),
         dares: JSON.parse(r.dares),
         total: r.total,

@@ -26,11 +26,12 @@ const totalText = (e: DareEntry) => {
 const csvCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
 function toCsv(entries: DareEntry[]) {
-  const rows = [["When", "From", "Dare", "For", "Total", "Note", "Finished form"]];
+  const rows = [["When", "From", "Email", "Dare", "For", "Total", "Note", "Finished form"]];
   for (const e of entries) {
     rows.push([
       e.createdAt,
       e.from,
+      e.email ?? "",
       dareText(e),
       e.members.join(", "),
       totalText(e),
@@ -120,6 +121,12 @@ export default function DareLogList({
                 <p className="break-words text-white">{dareText(e)}</p>
                 <p className="mt-0.5 break-words text-sm text-white/55">
                   for {e.members.join(", ")} · from <span className="text-white">{e.from}</span>
+                  {e.email && (
+                    <>
+                      {" "}
+                      · <span className="select-all">{e.email}</span>
+                    </>
+                  )}
                 </p>
                 {e.message && (
                   <p className="mt-2 border-l-2 border-white/15 pl-3 text-sm break-words text-white/70">

@@ -259,6 +259,7 @@ describe("parseDareRecord", () => {
     id: "1b4e28ba-2fa1-41d2-883f-0016d3cca427",
     key: "0123456789abcdef0123456789abcdef",
     from: "  Sam\n  Smith ",
+    email: " sam@case.edu ",
     members: ["Zane Sandelin", "Arka Nath"],
     dares: [
       { title: "Pie to the face!", count: 2, price: 7 },
@@ -270,7 +271,12 @@ describe("parseDareRecord", () => {
   };
 
   it("keeps a valid dare and tidies its whitespace", () => {
-    expect(parseDareRecord(good)).toEqual({ ...good, from: "Sam Smith", message: "It's his birthday" });
+    expect(parseDareRecord(good)).toEqual({
+      ...good,
+      from: "Sam Smith",
+      email: "sam@case.edu",
+      message: "It's his birthday",
+    });
     expect(parseDareRecord({ ...good, message: null })?.message).toBeNull();
     expect(parseDareRecord({ ...good, total: null, finished: true })).toMatchObject({ total: null, finished: true });
   });
@@ -295,10 +301,31 @@ describe("parseDareRecord", () => {
       { ...good, total: -1 },
       { ...good, total: "28" },
       { ...good, message: 5 },
+      { ...good, email: "hkujghkj" },
+      { ...good, email: "a@b" },
+      { ...good, email: "a b@case.edu" },
+      { ...good, email: "" },
+      { ...good, email: 5 },
       { ...good, message: "   " },
       { ...good, message: "x".repeat(DARE_LIMITS.message + 1) },
     ]) {
       expect(parseDareRecord(bad)).toBeNull();
     }
+  });
+});
+
+describe("dares logged before the email field", () => {
+  it("still parse, with no email", () => {
+    const old = {
+      id: "1b4e28ba-2fa1-41d2-883f-0016d3cca427",
+      key: "0123456789abcdef0123456789abcdef",
+      from: "Joe",
+      members: ["Zane Sandelin"],
+      dares: [{ title: "Pie to the face!", count: 1, price: 7 }],
+      total: 7,
+      message: null,
+      finished: false,
+    };
+    expect(parseDareRecord(old)?.email).toBeNull();
   });
 });

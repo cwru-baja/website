@@ -22,6 +22,8 @@ export type DareDraft = {
   id: string;
   key: string;
   from: string;
+  /** How to reach the donor; required on /dares, checked for shape only (looksLikeEmail). */
+  email: string;
   members: string[];
   /** Each dare, its times, and its price per person in dollars (null: the member names it). */
   dares: DareLine[];
@@ -34,11 +36,22 @@ export type DareDraft = {
 export type DareLine = { title: string; count: number; price: number | null };
 
 /** A logged dare, as /dares/update lists it. */
-export type DareEntry = Omit<DareDraft, "key"> & {
+export type DareEntry = Omit<DareDraft, "key" | "email"> & {
+  /** null on dares logged before /dares asked for an email. */
+  email: string | null;
   createdAt: string;
   /** When the Blackbaud form reported success on the donor's page, or null. */
   completedAt: string | null;
 };
+
+/**
+ * Something@something.tld: catches blanks and keyboard mashing, not made-up
+ * addresses. Mirror of EMAIL_PATTERN in live-relay/src/state.ts, which has the
+ * final say; change both together.
+ */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+export const looksLikeEmail = (value: string) => EMAIL_PATTERN.test(value.trim());
 
 // ---- Building and describing a dare -----------------------------------------
 

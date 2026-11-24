@@ -6,7 +6,7 @@ import Image from "next/image";
 import { framingTransform, resolveFraming } from "@/components/headshotFraming";
 import { DARE_MEMBERS, DARES, type Dare, type DareMember } from "@/lib/dares";
 import { formatUsd } from "@/lib/money";
-import { buildDareLines, describeDares, newDareDraft, stashDare } from "@/lib/dareLog";
+import { buildDareLines, describeDares, looksLikeEmail, newDareDraft, stashDare } from "@/lib/dareLog";
 
 const eyebrow = "font-coolvetica text-xs uppercase tracking-[0.18em] text-white/45";
 const focusRing =
@@ -24,6 +24,7 @@ const STEP_EXTRA = "dares-extra";
 /** Matches the relay's limit (DARE_LIMITS.message). */
 const MESSAGE_MAX = 500;
 const FROM_INPUT = "dares-from-name";
+const EMAIL_INPUT = "dares-from-email";
 
 // Most donors are on a phone, so the board is built for one first: two
 // columns of compact name chips with a search box, dares as one-line rows,
@@ -36,6 +37,9 @@ export default function DaresBoard() {
   const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
   const [from, setFrom] = useState("");
+  const [email, setEmail] = useState("");
+  // The "doesn't look right" hint waits until they leave the field.
+  const [emailTouched, setEmailTouched] = useState(false);
 
   // Any number of dares, each any number of times. Prices are per person, so
   // the total is (sum of price x count) x people. The custom dare has no price.
@@ -43,7 +47,8 @@ export default function DaresBoard() {
   const hasCustom = chosen.some(({ dare }) => dare.price === null);
   const needsText = hasCustom && customText.trim() === "";
   const hasFrom = from.trim() !== "";
-  const ready = picked.length > 0 && chosen.length > 0 && !needsText && hasFrom;
+  const hasEmail = looksLikeEmail(email);
+  const ready = picked.length > 0 && chosen.length > 0 && !needsText && hasFrom && hasEmail;
   const perPerson = chosen.reduce((sum, { dare, count }) => sum + (dare.price ?? 0) * count, 0);
   const total = perPerson > 0 ? perPerson * picked.length : null;
   const lines = buildDareLines(chosen, customText);
@@ -72,6 +77,7 @@ export default function DaresBoard() {
   const handOff = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const draft = newDareDraft({
       from: from.trim(),
+      email: email.trim(),
       members: picked,
       dares: lines,
       total,
@@ -84,13 +90,20 @@ export default function DaresBoard() {
     e.currentTarget.href = `/donate?${params}`;
   };
 
+  // A step scrolls to its top; a field is centred and focused.
   const goTo = (id: string) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: id === CUSTOM_TEXT ? "center" : "start" });
-    if (id === CUSTOM_TEXT) (el as HTMLTextAreaElement).focus({ preventScroll: true });
-    if (id === STEP_FROM) document.getElementById(FROM_INPUT)?.focus({ preventScroll: true });
+    const field = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
+    el.scrollIntoView({ behavior: "smooth", block: field ? "center" : "start" });
+    if (field) el.focus({ preventScroll: true });
   };
+
+  // Step 01's empty fields, in page order: the button names them all and goes to the first.
+  const missingContact = [
+    ...(hasFrom ? [] : [{ word: "name", field: FROM_INPUT }]),
+    ...(hasEmail ? [] : [{ word: "email", field: EMAIL_INPUT }]),
+  ];
 
   const next = !picked.length
     ? { label: "Pick who", arrow: "↑", target: STEP_WHO }
@@ -98,30 +111,60 @@ export default function DaresBoard() {
       ? { label: "Pick a dare", arrow: "↓", target: STEP_DARE }
       : needsText
         ? { label: "Describe your dare", arrow: "↓", target: CUSTOM_TEXT }
-        : { label: "Add your name", arrow: "↑", target: STEP_FROM };
+        : {
+            label: `Add your ${missingContact.map((m) => m.word).join(" and ")}`,
+            arrow: "↑",
+            target: missingContact[0]?.field ?? STEP_FROM,
+          };
 
   // Replaced with the dare's own link the moment Donate is opened (handOff).
   const donateHref = total ? `/donate?onetimeamt=${total}` : "/donate";
 
   return (
     <div className="pb-48 sm:pb-40">
-      <Step id={STEP_FROM} number="01" title="Who's it from?" hint="So they know who to thank. Only the team sees it.">
-        <label className="block sm:max-w-md">
-          <span className="sr-only">Your name</span>
-          <input
-            id={FROM_INPUT}
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            placeholder="Your name"
-            autoComplete="name"
-            maxLength={80}
-            enterKeyHint="done"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") e.currentTarget.blur();
-            }}
-            className="block min-h-12 w-full border border-white/15 bg-transparent px-4 text-base text-white placeholder:text-white/35 focus:border-white focus:outline-none"
-          />
-        </label>
+      <Step id={STEP_FROM} number="01" title="Who's it from?" hint="So they know who to thank. Only the team sees these.">
+        <div className="grid gap-3 sm:max-w-3xl sm:grid-cols-2">
+          <label className="block">
+            <span className="sr-only">Your name</span>
+            <input
+              id={FROM_INPUT}
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              placeholder="Your name"
+              autoComplete="name"
+              maxLength={80}
+              enterKeyHint="done"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+              }}
+              className="block min-h-12 w-full border border-white/15 bg-transparent px-4 text-base text-white placeholder:text-white/35 focus:border-white focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="sr-only">Your email</span>
+            <input
+              id={EMAIL_INPUT}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setEmailTouched(true)}
+              placeholder="Your email"
+              autoComplete="email"
+              inputMode="email"
+              maxLength={254}
+              enterKeyHint="done"
+              aria-invalid={emailTouched && email !== "" && !hasEmail}
+              aria-describedby={`${EMAIL_INPUT}-hint`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+              }}
+              className="block min-h-12 w-full border border-white/15 bg-transparent px-4 text-base text-white placeholder:text-white/35 focus:border-white focus:outline-none aria-invalid:border-livery-pop"
+            />
+            <span id={`${EMAIL_INPUT}-hint`} className="mt-2 block min-h-5 text-sm text-livery-pop">
+              {emailTouched && email !== "" && !hasEmail ? "That email doesn\u2019t look right." : ""}
+            </span>
+          </label>
+        </div>
       </Step>
 
       <Step id={STEP_WHO} number="02" title="Pick who" hint="One or more. The price is per person.">

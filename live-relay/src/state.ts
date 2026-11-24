@@ -202,6 +202,7 @@ export function parseRaisedUpdate(value: unknown): RaisedUpdate | null {
 
 export const DARE_LIMITS = {
   from: 80,
+  email: 254,
   member: 80,
   members: 60,
   title: 240,
@@ -224,6 +225,12 @@ export type DareDraft = {
   id: string;
   key: string;
   from: string;
+  /**
+   * How to reach the donor. The page requires one, checked for shape only:
+   * nothing proves the address is real. null on dares logged before the page
+   * asked for it.
+   */
+  email: string | null;
   members: string[];
   /** Each dare, its times, and its price per person (null: the member names it). */
   dares: { title: string; count: number; price: number | null }[];
@@ -253,6 +260,29 @@ export type DareEntry = Omit<DareDraft, "key"> & {
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const KEY_PATTERN = /^[0-9a-f]{32}$/;
 
+/**
+ * Something@something.tld: catches blanks and keyboard mashing, not made-up
+ * addresses. v2/src/lib/dareLog.ts mirrors it to check as the donor types.
+ */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/** A trimmed email of a sane length and shape, or null. */
+export function cleanEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = value.trim();
+  return email.length <= DARE_LIMITS.email && EMAIL_PATTERN.test(email) ? email : null;
+}
+
+/**
+ * An optional field: missing (null or absent) means none, and anything sent
+ * must clean up. null for none, the cleaned value, or INVALID to reject.
+ */
+const INVALID = Symbol("invalid");
+function optionalField<T>(value: unknown, clean: (value: unknown) => T | null): T | null | typeof INVALID {
+  if (value === null || value === undefined) return null;
+  return clean(value) ?? INVALID;
+}
+
 const isWhole = (value: unknown, min: number, max: number): value is number =>
   typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
 
@@ -275,16 +305,19 @@ function parseDare(value: unknown): DareDraft["dares"][number] | null {
 /** A valid POST /dares/log body, cleaned, or null if anything is off. */
 export function parseDareRecord(value: unknown): DareRecord | null {
   if (!isRecord(value)) return null;
-  const { id, key, from, members, dares, total, finished, message } = value;
+  const { id, key, from, email, members, dares, total, finished, message } = value;
   if (typeof id !== "string" || !ID_PATTERN.test(id)) return null;
   if (typeof key !== "string" || !KEY_PATTERN.test(key)) return null;
   if (typeof finished !== "boolean") return null;
   const name = cleanText(from, DARE_LIMITS.from);
   if (!name) return null;
+  // Missing only from pages built before /dares asked for it.
+  const contact = optionalField(email, cleanEmail);
+  if (contact === INVALID) return null;
   if (total !== null && !isWhole(total, 0, DARE_LIMITS.total)) return null;
-  // Optional: null for none (the page sends null, never a blank string).
-  const note = message === null ? null : cleanText(message, DARE_LIMITS.message);
-  if (message !== null && !note) return null;
+  // The page sends null for none, never a blank string.
+  const note = optionalField(message, (v) => cleanText(v, DARE_LIMITS.message));
+  if (note === INVALID) return null;
 
   if (!Array.isArray(members) || members.length === 0 || members.length > DARE_LIMITS.members) return null;
   const who = members.map((m) => cleanText(m, DARE_LIMITS.member));
@@ -294,5 +327,5 @@ export function parseDareRecord(value: unknown): DareRecord | null {
   const what = dares.map(parseDare);
   if (!what.every((d) => d !== null)) return null;
 
-  return { id, key, from: name, members: who, dares: what, total, message: note, finished };
+  return { id, key, from: name, email: contact, members: who, dares: what, total, message: note, finished };
 }
