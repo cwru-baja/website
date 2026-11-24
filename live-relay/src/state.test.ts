@@ -2,16 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import { LOCKOUT_ATTEMPTS, LOCKOUT_WINDOW_MS, MAX_MESSAGE_BYTES, type LiveFrame } from "./protocol";
 import {
-  addFailure,
-  isLockedOut,
+  bump,
+  DARE_LIMITS,
+  DARE_LOG_RATE,
+  isFull,
+  LOCKOUT,
   MAX_RAISED,
   mergeLatest,
   originAllowed,
+  parseDareRecord,
   parseFrame,
   parsePublisherMessage,
   parseRaisedUpdate,
   tokensMatch,
-  type Failures,
+  type Tally,
 } from "./state";
 
 function fast(receivedAt: string, speed = 20): LiveFrame {
@@ -204,23 +208,26 @@ describe("originAllowed", () => {
   });
 });
 
-describe("lockout", () => {
+describe("rate rules", () => {
   const T = 1_000_000;
 
-  it("locks an address out after the allowed number of wrong tokens", () => {
-    let failures: Failures | undefined;
-    for (let i = 0; i < LOCKOUT_ATTEMPTS; i++) {
-      expect(isLockedOut(failures, T + i)).toBe(false);
-      failures = addFailure(failures, T + i);
+  it.each([
+    ["the lockout", LOCKOUT],
+    ["new dares", DARE_LOG_RATE],
+  ])("%s fills after its limit within the window", (_, rule) => {
+    let tally: Tally | undefined;
+    for (let i = 0; i < rule.limit; i++) {
+      expect(isFull(tally, T + i, rule)).toBe(false);
+      tally = bump(tally, T + i, rule);
     }
-    expect(isLockedOut(failures, T + LOCKOUT_ATTEMPTS)).toBe(true);
+    expect(isFull(tally, T + rule.limit, rule)).toBe(true);
   });
 
-  it("lets the address try again once the window has passed", () => {
-    const failures: Failures = { count: LOCKOUT_ATTEMPTS, since: T };
-    expect(isLockedOut(failures, T + LOCKOUT_WINDOW_MS - 1)).toBe(true);
-    expect(isLockedOut(failures, T + LOCKOUT_WINDOW_MS)).toBe(false);
-    expect(addFailure(failures, T + LOCKOUT_WINDOW_MS)).toEqual({ count: 1, since: T + LOCKOUT_WINDOW_MS });
+  it("starts again once the window has passed", () => {
+    const tally: Tally = { count: LOCKOUT_ATTEMPTS, since: T };
+    expect(isFull(tally, T + LOCKOUT_WINDOW_MS - 1, LOCKOUT)).toBe(true);
+    expect(isFull(tally, T + LOCKOUT_WINDOW_MS, LOCKOUT)).toBe(false);
+    expect(bump(tally, T + LOCKOUT_WINDOW_MS, LOCKOUT)).toEqual({ count: 1, since: T + LOCKOUT_WINDOW_MS });
   });
 });
 
@@ -243,6 +250,55 @@ describe("parseRaisedUpdate", () => {
       [],
     ]) {
       expect(parseRaisedUpdate(bad)).toBeNull();
+    }
+  });
+});
+
+describe("parseDareRecord", () => {
+  const good = {
+    id: "1b4e28ba-2fa1-41d2-883f-0016d3cca427",
+    key: "0123456789abcdef0123456789abcdef",
+    from: "  Sam\n  Smith ",
+    members: ["Zane Sandelin", "Arka Nath"],
+    dares: [
+      { title: "Pie to the face!", count: 2, price: 7 },
+      { title: "Custom dare: sing", count: 1, price: null },
+    ],
+    total: 28,
+    message: "  It's his\n birthday ",
+    finished: false,
+  };
+
+  it("keeps a valid dare and tidies its whitespace", () => {
+    expect(parseDareRecord(good)).toEqual({ ...good, from: "Sam Smith", message: "It's his birthday" });
+    expect(parseDareRecord({ ...good, message: null })?.message).toBeNull();
+    expect(parseDareRecord({ ...good, total: null, finished: true })).toMatchObject({ total: null, finished: true });
+  });
+
+  it("drops anything malformed", () => {
+    for (const bad of [
+      null,
+      { ...good, id: "not-a-uuid" },
+      { ...good, key: "short" },
+      { ...good, finished: "yes" },
+      { ...good, from: "   " },
+      { ...good, from: "x".repeat(DARE_LIMITS.from + 1) },
+      { ...good, members: [] },
+      { ...good, members: ["ok", 3] },
+      { ...good, dares: [] },
+      { ...good, dares: [{ title: "Pie", count: 0, price: 7 }] },
+      { ...good, dares: [{ title: "Pie", count: 1.5, price: 7 }] },
+      { ...good, dares: [{ title: "", count: 1, price: 7 }] },
+      { ...good, dares: [{ title: "Pie", count: 1 }] },
+      { ...good, dares: [{ title: "Pie", count: 1, price: -7 }] },
+      { ...good, dares: [{ title: "Pie", count: 1, price: 7.5 }] },
+      { ...good, total: -1 },
+      { ...good, total: "28" },
+      { ...good, message: 5 },
+      { ...good, message: "   " },
+      { ...good, message: "x".repeat(DARE_LIMITS.message + 1) },
+    ]) {
+      expect(parseDareRecord(bad)).toBeNull();
     }
   });
 });

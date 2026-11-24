@@ -426,16 +426,6 @@ html[data-car-dock]:not([data-car-dock~="below"]) [data-car-dock-spacer] {
   .dares-tape-crawl { animation: none; }
 }
 
-/* /donate: PasteArrow draws itself in once, then the head appears. */
-@keyframes paste-arrow-draw { to { stroke-dashoffset: 0; } }
-@keyframes paste-arrow-head { to { opacity: 1; } }
-.paste-arrow-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: paste-arrow-draw 0.9s ease-out 0.3s forwards; }
-.paste-arrow-head { opacity: 0; animation: paste-arrow-head 0.2s ease-out 1.15s forwards; }
-@media (prefers-reduced-motion: reduce) {
-  .paste-arrow-draw { stroke-dashoffset: 0; animation: none; }
-  .paste-arrow-head { opacity: 1; animation: none; }
-}
-
 /* The fixed header's height: the 4rem navbar, plus the 2.5rem dares bar while
    it shows. :has() so the first paint already knows (the bar is in the static
    HTML), with no script and no shift on hydration. /car sizes its stage, frame

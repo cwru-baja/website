@@ -6,7 +6,7 @@ import Image from "next/image";
 import { framingTransform, resolveFraming } from "@/components/headshotFraming";
 import { DARE_MEMBERS, DARES, type Dare, type DareMember } from "@/lib/dares";
 import { formatUsd } from "@/lib/money";
-import { dareNote } from "@/lib/dareNote";
+import { buildDareLines, describeDares, newDareDraft, stashDare } from "@/lib/dareLog";
 
 const eyebrow = "font-coolvetica text-xs uppercase tracking-[0.18em] text-white/45";
 const focusRing =
@@ -19,6 +19,11 @@ const MAX_COUNT = 10;
 const STEP_WHO = "dares-who";
 const STEP_DARE = "dares-dare";
 const CUSTOM_TEXT = "dares-custom-text";
+const STEP_FROM = "dares-from";
+const STEP_EXTRA = "dares-extra";
+/** Matches the relay's limit (DARE_LIMITS.message). */
+const MESSAGE_MAX = 500;
+const FROM_INPUT = "dares-from-name";
 
 // Most donors are on a phone, so the board is built for one first: two
 // columns of compact name chips with a search box, dares as one-line rows,
@@ -28,17 +33,21 @@ export default function DaresBoard() {
   // Dare id -> how many times. Absent means not picked.
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [customText, setCustomText] = useState("");
+  const [message, setMessage] = useState("");
   const [query, setQuery] = useState("");
+  const [from, setFrom] = useState("");
 
   // Any number of dares, each any number of times. Prices are per person, so
   // the total is (sum of price x count) x people. The custom dare has no price.
   const chosen = DARES.filter((d) => counts[d.id]).map((dare) => ({ dare, count: counts[dare.id] }));
   const hasCustom = chosen.some(({ dare }) => dare.price === null);
   const needsText = hasCustom && customText.trim() === "";
-  const ready = picked.length > 0 && chosen.length > 0 && !needsText;
+  const hasFrom = from.trim() !== "";
+  const ready = picked.length > 0 && chosen.length > 0 && !needsText && hasFrom;
   const perPerson = chosen.reduce((sum, { dare, count }) => sum + (dare.price ?? 0) * count, 0);
   const total = perPerson > 0 ? perPerson * picked.length : null;
-  const note = ready ? dareNote(chosen, picked, customText) : "";
+  const lines = buildDareLines(chosen, customText);
+  const summary = ready ? `${describeDares(lines)} for ${picked.join(", ")}` : "";
 
   const q = query.trim().toLowerCase();
   const shown = q ? DARE_MEMBERS.filter((m) => m.name.toLowerCase().includes(q)) : DARE_MEMBERS;
@@ -56,13 +65,23 @@ export default function DaresBoard() {
     setPicked((p) => (p.includes(name) ? p.filter((n) => n !== name) : [...p, name]));
   };
 
-  // Donate copies the note on the way out; /donate also shows it with a Copy button.
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(note);
-    } catch {
-      // No clipboard access: the note is still on /donate.
-    }
+  // The dare goes to /donate through localStorage (lib/dareLog.ts), and /donate
+  // records it: the form's "Other" box never reaches the team. Made fresh each
+  // time Donate is opened (click, middle-click or the context menu), so one
+  // visit can send several dares.
+  const handOff = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const draft = newDareDraft({
+      from: from.trim(),
+      members: picked,
+      dares: lines,
+      total,
+      message: message.trim() || null,
+    });
+    stashDare(draft);
+    const params = new URLSearchParams();
+    if (total) params.set("onetimeamt", String(total));
+    params.set("dare", draft.id);
+    e.currentTarget.href = `/donate?${params}`;
   };
 
   const goTo = (id: string) => {
@@ -70,22 +89,42 @@ export default function DaresBoard() {
     if (!el) return;
     el.scrollIntoView({ behavior: "smooth", block: id === CUSTOM_TEXT ? "center" : "start" });
     if (id === CUSTOM_TEXT) (el as HTMLTextAreaElement).focus({ preventScroll: true });
+    if (id === STEP_FROM) document.getElementById(FROM_INPUT)?.focus({ preventScroll: true });
   };
 
   const next = !picked.length
     ? { label: "Pick who", arrow: "↑", target: STEP_WHO }
     : !chosen.length
       ? { label: "Pick a dare", arrow: "↓", target: STEP_DARE }
-      : { label: "Describe your dare", arrow: "↓", target: CUSTOM_TEXT };
+      : needsText
+        ? { label: "Describe your dare", arrow: "↓", target: CUSTOM_TEXT }
+        : { label: "Add your name", arrow: "↑", target: STEP_FROM };
 
-  const params = new URLSearchParams();
-  if (total) params.set("onetimeamt", String(total));
-  if (note) params.set("note", note);
-  const donateHref = `/donate?${params}`;
+  // Replaced with the dare's own link the moment Donate is opened (handOff).
+  const donateHref = total ? `/donate?onetimeamt=${total}` : "/donate";
 
   return (
     <div className="pb-48 sm:pb-40">
-      <Step id={STEP_WHO} number="01" title="Pick who" hint="One or more. The price is per person.">
+      <Step id={STEP_FROM} number="01" title="Who's it from?" hint="So they know who to thank. Only the team sees it.">
+        <label className="block sm:max-w-md">
+          <span className="sr-only">Your name</span>
+          <input
+            id={FROM_INPUT}
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            placeholder="Your name"
+            autoComplete="name"
+            maxLength={80}
+            enterKeyHint="done"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+            }}
+            className="block min-h-12 w-full border border-white/15 bg-transparent px-4 text-base text-white placeholder:text-white/35 focus:border-white focus:outline-none"
+          />
+        </label>
+      </Step>
+
+      <Step id={STEP_WHO} number="02" title="Pick who" hint="One or more. The price is per person.">
         <label className="mb-4 block sm:max-w-xs">
           <span className="sr-only">Find a member</span>
           {/* text-base: anything smaller makes iOS zoom the page on focus. */}
@@ -117,7 +156,7 @@ export default function DaresBoard() {
         )}
       </Step>
 
-      <Step id={STEP_DARE} number="02" title="Pick a dare" hint="One or more, as many times as you like. Their prices add up.">
+      <Step id={STEP_DARE} number="03" title="Pick a dare" hint="One or more, as many times as you like. Their prices add up.">
         <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {DARES.map((d) => (
             <li key={d.id}>
@@ -155,6 +194,20 @@ export default function DaresBoard() {
         )}
       </Step>
 
+      <Step id={STEP_EXTRA} number="04" title="Anything else?" hint="Optional.">
+        <label className="block sm:max-w-2xl">
+          <span className="sr-only">Anything else (optional)</span>
+          <textarea
+            id={STEP_EXTRA + "-text"}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={3}
+            maxLength={MESSAGE_MAX}
+            placeholder="Add a note for the team"
+            className="block w-full resize-none border border-white/15 bg-transparent p-4 text-base text-white placeholder:text-white/30 focus:border-white focus:outline-none"
+          />
+        </label>
+      </Step>
 
       {/* The tally rides along the bottom once anything is picked, so the
           Donate button is never a scroll away from the board. Solid on phones:
@@ -202,9 +255,9 @@ export default function DaresBoard() {
           {ready && (
             <p
               className="-mt-2 hidden truncate font-satoshi text-xs text-white/40 sm:mt-1 sm:block"
-              title={note}
+              title={summary}
             >
-              {note}
+              {summary}
             </p>
           )}
 
@@ -215,9 +268,9 @@ export default function DaresBoard() {
                   href={donateHref}
                   target="_blank"
                   rel="noopener"
-                  onClick={() => {
-                    void copy();
-                  }}
+                  onClick={handOff}
+                  onAuxClick={handOff}
+                  onContextMenu={handOff}
                   className={`inline-flex min-h-12 flex-1 items-center justify-center gap-3 bg-livery px-6 font-coolvetica text-sm uppercase tracking-[0.12em] text-on-livery hover:bg-livery-hover sm:flex-none ${focusRing}`}
                 >
                   Donate{total ? ` ${formatUsd(total)}` : ""}

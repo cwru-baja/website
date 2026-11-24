@@ -21,6 +21,8 @@ and the site depends on its branch previews.
 | `GET /health` | `{ viewers, publisher: { connected, lastSeenAt } }`, no telemetry. |
 | `GET /dares` | `{ raised, updatedAt }`: the Giving Tuesday total shown on `/dares`. Public; the edge caches it for 30 s. Kept in its own Durable Object, `DaresTotal` (`src/dares.ts`). |
 | `POST /dares` | `{ "password": "<team password>", "raised": 1240 }` from `cwrumotorsports.com/dares/update`. Whole dollars, 0 to 10,000,000. Same lockout as the sockets (429), same `SITE_ORIGINS` check (403). Clears the cached total. |
+| `POST /dares/log` | `{ id, key, from, members, dares: [{ title, count, price }], total, message, finished }` from `/donate`: who dared whom (Blackbaud's "Other" box never reaches the team). Sent when /donate opens (`finished: false`) and again when Blackbaud's form posts `"donation success ready"` (`true`), in either order. The first copy and the first finish win, and only the dare's own `key` can finish it. `price` is per person (null: the member names it); `total` is what the priced dares cost for everyone picked (null if none are priced); `message` is the donor's optional note (null if none). "Finished" is a signal, not proof of payment: the message carries no gift and can be faked. Public, 300 new dares an hour per address (campus wifi shares addresses), `SITE_ORIGINS` check. |
+| `POST /dares/log/list` | `{ "password": "<team password>" }` from `/dares/update`: every dare, newest first. Same lockout as the total. |
 
 On both doors: five wrong passwords from one address in 10 minutes lock it out (4003), and browser pages
 outside `SITE_ORIGINS` are refused (4004). Sending `ping` gets `pong`.

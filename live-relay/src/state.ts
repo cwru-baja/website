@@ -19,7 +19,7 @@ export type ParsedPublisherMessage =
 
 const encoder = new TextEncoder();
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
@@ -148,18 +148,29 @@ export function originAllowed(origin: string | null, allowed: string | undefined
   return list.includes(origin);
 }
 
-/** Wrong tokens from one address: how many, since when. */
-export type Failures = { count: number; since: number };
+/** Something one address did: how many times, since when. */
+export type Tally = { count: number; since: number };
 
-/** Whether an address has used up its wrong tokens for the current window. */
-export function isLockedOut(failures: Failures | undefined, now: number): boolean {
-  return !!failures && now - failures.since < LOCKOUT_WINDOW_MS && failures.count >= LOCKOUT_ATTEMPTS;
+/** How many times an address may do something within a window. */
+export type RateRule = { limit: number; windowMs: number };
+
+/** Wrong passwords, on any door: the sockets, the total, the dare log. */
+export const LOCKOUT: RateRule = { limit: LOCKOUT_ATTEMPTS, windowMs: LOCKOUT_WINDOW_MS };
+
+/** Whether the address has used up its allowance for the current window. */
+export function isFull(tally: Tally | undefined, now: number, rule: RateRule): boolean {
+  return !!tally && now - tally.since < rule.windowMs && tally.count >= rule.limit;
 }
 
-/** Counts one more wrong token. A window that has run out starts again. */
-export function addFailure(failures: Failures | undefined, now: number): Failures {
-  if (!failures || now - failures.since >= LOCKOUT_WINDOW_MS) return { count: 1, since: now };
-  return { count: failures.count + 1, since: failures.since };
+/** Counts one more. A window that has run out starts again. */
+export function bump(tally: Tally | undefined, now: number, rule: RateRule): Tally {
+  if (!tally || now - tally.since >= rule.windowMs) return { count: 1, since: now };
+  return { count: tally.count + 1, since: tally.since };
+}
+
+/** A team password as sent: a non-empty string of sane length. */
+export function isPassword(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0 && value.length <= 256;
 }
 
 // ---- Giving Tuesday total ---------------------------------------------------
@@ -177,7 +188,111 @@ export type RaisedUpdate = { password: string; raised: number };
 export function parseRaisedUpdate(value: unknown): RaisedUpdate | null {
   if (!isRecord(value)) return null;
   const { password, raised } = value;
-  if (typeof password !== "string" || password.length === 0 || password.length > 256) return null;
+  if (!isPassword(password)) return null;
   if (typeof raised !== "number" || !Number.isInteger(raised) || raised < 0 || raised > MAX_RAISED) return null;
   return { password, raised };
+}
+
+// ---- Dare log ----------------------------------------------------------------
+//
+// /dares records who dared whom, since the Blackbaud form's "Other" box never
+// reaches the team. The browser that made the dare picks its id and a key; the
+// key is the only thing that can later mark that dare's form as finished.
+// v2/src/lib/dareLog.ts mirrors these types.
+
+export const DARE_LIMITS = {
+  from: 80,
+  member: 80,
+  members: 60,
+  title: 240,
+  dares: 20,
+  count: 10,
+  message: 500,
+  /** Per person, in whole dollars. */
+  price: 10_000,
+  total: 100_000,
+} as const;
+
+/**
+ * New dares one address may log. High because campus wifi puts many donors
+ * behind a few addresses; still a wall for a script.
+ */
+export const DARE_LOG_RATE: RateRule = { limit: 300, windowMs: 60 * 60_000 };
+
+/** One dare as the donor built it on /dares. */
+export type DareDraft = {
+  id: string;
+  key: string;
+  from: string;
+  members: string[];
+  /** Each dare, its times, and its price per person (null: the member names it). */
+  dares: { title: string; count: number; price: number | null }[];
+  /**
+   * What the priced dares cost, in whole dollars: price x times, summed, x
+   * members. null when every dare is one the member prices.
+   */
+  total: number | null;
+  /** Anything else the donor wants the team to know, or null. */
+  message: string | null;
+};
+
+/**
+ * POST /dares/log: the dare, and whether Blackbaud's form has shown its
+ * thank-you. Sent on arrival (false) and again at the thank-you (true), in
+ * either order; the relay keeps the first copy and the first finish.
+ */
+export type DareRecord = DareDraft & { finished: boolean };
+
+/** A logged dare, as /dares/update lists it. */
+export type DareEntry = Omit<DareDraft, "key"> & {
+  createdAt: string;
+  /** When the Blackbaud form reported success on the donor's page, or null. */
+  completedAt: string | null;
+};
+
+const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const KEY_PATTERN = /^[0-9a-f]{32}$/;
+
+const isWhole = (value: unknown, min: number, max: number): value is number =>
+  typeof value === "number" && Number.isInteger(value) && value >= min && value <= max;
+
+/** Trimmed, with runs of whitespace (newlines included) collapsed to one space. */
+function cleanText(value: unknown, max: number): string | null {
+  if (typeof value !== "string") return null;
+  const text = value.replace(/\s+/g, " ").trim();
+  return text.length > 0 && text.length <= max ? text : null;
+}
+
+function parseDare(value: unknown): DareDraft["dares"][number] | null {
+  if (!isRecord(value)) return null;
+  const title = cleanText(value.title, DARE_LIMITS.title);
+  const { count, price } = value;
+  if (!title || !isWhole(count, 1, DARE_LIMITS.count)) return null;
+  if (price !== null && !isWhole(price, 0, DARE_LIMITS.price)) return null;
+  return { title, count, price };
+}
+
+/** A valid POST /dares/log body, cleaned, or null if anything is off. */
+export function parseDareRecord(value: unknown): DareRecord | null {
+  if (!isRecord(value)) return null;
+  const { id, key, from, members, dares, total, finished, message } = value;
+  if (typeof id !== "string" || !ID_PATTERN.test(id)) return null;
+  if (typeof key !== "string" || !KEY_PATTERN.test(key)) return null;
+  if (typeof finished !== "boolean") return null;
+  const name = cleanText(from, DARE_LIMITS.from);
+  if (!name) return null;
+  if (total !== null && !isWhole(total, 0, DARE_LIMITS.total)) return null;
+  // Optional: null for none (the page sends null, never a blank string).
+  const note = message === null ? null : cleanText(message, DARE_LIMITS.message);
+  if (message !== null && !note) return null;
+
+  if (!Array.isArray(members) || members.length === 0 || members.length > DARE_LIMITS.members) return null;
+  const who = members.map((m) => cleanText(m, DARE_LIMITS.member));
+  if (!who.every((m) => m !== null)) return null;
+
+  if (!Array.isArray(dares) || dares.length === 0 || dares.length > DARE_LIMITS.dares) return null;
+  const what = dares.map(parseDare);
+  if (!what.every((d) => d !== null)) return null;
+
+  return { id, key, from: name, members: who, dares: what, total, message: note, finished };
 }

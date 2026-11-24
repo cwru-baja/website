@@ -5,12 +5,13 @@
 //   GET /health   JSON: { viewers, publisher: { connected, lastSeenAt } }
 //   GET /dares    JSON: { raised, updatedAt }, the Giving Tuesday total. Public.
 //   POST /dares   { password, raised }: a team member sets the total (/dares/update).
+//   POST /dares/log, /dares/log/list: who dared whom (./dares.ts).
 //
 // The telemetry routes go to one Durable Object, so there is exactly one relay
 // and one copy of the latest state. The wire contract is in ./protocol.ts.
 // /dares is the Giving Tuesday total, its own Durable Object (./dares.ts).
 
-import { handleDares } from "./dares";
+import { handleDares, isDaresPath } from "./dares";
 import { CLOSE_BAD_ORIGIN } from "./protocol";
 import { originAllowed } from "./state";
 
@@ -23,7 +24,7 @@ export default {
   async fetch(request, env, ctx): Promise<Response> {
     const { pathname } = new URL(request.url);
 
-    if (pathname === "/dares") return handleDares(request, env, ctx);
+    if (isDaresPath(pathname)) return handleDares(request, env, ctx);
 
     const relay = env.LIVE_RELAY.get(env.LIVE_RELAY.idFromName("car"));
 

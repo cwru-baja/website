@@ -14,12 +14,13 @@ import {
   type ViewerMessage,
 } from "./protocol";
 import {
-  addFailure,
-  isLockedOut,
+  bump,
+  isFull,
+  LOCKOUT,
   mergeLatest,
   parsePublisherMessage,
   tokensMatch,
-  type Failures,
+  type Tally,
 } from "./state";
 
 // What each socket carries through hibernation. Tags are fixed when a socket
@@ -85,7 +86,7 @@ export class LiveRelay extends DurableObject<Env> {
     server.serializeAttachment(attachment);
     // Accepted and then closed, rather than refused, so the page can tell
     // "locked out" from "no internet".
-    if (isLockedOut(this.ctx.storage.kv.get<Failures>(failuresKey(attachment.ip)), attachment.openedAt)) {
+    if (isFull(this.ctx.storage.kv.get<Tally>(failuresKey(attachment.ip)), attachment.openedAt, LOCKOUT)) {
       close(server, CLOSE_LOCKED_OUT, "Too many wrong passwords. Try again in a few minutes.");
     } else {
       await this.armHelloDeadline(attachment.openedAt + HELLO_TIMEOUT_MS);
@@ -106,7 +107,7 @@ export class LiveRelay extends DurableObject<Env> {
         // Only a wrong token counts toward the lockout; a slow hello doesn't.
         if (message?.t === "hello" && inTime) {
           const key = failuresKey(attachment.ip);
-          this.ctx.storage.kv.put(key, addFailure(this.ctx.storage.kv.get<Failures>(key), Date.now()));
+          this.ctx.storage.kv.put(key, bump(this.ctx.storage.kv.get<Tally>(key), Date.now(), LOCKOUT));
         }
         close(ws, CLOSE_UNAUTHORIZED, "Unauthorized");
         return;
