@@ -1,7 +1,7 @@
 import type { StaticImageData } from "next/image";
 
 import type { HeadshotFraming } from "@/components/headshotFraming";
-import { LEADERSHIP_TIERS } from "@/lib/team";
+import { LEADERSHIP_TIERS, type Leader } from "@/lib/team";
 
 // "Dare us!" - the Giving Tuesday 2026 fundraiser from @cwrubaja's Instagram:
 // a donor picks member(s) and a dare, gives the dare's price per person, and
@@ -42,26 +42,42 @@ export type DareMember = {
   framing?: Partial<HeadshotFraming>;
 };
 
-// The two "Who can you dare?" boards, in their order. Photos come from the
-// Team page where one exists; everyone else is a name card.
-const BOARD = [
+// Who can you dare? The page shows WITH_PHOTOS first, then NAME_CARDS, each
+// in its own order (the Instagram boards' order, leaders with photos first).
+// Every WITH_PHOTOS name must match a leader on the Team page (lib/team.ts)
+// exactly, or the build fails: a typo can't quietly turn a leader into a name card.
+const WITH_PHOTOS = [
   // Leadership edition
   "Zane Sandelin", "Arka Nath", "Amy Budzichowski", "Joshua Stout", "Shelley Wei",
   "Audrey Weaver", "Kurt Rehm", "Veronica Talan", "Matthew Alcantara", "Andrew Shen",
   "Bram Loren", "Ben Roy", "Zhansar Zhaparov", "Maureen Manning", "Lauren Metzler",
   "Sofia Acevedo", "Anthony Retelewski",
-  // Everyone else
-  "Phoebe Streiffer", "Davis Clarke", "Evelyn Sanchez", "Annelise Reilman", "Jake Meltzer",
-  "Anjay Singla", "Aliya Nasim", "Kaavya Dhand-Kalluri", "Lev Edelson", "Ciaran Nimick",
-  "June Budzichowski", "Benjamin Turner", "Gavin Zhang", "Cole Green", "Uddalak Sarkar",
-  "Ellie Tochtrop", "James Mou", "Jessy Zhang", "Avaneesh Rao", "Jessica Shue",
-  "Shubham Iyer", "Nate Leshin", "Wei", "Veer Mehta", "Charles Madland",
+  // Leads from the "everyone else" board
+  "Uddalak Sarkar", "James Mou", "Jessica Shue", "Charles Madland",
 ];
 
-const photos = new Map(
+const NAME_CARDS = [
+  "Phoebe Streiffer", "Davis Clarke", "Evelyn Sanchez", "Annelise Reilman", "Jake Meltzer",
+  "Anjay Singla", "Aliya Nasim", "Kaavya Dhand-Kalluri", "Lev Edelson", "Ciaran Nimick",
+  "June Budzichowski", "Benjamin Turner", "Gavin Zhang", "Cole Green", "Ellie Tochtrop",
+  "Jessy Zhang", "Avaneesh Rao", "Shubham Iyer", "Nate Leshin", "Wei", "Veer Mehta",
+];
+
+const headshots = new Map(
   LEADERSHIP_TIERS.flatMap((tier) => tier.members)
-    .filter((m) => !m.usesLogo)
-    .map((m) => [m.name, { image: m.image as StaticImageData, framing: m.framing }]),
+    .filter((m): m is Extract<Leader, { usesLogo?: false }> => !m.usesLogo)
+    .map((m) => [m.name, { image: m.image, framing: m.framing }]),
 );
 
-export const DARE_MEMBERS: DareMember[] = BOARD.map((name) => ({ name, ...photos.get(name) }));
+function withHeadshot(name: string): DareMember {
+  const headshot = headshots.get(name);
+  if (!headshot) {
+    throw new Error(`dares.ts: no Team page headshot named "${name}". Fix the spelling, or move them to NAME_CARDS.`);
+  }
+  return { name, ...headshot };
+}
+
+export const DARE_MEMBERS: DareMember[] = [
+  ...WITH_PHOTOS.map(withHeadshot),
+  ...NAME_CARDS.map((name) => ({ name })),
+];
