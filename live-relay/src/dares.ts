@@ -32,7 +32,9 @@ import {
 //                          Blackbaud's form says "donation success ready": a
 //                          signal, not proof of payment (the message carries no
 //                          gift and can be faked).
-//   POST /dares/log/list   { password }. Every dare, newest first, for /dares/update.
+//   POST /dares/log/list   { password }. The finished dares, newest first, for
+//                          /dares/update. Unfinished ones stay in the table: most
+//                          are donors who looked and left.
 //
 // Every password check shares the sockets' lockout: five wrong in 10 minutes.
 // Its own Durable Object, apart from the telemetry relay; the class keeps the
@@ -43,10 +45,11 @@ export type Raised = { raised: number; updatedAt: string | null };
 /** Why a team password was refused. */
 type Refusal = 401 | 429;
 
+/** A finished dare_log row, as listDares selects them. */
 type DareRow = {
   id: string;
   created_at: string;
-  completed_at: string | null;
+  completed_at: string;
   from_name: string;
   members: string;
   dares: string;
@@ -163,7 +166,7 @@ export class DaresTotal extends DurableObject<Env> {
     if (refusal) return refusal;
     return this.ctx.storage.sql
       .exec<DareRow>(
-        "SELECT id, created_at, completed_at, from_name, email, members, dares, total, message FROM dare_log ORDER BY created_at DESC",
+        "SELECT id, created_at, completed_at, from_name, email, members, dares, total, message FROM dare_log WHERE completed_at IS NOT NULL ORDER BY created_at DESC",
       )
       .toArray()
       .map((r) => ({

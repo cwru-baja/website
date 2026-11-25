@@ -35,13 +35,13 @@ export type DareDraft = {
 
 export type DareLine = { title: string; count: number; price: number | null };
 
-/** A logged dare, as /dares/update lists it. */
+/** A finished dare, as /dares/update lists it. */
 export type DareEntry = Omit<DareDraft, "key" | "email"> & {
   /** null on dares logged before /dares asked for an email. */
   email: string | null;
   createdAt: string;
-  /** When the Blackbaud form reported success on the donor's page, or null. */
-  completedAt: string | null;
+  /** When the Blackbaud form reported success on the donor's page. */
+  completedAt: string;
 };
 
 /**
@@ -135,7 +135,7 @@ export async function recordDare(draft: DareDraft, finished: boolean): Promise<b
   return (await post("/dares/log", { ...draft, finished })).ok;
 }
 
-/** Every dare, newest first, for the team (the team password). */
+/** The finished dares, newest first, for the team (the team password). */
 export async function listDares(
   password: string,
 ): Promise<{ ok: true; entries: DareEntry[] } | { ok: false; message: string }> {

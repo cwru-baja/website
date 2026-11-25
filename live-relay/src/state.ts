@@ -250,11 +250,11 @@ export type DareDraft = {
  */
 export type DareRecord = DareDraft & { finished: boolean };
 
-/** A logged dare, as /dares/update lists it. */
+/** A finished dare, as /dares/update lists it. */
 export type DareEntry = Omit<DareDraft, "key"> & {
   createdAt: string;
-  /** When the Blackbaud form reported success on the donor's page, or null. */
-  completedAt: string | null;
+  /** When the Blackbaud form reported success on the donor's page. */
+  completedAt: string;
 };
 
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;

@@ -36,16 +36,19 @@ function toCsv(entries: DareEntry[]) {
       e.members.join(", "),
       totalText(e),
       e.message ?? "",
-      e.completedAt ?? "",
+      e.completedAt,
     ]);
   }
   return rows.map((r) => r.map(csvCell).join(",")).join("\n");
 }
 
+/** "No finished dares yet", "1 dare", "3 dares" */
+const countText = (n: number) => (n === 0 ? "No finished dares yet" : `${n} ${n === 1 ? "dare" : "dares"}`);
+
 /**
- * Every dare logged from /dares, newest first, as useDareLog last loaded it.
- * "Finished form" means Blackbaud's form showed its thank-you on the donor's
- * page: a strong hint they paid, not proof. Check against the total.
+ * The finished dares, newest first, as useDareLog last loaded them (the relay
+ * leaves out the rest). "Finished" means Blackbaud's form showed its thank-you
+ * on the donor's page: a strong hint they paid, not proof. Check against the total.
  */
 export default function DareLogList({
   log,
@@ -62,7 +65,6 @@ export default function DareLogList({
   const [copiedAt, setCopiedAt] = useState<Date | null>(null);
   const copied = copiedAt === log.at;
   const { entries, at } = log;
-  const finished = entries.filter((e) => e.completedAt).length;
 
   return (
     <section className="min-w-0" aria-labelledby="dare-log-heading">
@@ -70,8 +72,8 @@ export default function DareLogList({
         Dare log
       </h2>
       <p className="mt-2 max-w-xl text-sm text-white/55">
-        Who dared whom, from the Donate button on /dares. &ldquo;Finished form&rdquo; means Blackbaud showed
-        its thank-you page; check gifts against the total before doing a dare.
+        Who dared whom, from the Donate button on /dares. Only dares whose donor reached Blackbaud&rsquo;s
+        thank-you page are listed; check gifts against the total before doing a dare.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -106,7 +108,7 @@ export default function DareLogList({
           <span className="text-livery-pop">{error}</span>
         ) : (
           <span className="text-white/55">
-            {entries.length} {entries.length === 1 ? "dare" : "dares"} · {finished} finished the form · as of{" "}
+            {countText(entries.length)} · as of{" "}
             {at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
           </span>
         )}
@@ -134,14 +136,7 @@ export default function DareLogList({
                   </p>
                 )}
               </div>
-              <div className="flex items-baseline gap-3 sm:flex-col sm:items-end sm:gap-1">
-                <span className="font-satoshi text-white tabular-nums">{totalText(e)}</span>
-                <span
-                  className={`text-xs uppercase tracking-[0.12em] ${e.completedAt ? "text-livery-pop" : "text-white/35"}`}
-                >
-                  {e.completedAt ? "Finished form" : "Not finished"}
-                </span>
-              </div>
+              <span className="font-satoshi text-white tabular-nums sm:text-right">{totalText(e)}</span>
             </li>
           ))}
         </ul>
